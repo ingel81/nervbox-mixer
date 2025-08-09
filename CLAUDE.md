@@ -2,7 +2,29 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with the **NervBox Mixer** application.
 
+## ⚡ CRITICAL INFORMATION
+
+### Claude Feedback Guidelines
+1. **Objektives Feedback**: Gib immer Feedback, das auf überprüfbaren Fakten und Daten basiert. Vermeide subjektive Meinungen, es sei denn, sie werden ausdrücklich angefordert.
+
+2. **Sicherheit bei Zustimmung**: Bestätige nur dann, dass ich richtig liege, wenn du zu 100% sicher bist, dass die Information korrekt ist. Bei Zweifeln äußere diese klar, anstatt zuzustimmen, um Verwirrung zu vermeiden.
+
+3. **Nachfragen bei Unklarheiten**: Wenn eine Aussage mehrdeutig oder unklar ist, frage nach Klarstellung, bevor du Feedback gibst. Das stellt sicher, dass deine Antwort auf korrektem Verständnis basiert.
+
+4. **Beispiele zur Verdeutlichung**: Gib beim Feedback Beispiele an, um deine Punkte zu veranschaulichen. Das hilft beim Verständnis des Kontexts und der Begründung.
+
+5. **Edge Cases**: Bei unvollständigen oder widersprüchlichen Informationen skizziere die möglichen Auswirkungen und schlage alternative Perspektiven oder Lösungen vor.
+
+### Project-Specific Critical Notes
+- **Current Priority Issues**: [List critical bugs/features]
+- **Breaking Changes**: [Document any recent breaking changes]
+- **Known Limitations**: [Current limitations to be aware of]
+- **Performance Notes**: [Critical performance considerations]
+- **Security Considerations**: [Important security notes]
+- **Production Gotchas**: [Things that work locally but fail in production]
+
 ## Table of Contents
+- [⚡ Critical Information](#-critical-information)
 - [Commands](#commands)
   - [Development](#development)
   - [Important: No linting commands configured](#important-no-linting-commands-configured)
@@ -17,6 +39,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 - [Git Repository Setup](#git-repository-setup)
   - [Repository Details](#repository-details)
   - [Important Git Commands Used](#important-git-commands-used)
+  - [Commit Message Rules](#commit-message-rules)
   - [.gitignore Configuration](#gitignore-configuration)
   - [Sound Files Management](#sound-files-management)
   - [Recovery Notes](#recovery-notes)
@@ -165,6 +188,29 @@ git checkout c2bfed5 -- src/ *.json  # Restore files from specific commit
 # Recovery from git reset --hard
 git reflog  # Shows commit history including reset operations
 git checkout <commit-hash> -- <files>  # Restore files from old commits
+```
+
+### Commit Message Rules
+**WICHTIG: Alle Commits müssen diese Regeln befolgen:**
+
+- **Einzeiler**: Commit-Nachrichten müssen einzeilig sein
+- **Prefix verwenden**: Nutze Standard-Prefixe:
+  - `fix:` - Bug-Fixes
+  - `feat:` - Neue Features
+  - `chore:` - Wartungsarbeiten, Dependencies
+  - `refactor:` - Code-Refactoring ohne funktionale Änderungen
+  - `docs:` - Dokumentation
+  - `style:` - Code-Formatierung
+  - `test:` - Tests hinzufügen/ändern
+- **Kein Claude Footer**: Keine automatischen Claude-Signaturen verwenden
+- **Deutsch oder Englisch**: Konsistent in einer Sprache
+
+```bash
+# Beispiele für gute Commit-Nachrichten
+git commit -m "fix: resolve drag and drop querySelector error"
+git commit -m "feat: add GitHub issues management section"
+git commit -m "chore: update dependencies to latest versions"
+git commit -m "docs: add table of contents to CLAUDE.md"
 ```
 
 ### .gitignore Configuration
