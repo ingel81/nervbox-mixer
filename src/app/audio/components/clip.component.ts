@@ -1,10 +1,10 @@
 import { Component, Input, Output, EventEmitter, HostListener, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { Clip } from './models';
-import { EditorStateService } from './editor-state.service';
-import { WaveformService } from './waveform.service';
-import { pxToSeconds } from './timeline.util';
+import { Clip } from '../models/models';
+import { EditorStateService } from '../services/editor-state.service';
+import { WaveformService } from '../services/waveform.service';
+import { pxToSeconds } from '../utils/timeline.util';
 
 export interface ClipDragEvent {
   clip: Clip;

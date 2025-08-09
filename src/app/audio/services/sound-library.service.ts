@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { AudioEngineService } from './audio-engine.service';
-import { SOUND_LIBRARY, SoundLibraryItem, SOUND_CATEGORIES, SoundCategory } from './sound-library';
+import { SOUND_LIBRARY, SoundLibraryItem, SOUND_CATEGORIES, SoundCategory } from '../utils/sound-library';
 
 @Injectable({ providedIn: 'root' })
 export class SoundLibraryService {

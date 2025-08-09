@@ -1,15 +1,15 @@
 import { Component, ElementRef, HostListener, ViewChild, ViewChildren, QueryList, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AudioEngineService } from './audio-engine.service';
-import { SoundLibraryService } from './sound-library.service';
-import { EditorStateService } from './editor-state.service';
-import { DefaultArrangementService } from './default-arrangement.service';
-import { WaveformService } from './waveform.service';
+import { AudioEngineService } from '../services/audio-engine.service';
+import { SoundLibraryService } from '../services/sound-library.service';
+import { EditorStateService } from '../services/editor-state.service';
+import { DefaultArrangementService } from '../services/default-arrangement.service';
+import { WaveformService } from '../services/waveform.service';
 import { SoundBrowserComponent } from './sound-browser.component';
 import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent } from './clip.component';
 import { TrackComponent, TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackDropEvent, TrackDragEvent } from './track.component';
-import { Clip, Track } from './models';
-import { secondsToPx, pxToSeconds } from './timeline.util';
+import { Clip, Track } from '../models/models';
+import { secondsToPx, pxToSeconds } from '../utils/timeline.util';
 
 import { MatSliderModule } from '@angular/material/slider';
 import { MatIconModule } from '@angular/material/icon';

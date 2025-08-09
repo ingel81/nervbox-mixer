@@ -6,9 +6,9 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { EditorStateService } from '../audio/editor-state.service';
-import { ArrangementStorageService } from '../audio/arrangement-storage.service';
-import { DefaultArrangementService } from '../audio/default-arrangement.service';
+import { EditorStateService } from '../audio/services/editor-state.service';
+import { ArrangementStorageService } from '../audio/services/arrangement-storage.service';
+import { DefaultArrangementService } from '../audio/services/default-arrangement.service';
 
 @Component({
   selector: 'project-management',

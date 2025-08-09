@@ -16,12 +16,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 5. **Edge Cases**: Bei unvollständigen oder widersprüchlichen Informationen skizziere die möglichen Auswirkungen und schlage alternative Perspektiven oder Lösungen vor.
 
 ### Project-Specific Critical Notes
-- **Current Priority Issues**: [List critical bugs/features]
-- **Breaking Changes**: [Document any recent breaking changes]
-- **Known Limitations**: [Current limitations to be aware of]
-- **Performance Notes**: [Critical performance considerations]
-- **Security Considerations**: [Important security notes]
-- **Production Gotchas**: [Things that work locally but fail in production]
+- **Current Priority Issues**: Directory restructuring completed (audio/ folder now organized into components/, services/, utils/, models/)
+- **Breaking Changes**: Audio directory structure changes completed, all import paths updated
+- **Known Limitations**: No ESLint/TSLint setup, no comprehensive test suite
+- **Performance Notes**: Large audio file collection (900+ files) excluded from Git
+- **Security Considerations**: Sound files contain no sensitive data, Web Audio API requires user interaction
+- **Production Gotchas**: Sound files must be deployed separately, scan-sounds must run after deployment
 
 ## Table of Contents
 - [⚡ Critical Information](#-critical-information)
@@ -112,25 +112,39 @@ The audio functionality is centralized in `AudioEngineService` which:
 
 ### File Structure Focus
 ```
-src/app/audio/ - All audio editor functionality
-├── audio-editor.component.* - Main UI and state management
-├── audio-engine.service.ts - Web Audio API operations and export
-├── sound-browser.component.ts - Sound library UI component
-├── sound-library.service.ts - Audio asset management
-├── sound-library.ts - Generated catalog (via scan-sounds script)
-├── arrangement-storage.service.ts - Save/load arrangements
-├── models.ts - TypeScript interfaces (Track, Clip, etc.)
-├── timeline.util.ts - Pixel/time conversion utilities
-└── lamejs.d.ts - MP3 encoder type definitions
+src/app/audio/ - All audio editor functionality (organized structure)
+├── components/ - UI components with index.ts for clean imports
+│   ├── audio-editor.component.* - Main UI and state management
+│   ├── sound-browser.component.* - Sound library UI component
+│   ├── clip.component.* - Individual clip UI components
+│   ├── track.component.* - Track UI components
+│   └── index.ts - Exports all components
+├── services/ - Business logic services with index.ts
+│   ├── audio-engine.service.ts - Web Audio API operations and export
+│   ├── sound-library.service.ts - Audio asset management
+│   ├── arrangement-storage.service.ts - Save/load arrangements
+│   ├── default-arrangement.service.ts - Default pattern generation
+│   ├── editor-state.service.ts - Editor state management
+│   ├── waveform.service.ts - Waveform generation
+│   └── index.ts - Exports all services
+├── utils/ - Helper utilities with index.ts
+│   ├── timeline.util.ts - Pixel/time conversion utilities
+│   ├── sound-library.ts - Generated catalog (via scan-sounds script)
+│   └── index.ts - Exports all utilities
+├── models/ - TypeScript interfaces and types with index.ts
+│   ├── models.ts - Core interfaces (Track, Clip, etc.)
+│   ├── lamejs.d.ts - MP3 encoder type definitions
+│   └── index.ts - Exports all models
+└── index.ts - Main module export for entire audio feature
 
-src/assets/sounds/ - Audio sample library
+src/assets/sounds/ - Audio sample library (excluded from Git)
 ├── drums/ - Drum samples (kicks, snares, hi-hats)
 ├── bass/ - Bass samples 
 ├── synth/ - Synthesizer sounds
 └── fx/ - Sound effects and vocal samples
 
 scripts/
-└── scan-sounds.js - Generates sound library catalog
+└── scan-sounds.js - Generates sound library catalog (updated for new structure)
 ```
 
 ### Critical Implementation Details
@@ -250,11 +264,12 @@ The repository excludes:
 4. Categories are auto-detected from folder structure and filenames
 
 ### Common Development Tasks
-- **Audio Engine**: Modify `audio-engine.service.ts` for playback/export changes
-- **UI Components**: Main editor in `audio-editor.component.ts`
-- **Data Models**: Update interfaces in `models.ts`
-- **Timeline Logic**: Coordinate conversion utilities in `timeline.util.ts`
-- **Sound Management**: Library service in `sound-library.service.ts`
+- **Audio Engine**: Modify `services/audio-engine.service.ts` for playback/export changes
+- **UI Components**: Main editor in `components/audio-editor.component.ts`
+- **Data Models**: Update interfaces in `models/models.ts`
+- **Timeline Logic**: Coordinate conversion utilities in `utils/timeline.util.ts`
+- **Sound Management**: Library service in `services/sound-library.service.ts`
+- **Clean Imports**: Use index.ts files for organized imports: `import { AudioEditorComponent } from './audio/components'`
 
 ### GitHub Issues Management
 ```bash

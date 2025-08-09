@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Track, Clip } from './models';
+import { Track, Clip } from '../models/models';
 import { SoundLibraryService } from './sound-library.service';
 import { WaveformService } from './waveform.service';
 

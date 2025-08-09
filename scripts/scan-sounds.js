@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const SOUNDS_DIR = path.join(__dirname, '..', 'src', 'assets', 'sounds');
-const OUTPUT_FILE = path.join(__dirname, '..', 'src', 'app', 'audio', 'sound-library.ts');
+const OUTPUT_FILE = path.join(__dirname, '..', 'src', 'app', 'audio', 'utils', 'sound-library.ts');
 
 // Category mapping based on folder structure first, then filename patterns
 const getCategoryFromPath = (filepath, filename) => {

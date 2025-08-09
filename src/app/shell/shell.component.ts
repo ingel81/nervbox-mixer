@@ -7,7 +7,7 @@ import { TransportControlsComponent } from './transport-controls.component';
 import { ProjectManagementComponent } from './project-management.component';
 import { ContentCreationComponent } from './content-creation.component';
 import { ExportControlsComponent } from './export-controls.component';
-import { AudioEditorComponent } from '../audio/audio-editor.component';
+import { AudioEditorComponent } from '../audio/components/audio-editor.component';
 
 @Component({
   selector: 'app-shell',

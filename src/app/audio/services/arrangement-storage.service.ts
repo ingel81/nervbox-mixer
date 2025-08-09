@@ -1,5 +1,5 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { Track } from './models';
+import { Track } from '../models/models';
 import { SoundLibraryService } from './sound-library.service';
 
 export interface SavedArrangement {

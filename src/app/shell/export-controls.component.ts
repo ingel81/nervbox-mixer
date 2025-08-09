@@ -4,8 +4,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 
-import { EditorStateService } from '../audio/editor-state.service';
-import { AudioEngineService } from '../audio/audio-engine.service';
+import { EditorStateService } from '../audio/services/editor-state.service';
+import { AudioEngineService } from '../audio/services/audio-engine.service';
 
 @Component({
   selector: 'export-controls',
