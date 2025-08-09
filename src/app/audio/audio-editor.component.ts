@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AudioEngineService } from './audio-engine.service';
 import { SoundLibraryService } from './sound-library.service';
 import { ArrangementStorageService } from './arrangement-storage.service';
+import { EditorStateService } from './editor-state.service';
 import { SoundBrowserComponent } from './sound-browser.component';
 import { Clip, Track } from './models';
 import { secondsToPx, pxToSeconds } from './timeline.util';
@@ -27,17 +28,18 @@ export class AudioEditorComponent {
   @ViewChild('timeline') timelineEl!: ElementRef<HTMLDivElement>;
   @ViewChildren('lane') laneEls!: QueryList<ElementRef<HTMLDivElement>>;
 
-  pxPerSecond = signal(120);
+  // Use signals from EditorStateService
+  get pxPerSecond() { return this.editorState.pxPerSecond; }
+  get playhead() { return this.editorState.playhead; }
+  get isPlaying() { return this.editorState.isPlaying; }
+  get tracks() { return this.editorState.tracks; }
+  get selectedClipId() { return this.editorState.selectedClipId; }
+  get showSoundBrowser() { return this.editorState.showSoundBrowser; }
+  
   scrollX = signal(0);
-  playhead = signal(0);
-  isPlaying = signal(false);
-
-  tracks = signal<Track[]>([]);
-  selectedClipId = signal<string | null>(null);
-  showSoundBrowser = signal<boolean>(false);
 
   duration = computed(() => {
-    const t = this.tracks();
+    const t = this.editorState.tracks();
     let max = 0;
     let maxClip = null;
     for (const tr of t) {
@@ -63,7 +65,8 @@ export class AudioEditorComponent {
   constructor(
     private audio: AudioEngineService, 
     private soundLibrary: SoundLibraryService,
-    private arrangementStorage: ArrangementStorageService
+    private arrangementStorage: ArrangementStorageService,
+    public editorState: EditorStateService
   ) {
     this.addDefaultHipHopTrack();
     
@@ -705,7 +708,7 @@ export class AudioEditorComponent {
       try {
         // Stop playback before loading
         this.pause();
-        this.playhead.set(0);
+        this.editorState.playhead.set(0);
         
         // Show loading message
         console.log(`Loading arrangement "${selectedArrangement.name}"...`);
@@ -729,9 +732,9 @@ export class AudioEditorComponent {
   newArrangement() {
     if (confirm('Create new arrangement? This will clear the current arrangement.')) {
       this.pause();
-      this.playhead.set(0);
+      this.editorState.playhead.set(0);
       this.tracks.set([]);
-      this.selectedClipId.set(null);
+      this.editorState.selectedClipId.set(null);
       this.addDefaultHipHopTrack();
     }
   }
@@ -773,12 +776,12 @@ export class AudioEditorComponent {
 
   pause() {
     this.audio.pause();
-    this.isPlaying.set(false);
+    this.editorState.pause();
   }
 
   stop() {
     this.audio.stop();
-    this.isPlaying.set(false);
+    this.editorState.stop();
   }
 
   async exportMixdown(format: 'wav' | 'mp3' = 'wav') {
@@ -826,24 +829,28 @@ export class AudioEditorComponent {
   }
 
   private flattenClips(): Clip[] {
-    return this.tracks().flatMap(t => t.clips);
+    return this.editorState.flattenedClips();
   }
 
-  dragState: { id: string; startX: number; origStartTime: number; clipRef?: Clip } | null = null;
-  trimState: { id: string; side: 'start' | 'end'; startX: number; originalTrimStart: number; originalTrimEnd: number; originalDuration: number; originalStartTime: number; clipRef: Clip } | null = null;
+  // Use drag state from service
+  get dragState() { return this.editorState.dragState; }
+  set dragState(value) { this.editorState.dragState = value; }
   
-  // Clipboard for copy/paste
-  clipboardClip: Clip | null = null;
+  get trimState() { return this.editorState.trimState; }
+  set trimState(value) { this.editorState.trimState = value; }
+  
+  get clipboardClip() { return this.editorState.clipboardClip; }
+  set clipboardClip(value) { this.editorState.clipboardClip = value; }
+  
+  get dragOverTrack() { return this.editorState.dragOverTrack; }
+  set dragOverTrack(value) { this.editorState.dragOverTrack = value; }
   
   // Waveform update throttling
   private waveformUpdateTimeout: number | null = null;
 
-  // Drag & Drop state
-  dragOverTrack: Track | null = null;
-
   clipMouseDown(ev: MouseEvent, clip: Clip) {
     ev.stopPropagation();
-    this.selectedClipId.set(clip.id);
+    this.editorState.selectedClipId.set(clip.id);
     const startX = ev.clientX;
     this.dragState = { id: clip.id, startX, origStartTime: clip.startTime, clipRef: clip };
     (document.body as any).style.userSelect = 'none';
@@ -1344,7 +1351,7 @@ export class AudioEditorComponent {
   }
 
   getSelectedClip(): Clip | null {
-    const selectedId = this.selectedClipId();
+    const selectedId = this.editorState.selectedClipId();
     if (!selectedId) return null;
     
     return this.flattenClips().find(c => c.id === selectedId) || null;
@@ -1392,7 +1399,7 @@ export class AudioEditorComponent {
       targetTrack.clips.push(pastedClip);
       
       // Select the newly pasted clip
-      this.selectedClipId.set(pastedClip.id);
+      this.editorState.selectedClipId.set(pastedClip.id);
       
       console.log(`Clip "${pastedClip.name}" pasted to ${targetTrack.name}`);
       
@@ -1412,8 +1419,8 @@ export class AudioEditorComponent {
       }
       
       // Clear selection if deleted clip was selected
-      if (this.selectedClipId() === clip.id) {
-        this.selectedClipId.set(null);
+      if (this.editorState.selectedClipId() === clip.id) {
+        this.editorState.selectedClipId.set(null);
       }
       
       return [...list];
@@ -1558,7 +1565,7 @@ export class AudioEditorComponent {
   }
 
   toggleSoundBrowser() {
-    this.showSoundBrowser.update(show => !show);
+    this.editorState.showSoundBrowser.update(show => !show);
   }
 
   async onSoundSelected(buffer: AudioBuffer & { name: string; category: string; id?: string }) {
