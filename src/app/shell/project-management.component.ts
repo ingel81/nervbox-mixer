@@ -128,9 +128,15 @@ export class ProjectManagementComponent {
     
     if (index >= 0 && index < arrangements.length) {
       const selectedArrangement = arrangements[index];
-      this.editorState.tracks.set(selectedArrangement.tracks);
-      this.editorState.stop();
-      alert(`Arrangement "${selectedArrangement.name}" loaded.`);
+      this.arrangementStorage.loadArrangement(selectedArrangement.id).then(tracks => {
+        if (tracks) {
+          this.editorState.tracks.set(tracks);
+          this.editorState.stop();
+          alert(`Arrangement "${selectedArrangement.name}" loaded.`);
+        } else {
+          alert('Failed to load arrangement.');
+        }
+      });
     }
   }
   

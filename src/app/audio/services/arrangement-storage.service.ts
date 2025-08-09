@@ -1,11 +1,12 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { Track } from '../models/models';
+import { Track, ArrangementDefinition } from '../models/models';
 import { SoundLibraryService } from './sound-library.service';
+import { ArrangementService } from './arrangement.service';
 
 export interface SavedArrangement {
   id: string;
   name: string;
-  tracks: Track[];
+  arrangement: ArrangementDefinition; // Use unified format instead of raw tracks
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,6 +17,7 @@ export class ArrangementStorageService {
   
   savedArrangements = signal<SavedArrangement[]>([]);
   private soundLibrary = inject(SoundLibraryService);
+  private arrangementService = inject(ArrangementService);
 
   constructor() {
     this.loadArrangementsFromStorage();
@@ -48,16 +50,19 @@ export class ArrangementStorageService {
     }
   }
 
-  saveArrangement(name: string, tracks: Track[]): string {
+  saveArrangement(name: string, tracks: Track[], bpm: number = 120): string {
     const now = new Date();
     const existingIndex = this.savedArrangements().findIndex(arr => arr.name === name);
+    
+    // Convert tracks to unified arrangement definition format
+    const arrangementDef = this.arrangementService.tracksToDefinition(tracks, name, bpm);
     
     if (existingIndex >= 0) {
       // Update existing arrangement
       const arrangements = [...this.savedArrangements()];
       arrangements[existingIndex] = {
         ...arrangements[existingIndex],
-        tracks: this.cloneTracks(tracks),
+        arrangement: arrangementDef,
         updatedAt: now
       };
       this.savedArrangements.set(arrangements);
@@ -66,7 +71,7 @@ export class ArrangementStorageService {
       const newArrangement: SavedArrangement = {
         id: crypto.randomUUID(),
         name,
-        tracks: this.cloneTracks(tracks),
+        arrangement: arrangementDef,
         createdAt: now,
         updatedAt: now
       };
@@ -78,42 +83,16 @@ export class ArrangementStorageService {
   }
 
   async loadArrangement(id: string): Promise<Track[] | null> {
-    const arrangement = this.savedArrangements().find(arr => arr.id === id);
-    if (!arrangement) return null;
+    const savedArrangement = this.savedArrangements().find(arr => arr.id === id);
+    if (!savedArrangement) return null;
 
-    // Clone tracks and restore AudioBuffers
-    const restoredTracks = await Promise.all(
-      arrangement.tracks.map(async (track) => {
-        const restoredClips = await Promise.all(
-          track.clips.map(async (clip) => {
-            if ((clip as any).soundId) {
-              // Restore buffer from sound library
-              const buffer = await this.soundLibrary.loadSound((clip as any).soundId);
-              if (buffer) {
-                return { ...clip, buffer };
-              } else {
-                console.warn(`Failed to load buffer for clip ${clip.name} with soundId ${(clip as any).soundId}`);
-                return null;
-              }
-            } else {
-              // For clips without soundId, we can't restore the buffer
-              console.warn(`Clip ${clip.name} has no soundId, buffer cannot be restored`);
-              return null;
-            }
-          })
-        );
-        
-        // Filter out clips that couldn't be restored
-        const validClips = restoredClips.filter(clip => clip !== null) as any[];
-        
-        return {
-          ...track,
-          clips: validClips
-        };
-      })
-    );
-
-    return restoredTracks;
+    try {
+      // Use the unified arrangement service to create tracks from definition
+      return await this.arrangementService.createFromDefinition(savedArrangement.arrangement);
+    } catch (error) {
+      console.error('Error loading arrangement:', error);
+      return null;
+    }
   }
 
   deleteArrangement(id: string): void {
@@ -136,39 +115,16 @@ export class ArrangementStorageService {
     }
   }
 
-  private cloneTracks(tracks: Track[]): Track[] {
-    // Deep clone tracks and store sound info for buffer restoration
-    return tracks.map(track => ({
-      ...track,
-      clips: track.clips.map(clip => ({
-        ...clip,
-        // Store sound ID for buffer restoration, remove buffer for serialization
-        soundId: (clip as any).soundId || null,
-        buffer: null as any // Will be restored when loading
-      }))
-    }));
-  }
+  // No longer needed - ArrangementService handles track/definition conversion
 
   exportArrangement(id: string): string {
     const arrangement = this.savedArrangements().find(arr => arr.id === id);
     if (!arrangement) throw new Error('Arrangement not found');
     
-    // Create export data without AudioBuffers (not serializable)
+    // Export the clean arrangement definition - no AudioBuffers needed
     const exportData = {
       ...arrangement,
-      tracks: arrangement.tracks.map(track => ({
-        ...track,
-        clips: track.clips.map(clip => ({
-          ...clip,
-          buffer: null, // AudioBuffer will need to be reloaded
-          bufferInfo: {
-            // Store info to help reload the buffer later
-            duration: clip.buffer.duration,
-            sampleRate: clip.buffer.sampleRate,
-            numberOfChannels: clip.buffer.numberOfChannels
-          }
-        }))
-      }))
+      // arrangement already contains the clean JSON definition
     };
     
     return JSON.stringify(exportData, null, 2);

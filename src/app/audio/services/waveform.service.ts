@@ -5,6 +5,8 @@ export interface WaveformOptions {
   height?: number;
   clipColor?: string;
   pxPerSecond?: number;
+  trimStart?: number;
+  trimEnd?: number;
 }
 
 @Injectable({

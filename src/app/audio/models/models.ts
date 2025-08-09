@@ -28,3 +28,31 @@ export interface Track {
   /** -1..1 */
   pan: number;
 }
+
+// Arrangement definition interfaces for JSON-based patterns
+export interface ClipDefinition {
+  soundId: string;        // Reference to sound library
+  startTime: number;      // seconds
+  duration?: number;      // optional - uses full sound if omitted
+  trimStart?: number;     // seconds to trim from start
+  trimEnd?: number;       // seconds to trim from end
+  volume?: number;        // clip-specific volume (0-1)
+  color?: string;         // optional clip color override
+}
+
+export interface TrackDefinition {
+  name: string;
+  volume: number;
+  pan: number;
+  mute: boolean;
+  solo: boolean;
+  color?: string;         // default color for clips in this track
+  clips: ClipDefinition[];
+}
+
+export interface ArrangementDefinition {
+  name: string;
+  bpm: number;
+  duration: number;       // total seconds
+  tracks: TrackDefinition[];
+}

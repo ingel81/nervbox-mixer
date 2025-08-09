@@ -4,3 +4,4 @@ export { EditorStateService } from './editor-state.service';
 export { ArrangementStorageService } from './arrangement-storage.service';
 export { DefaultArrangementService } from './default-arrangement.service';
 export { WaveformService } from './waveform.service';
+export { ArrangementService } from './arrangement.service';

@@ -287,3 +287,5 @@ gh pr create --title "Fix #<number>: ..." # Create PR linked to issue
 gh issue edit <number> --add-label "in-progress"
 gh issue close <number>                # Close completed issue
 ```
+- niemals starten ...nur bauen
+- niemals issues schließen oder commiten ohne befehl dazu
