@@ -50,6 +50,58 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'JetBrains Mono', monospace;
+  padding: 2px 4px;
+  border-radius: 2px;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.title-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.edit-icon {
+  font-size: 12px !important;
+  width: 12px !important;
+  height: 12px !important;
+  opacity: 0;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  color: rgba(147, 51, 234, 0.7) !important;
+  padding: 1px;
+  border-radius: 2px;
+}
+
+.title-content:hover .edit-icon {
+  opacity: 1;
+}
+
+.edit-icon:hover {
+  background: rgba(147, 51, 234, 0.2);
+  color: rgba(236, 72, 153, 1) !important;
+}
+
+.track-head .title.editing {
+  background: rgba(147, 51, 234, 0.2);
+  border: 1px solid rgba(147, 51, 234, 0.5);
+  padding: 1px 3px;
+}
+
+.name-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: 'JetBrains Mono', monospace;
+  width: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 .track-buttons {

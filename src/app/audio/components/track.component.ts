@@ -1,5 +1,6 @@
-import { Component, Input, Output, EventEmitter, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, computed, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -18,6 +19,11 @@ export interface TrackDeleteEvent {
   track: Track;
 }
 
+export interface TrackRenameEvent {
+  track: Track;
+  newName: string;
+}
+
 export interface TrackDropEvent {
   track: Track;
   event: DragEvent;
@@ -31,12 +37,24 @@ export interface TrackDragEvent {
 @Component({
   selector: 'audio-track',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, MatTooltipModule, ClipComponent],
+  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatTooltipModule, ClipComponent],
   template: `
     <!-- Track head -->
     <div class="track-head">
       <div class="track-controls">
-        <div class="title">{{ track.name }}</div>
+        <div class="title" 
+             [class.editing]="isEditing">
+          <span *ngIf="!isEditing" class="title-content">
+            {{ track.name }}
+            <mat-icon class="edit-icon" (click)="startEditing()">edit</mat-icon>
+          </span>
+          <input *ngIf="isEditing" 
+                 #nameInput
+                 [(ngModel)]="editingName"
+                 (keydown)="onEditKeyDown($event)"
+                 (blur)="finishEditing()"
+                 class="name-input" />
+        </div>
         <div class="track-buttons">
           <button mat-icon-button 
                   class="track-btn" 
@@ -87,12 +105,18 @@ export class TrackComponent {
   @Input({ required: true }) playhead!: number;
   @Input() isDragOver = false;
   
+  // Track renaming
+  @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
+  isEditing = false;
+  editingName = '';
+  
   // Drag performance optimization
   private dragOverThrottleId: number | null = null;
   
   @Output() muteToggled = new EventEmitter<TrackMuteEvent>();
   @Output() soloToggled = new EventEmitter<TrackSoloEvent>();
   @Output() trackDeleted = new EventEmitter<TrackDeleteEvent>();
+  @Output() trackRenamed = new EventEmitter<TrackRenameEvent>();
   @Output() trackDrop = new EventEmitter<TrackDropEvent>();
   // REMOVED: trackDragOver - was causing continuous performance issues
   @Output() trackDragEnter = new EventEmitter<TrackDragEvent>();
@@ -163,5 +187,43 @@ export class TrackComponent {
 
   onClipTrimStarted(event: ClipTrimEvent) {
     this.clipTrimStarted.emit(event);
+  }
+
+  // Track renaming methods
+  startEditing() {
+    this.isEditing = true;
+    this.editingName = this.track.name;
+    
+    // Focus input after view update
+    setTimeout(() => {
+      if (this.nameInput) {
+        this.nameInput.nativeElement.focus();
+        this.nameInput.nativeElement.select();
+      }
+    }, 0);
+  }
+
+  finishEditing() {
+    if (!this.isEditing) return;
+    
+    this.isEditing = false;
+    
+    if (this.editingName.trim() && this.editingName !== this.track.name) {
+      this.trackRenamed.emit({
+        track: this.track,
+        newName: this.editingName.trim()
+      });
+    }
+  }
+
+  onEditKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.finishEditing();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.isEditing = false;
+      this.editingName = this.track.name;
+    }
   }
 }

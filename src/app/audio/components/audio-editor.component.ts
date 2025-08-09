@@ -7,7 +7,7 @@ import { DefaultArrangementService } from '../services/default-arrangement.servi
 import { WaveformService } from '../services/waveform.service';
 import { SoundBrowserComponent } from './sound-browser.component';
 import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent } from './clip.component';
-import { TrackComponent, TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackDropEvent, TrackDragEvent } from './track.component';
+import { TrackComponent, TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackRenameEvent, TrackDropEvent, TrackDragEvent } from './track.component';
 import { Clip, Track } from '../models/models';
 import { secondsToPx, pxToSeconds } from '../utils/timeline.util';
 
@@ -343,6 +343,10 @@ export class AudioEditorComponent {
   
   onTrackDeleted(event: TrackDeleteEvent) {
     this.removeTrack(event.track);
+  }
+
+  onTrackRenamed(event: TrackRenameEvent) {
+    this.editorState.renameTrack(event.track.id, event.newName);
   }
   
   onTrackDrop(event: TrackDropEvent) {

@@ -71,6 +71,10 @@ export class EditorStateService {
       )
     );
   }
+
+  renameTrack(trackId: string, newName: string): void {
+    this.updateTrack(trackId, { name: newName });
+  }
   
   // Clip management
   addClipToTrack(trackId: string, clip: Clip): void {
