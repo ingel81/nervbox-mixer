@@ -25,10 +25,6 @@ import { AudioEngineService } from '../audio/services/audio-engine.service';
             class="transport-btn">
       <mat-icon>stop</mat-icon>
     </button>
-    
-    <div class="time-display">
-      {{ formatDuration(editorState.playhead()) }}
-    </div>
   `,
   styles: [`
     :host {
@@ -46,18 +42,6 @@ import { AudioEngineService } from '../audio/services/audio-engine.service';
     .transport-btn:hover {
       color: #9333ea;
       background: rgba(147, 51, 234, 0.1);
-    }
-    
-    .time-display {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.8);
-      background: rgba(0, 0, 0, 0.3);
-      padding: 4px 8px;
-      border-radius: 4px;
-      border: 1px solid rgba(147, 51, 234, 0.2);
-      min-width: 60px;
-      text-align: center;
     }
   `]
 })
@@ -149,11 +133,5 @@ export class TransportControlsComponent {
       event.preventDefault();
       this.togglePlayback();
     }
-  }
-  
-  formatDuration(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 }

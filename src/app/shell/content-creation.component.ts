@@ -12,12 +12,6 @@ import { AudioEngineService } from '../audio/services/audio-engine.service';
   standalone: true,
   imports: [CommonModule, MatButtonModule, MatIconModule, MatTooltipModule],
   template: `
-    <button mat-icon-button 
-            (click)="addTrack()" 
-            matTooltip="Add track"
-            class="content-btn">
-      <mat-icon>queue</mat-icon>
-    </button>
     
     <button mat-icon-button 
             (click)="openFileDialog()" 
@@ -74,9 +68,6 @@ export class ContentCreationComponent {
     private audio: AudioEngineService
   ) {}
   
-  addTrack(): void {
-    this.editorState.addTrack();
-  }
   
   openFileDialog(): void {
     this.fileInput.nativeElement.click();

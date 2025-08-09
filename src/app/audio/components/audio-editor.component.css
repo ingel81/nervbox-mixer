@@ -229,33 +229,37 @@
 .add-track-container {
   display: flex;
   justify-content: center;
-  padding: 16px 0;
+  align-items: center;
+  padding: 8px;
   border-top: 1px solid rgba(147, 51, 234, 0.2);
-  margin-top: 8px;
+  margin-top: 0;
+  grid-column: 1;
+  background: rgba(10, 10, 10, 0.8);
+  border-right: 1px solid rgba(147, 51, 234, 0.2);
 }
 
 .add-track-btn {
-  color: rgba(255, 255, 255, 0.7) !important;
-  border-color: rgba(147, 51, 234, 0.3) !important;
-  font-size: 12px !important;
-  padding: 6px 16px !important;
-  height: 36px;
+  color: rgba(255, 255, 255, 0.4) !important;
+  border-color: rgba(147, 51, 234, 0.15) !important;
+  font-size: 11px !important;
+  padding: 4px 8px !important;
+  height: 28px;
+  width: 100%;
   transition: all 0.2s ease !important;
-  background: rgba(0, 0, 0, 0.2) !important;
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(2px);
 }
 
 .add-track-btn:hover {
-  background: rgba(147, 51, 234, 0.1) !important;
-  border-color: #9333ea !important;
-  color: #9333ea !important;
-  box-shadow: 0 0 10px rgba(147, 51, 234, 0.3);
-  transform: translateY(-1px);
+  background: rgba(147, 51, 234, 0.08) !important;
+  border-color: rgba(147, 51, 234, 0.3) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 0 5px rgba(147, 51, 234, 0.2);
 }
 
 .add-track-btn mat-icon {
-  margin-right: 4px;
-  font-size: 16px;
+  margin-right: 3px;
+  font-size: 14px;
 }
 
 /* Animations */
