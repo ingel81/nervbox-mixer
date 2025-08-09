@@ -205,6 +205,9 @@ export class SoundBrowserComponent {
     console.log('Drag start:', sound.name);
     this.draggedSound = sound;
     
+    // Signal that a sound is being dragged (not the window)
+    (window as any).soundDragActive = true;
+    
     // Set drag data
     event.dataTransfer!.effectAllowed = 'copy';
     event.dataTransfer!.setData('text/plain', JSON.stringify({
@@ -241,6 +244,9 @@ export class SoundBrowserComponent {
   onDragEnd(event: DragEvent) {
     console.log('Drag end');
     this.draggedSound = undefined;
+    
+    // Clear sound drag flag
+    (window as any).soundDragActive = false;
   }
 
   onHeaderMouseDown(event: MouseEvent) {

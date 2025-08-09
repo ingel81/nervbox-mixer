@@ -1695,29 +1695,32 @@ export class AudioEditorComponent {
 
   // --- Drag & Drop from Sound Library ---
   onDragOver(event: DragEvent) {
+    // Skip processing if sound drag is not active (window dragging)
+    if (!(window as any).soundDragActive) {
+      return;
+    }
+    
     event.preventDefault();
     event.dataTransfer!.dropEffect = 'copy';
   }
 
   onDragEnter(event: DragEvent, track: Track) {
-    event.preventDefault();
-    
-    // Check if this is a sound being dragged
-    const data = event.dataTransfer?.getData('text/plain');
-    if (data) {
-      try {
-        const dragData = JSON.parse(data);
-        if (dragData.type === 'sound') {
-          this.dragOverTrack = track;
-          console.log(`Drag enter track: ${track.name}`);
-        }
-      } catch (e) {
-        // Not JSON data, might be file drag
-      }
+    // Skip processing if sound drag is not active (window dragging)
+    if (!(window as any).soundDragActive) {
+      return;
     }
+    
+    event.preventDefault();
+    this.dragOverTrack = track;
+    console.log(`Drag enter track: ${track.name}`);
   }
 
   onDragLeave(event: DragEvent) {
+    // Skip processing if sound drag is not active (window dragging)
+    if (!(window as any).soundDragActive) {
+      return;
+    }
+    
     // Only clear if we're leaving the lane entirely
     const relatedTarget = event.relatedTarget as HTMLElement;
     if (!relatedTarget || !relatedTarget.closest('.lane')) {
