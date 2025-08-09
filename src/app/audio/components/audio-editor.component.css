@@ -225,6 +225,39 @@
 
 /* Track styles moved to track.component.css */
 
+/* Add Track Button */
+.add-track-container {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+  border-top: 1px solid rgba(147, 51, 234, 0.2);
+  margin-top: 8px;
+}
+
+.add-track-btn {
+  color: rgba(255, 255, 255, 0.7) !important;
+  border-color: rgba(147, 51, 234, 0.3) !important;
+  font-size: 12px !important;
+  padding: 6px 16px !important;
+  height: 36px;
+  transition: all 0.2s ease !important;
+  background: rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(4px);
+}
+
+.add-track-btn:hover {
+  background: rgba(147, 51, 234, 0.1) !important;
+  border-color: #9333ea !important;
+  color: #9333ea !important;
+  box-shadow: 0 0 10px rgba(147, 51, 234, 0.3);
+  transform: translateY(-1px);
+}
+
+.add-track-btn mat-icon {
+  margin-right: 4px;
+  font-size: 16px;
+}
+
 /* Animations */
 @keyframes pulse {
   0%, 100% { opacity: 0.2; }

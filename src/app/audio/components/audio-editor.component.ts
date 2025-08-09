@@ -77,6 +77,10 @@ export class AudioEditorComponent {
     });
   }
 
+  addTrack(): void {
+    this.editorState.addTrack();
+  }
+
   async onFilesSelected(files: FileList | null, targetTrack?: Track) {
     if (!files || files.length === 0) return;
     
