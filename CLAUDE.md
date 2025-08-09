@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 - `npm run build` - Create production build
 - `npm run watch` - Build in watch mode for development
 - `npm test` - Run unit tests (basic setup only, no tests implemented)
+- `npm run scan-sounds` - Regenerate sound library catalog from files in src/assets/sounds/
 
 ### Important: No linting commands configured
 The project currently has no ESLint or TSLint setup. When making changes, ensure TypeScript compilation succeeds via `npm run build`.
@@ -26,9 +27,10 @@ This is a modern Angular 18 application using:
 The audio functionality is centralized in `AudioEngineService` which:
 - Manages a single Web Audio API AudioContext (48kHz)
 - Handles audio decoding via `decodeAudioData()`
-- Schedules AudioBufferSourceNodes for playback
-- Implements offline rendering for WAV export
+- Schedules AudioBufferSourceNodes for playback with precise timing
+- Implements offline rendering for both WAV and MP3 export (using @breezystack/lamejs)
 - Uses gain nodes for track mixing and panning
+- Supports clip trimming with sample-accurate positioning
 
 ### Key Architectural Patterns
 
@@ -46,28 +48,64 @@ The audio functionality is centralized in `AudioEngineService` which:
    - Tracks contain clips with position, duration, and audio buffer
    - Each clip has unique ID for selection and manipulation
    - Clips store decoded AudioBuffer, not raw file data
+   - Support for clip trimming with `trimStart`, `trimEnd`, and `originalDuration` properties
+   - Built-in waveform generation and caching for visual feedback
 
 4. **Component Communication**
    - Parent component (`AudioEditorComponent`) manages all state
-   - Child components would receive signals as inputs
+   - Child components (`SoundBrowserComponent`) receive signals as inputs  
    - Audio service injected directly where needed
+   - Sound library service manages preloaded audio assets
+
+5. **Sound Library System**
+   - `SoundLibraryService` provides categorized audio samples
+   - Automatic scanning via `scan-sounds.js` script generates TypeScript definitions
+   - Lazy loading with caching of frequently used sounds
+   - Categories: Drums, Bass, Synth, FX with searchable tags
 
 ### File Structure Focus
 ```
 src/app/audio/ - All audio editor functionality
 ├── audio-editor.component.* - Main UI and state management
-├── audio-engine.service.ts - Web Audio API operations
+├── audio-engine.service.ts - Web Audio API operations and export
+├── sound-browser.component.ts - Sound library UI component
+├── sound-library.service.ts - Audio asset management
+├── sound-library.ts - Generated catalog (via scan-sounds script)
+├── arrangement-storage.service.ts - Save/load arrangements
 ├── models.ts - TypeScript interfaces (Track, Clip, etc.)
-└── timeline.util.ts - Pixel/time conversion utilities
+├── timeline.util.ts - Pixel/time conversion utilities
+└── lamejs.d.ts - MP3 encoder type definitions
+
+src/assets/sounds/ - Audio sample library
+├── drums/ - Drum samples (kicks, snares, hi-hats)
+├── bass/ - Bass samples 
+├── synth/ - Synthesizer sounds
+└── fx/ - Sound effects and vocal samples
+
+scripts/
+└── scan-sounds.js - Generates sound library catalog
 ```
 
 ### Critical Implementation Details
 
-1. **Playback Scheduling**: Uses `AudioContext.currentTime` for precise timing, not setTimeout/setInterval
-2. **Drag Operations**: Store initial mouse position and clip position to calculate deltas
-3. **WAV Export**: Uses OfflineAudioContext to render audio faster than real-time
-4. **File Import**: Drag-and-drop or file input, then decode with Web Audio API
-5. **Zoom**: Ctrl+wheel modifies `pxPerSecond` signal, triggering UI updates
+1. **Playback Scheduling**: Uses `AudioContext.currentTime` with sample-accurate timing, not setTimeout/setInterval
+2. **Drag Operations**: Real-time clip movement with overlap detection and track switching
+3. **Clip Trimming**: Sample-accurate trimming with waveform regeneration
+4. **Export Formats**: Uses OfflineAudioContext for WAV, @breezystack/lamejs for MP3 
+5. **File Import**: Drag-and-drop or file input, batch decoding with error handling
+6. **Zoom**: Ctrl+wheel modifies `pxPerSecond` signal, triggering UI updates
+7. **Default Pattern**: Auto-generates 90s hip-hop beat pattern on startup with categorized samples
+8. **Keyboard Shortcuts**: Space (play/pause), Ctrl+C/V (copy/paste), Delete (remove clip)
+9. **Arrangement Storage**: Local storage for saving/loading complete arrangements
+10. **Sound Library**: Dynamic catalog generation with category filtering and search
+
+### Dependencies & Key Libraries
+
+- **@angular/core**: v18.2.0 - Standalone components with signals
+- **@angular/material**: v18.2.0 - UI components (toolbar, buttons, sliders)
+- **@breezystack/lamejs**: v1.2.7 - MP3 encoding for audio export
+- **Web Audio API**: Native browser API for audio processing
+- **HTML5 Canvas**: For waveform visualization generation
 
 ### Testing Approach
 Currently no tests implemented. When adding tests:
@@ -75,6 +113,7 @@ Currently no tests implemented. When adding tests:
 - Test signal updates and computed values
 - Mock AudioContext for service tests
 - Test timeline utility functions independently
+- Test sound library scanning and categorization
 
 ## Git Repository Setup
 
@@ -114,8 +153,10 @@ The repository excludes:
 ### Sound Files Management
 - **Location**: `src/assets/sounds/` (bass/, drums/, synth/, fx/)
 - **Status**: Local files maintained, excluded from Git via .gitignore
-- **Formats**: Primarily WAV files, some MP3 in fx/ folder
-- **Size**: Large collection (~900+ files) would exceed GitHub limits
+- **Formats**: Primarily WAV files, some MP3 in fx/ folder (900+ files)
+- **Size**: Large collection would exceed GitHub limits
+- **Management**: Use `npm run scan-sounds` after adding/removing files
+- **Categories**: Automatically detected from folder structure and filenames
 
 ### Recovery Notes
 - When Git shows "files lost", check `git reflog` for commit history
@@ -128,3 +169,19 @@ The repository excludes:
 - Consider using CDN or external storage for audio assets
 - Build process: `npm run build` creates `/dist` folder
 - Dev server: `npm start` includes auto-browser opening
+- Ensure sound library is regenerated after deployment: `npm run scan-sounds`
+
+## Development Workflow
+
+### Adding New Audio Samples
+1. Place audio files (.wav, .mp3) in appropriate `src/assets/sounds/` subdirectory
+2. Run `npm run scan-sounds` to update the sound library catalog
+3. Restart dev server to see changes in the sound browser
+4. Categories are auto-detected from folder structure and filenames
+
+### Common Development Tasks
+- **Audio Engine**: Modify `audio-engine.service.ts` for playback/export changes
+- **UI Components**: Main editor in `audio-editor.component.ts`
+- **Data Models**: Update interfaces in `models.ts`
+- **Timeline Logic**: Coordinate conversion utilities in `timeline.util.ts`
+- **Sound Management**: Library service in `sound-library.service.ts`
