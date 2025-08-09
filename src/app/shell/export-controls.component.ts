@@ -107,11 +107,13 @@ export class ExportControlsComponent {
         blob = await this.audio.renderToWav({ clips, duration: this.duration() });
       }
       
-      // Download the file
+      // Download the file using arrangement name
+      const arrangementName = this.editorState.currentArrangementName();
+      const sanitizedName = arrangementName.replace(/[^a-zA-Z0-9-_]/g, '_');
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `nervbox-export.${format}`;
+      a.download = `${sanitizedName}.${format}`;
       a.click();
       URL.revokeObjectURL(url);
       

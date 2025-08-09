@@ -284,6 +284,7 @@ export class AudioEditorComponent {
   async addDefaultHipHopTrack() {
     const defaultTracks = await this.defaultArrangement.createDefaultHipHopTracks();
     this.editorState.tracks.update(list => [...list, ...defaultTracks]);
+    this.editorState.setArrangementName('DefaultBeat');
   }
 
   private removeTrack(track: Track) {

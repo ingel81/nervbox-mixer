@@ -100,10 +100,12 @@ export class ProjectManagementComponent {
   ) {}
   
   saveArrangement(): void {
-    const name = prompt('Enter arrangement name:');
+    const currentName = this.editorState.currentArrangementName();
+    const name = prompt('Enter arrangement name:', currentName === 'Untitled' ? '' : currentName);
     if (!name) return;
     
     this.arrangementStorage.saveArrangement(name, this.editorState.tracks());
+    this.editorState.setArrangementName(name);
     alert(`Arrangement "${name}" saved successfully.`);
   }
   
@@ -131,6 +133,7 @@ export class ProjectManagementComponent {
       this.arrangementStorage.loadArrangement(selectedArrangement.id).then(tracks => {
         if (tracks) {
           this.editorState.tracks.set(tracks);
+          this.editorState.setArrangementName(selectedArrangement.arrangement.name);
           this.editorState.stop();
           alert(`Arrangement "${selectedArrangement.arrangement.name}" loaded.`);
         } else {
@@ -147,6 +150,7 @@ export class ProjectManagementComponent {
     }
     
     this.editorState.clearArrangement();
+    this.editorState.setArrangementName('Default Hip Hop');
     
     // Add default hip hop track
     const defaultTracks = await this.defaultArrangement.createDefaultHipHopTracks();

@@ -10,6 +10,7 @@ export class EditorStateService {
   playhead = signal(0);
   selectedClipId = signal<string | null>(null);
   isPlaying = signal(false);
+  currentArrangementName = signal<string>('Untitled');
   
   // UI state
   pxPerSecond = signal(100);
@@ -245,5 +246,11 @@ export class EditorStateService {
     this.playhead.set(0);
     this.selectedClipId.set(null);
     this.isPlaying.set(false);
+    this.currentArrangementName.set('Untitled');
+  }
+
+  // Arrangement name management
+  setArrangementName(name: string): void {
+    this.currentArrangementName.set(name);
   }
 }
