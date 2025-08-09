@@ -6,6 +6,7 @@ import { EditorStateService } from './editor-state.service';
 import { DefaultArrangementService } from './default-arrangement.service';
 import { WaveformService } from './waveform.service';
 import { SoundBrowserComponent } from './sound-browser.component';
+import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent } from './clip.component';
 import { Clip, Track } from './models';
 import { secondsToPx, pxToSeconds } from './timeline.util';
 
@@ -17,7 +18,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 @Component({
   selector: 'audio-editor',
   standalone: true,
-  imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent],
+  imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent, ClipComponent],
   templateUrl: './audio-editor.component.html',
   styleUrls: ['./audio-editor.component.css']
 })
@@ -367,100 +368,40 @@ export class AudioEditorComponent {
   
   get dragOverTrack() { return this.editorState.dragOverTrack; }
   set dragOverTrack(value) { this.editorState.dragOverTrack = value; }
-  
-  // Waveform update throttling
-  private waveformUpdateTimeout: number | null = null;
 
-  clipMouseDown(ev: MouseEvent, clip: Clip) {
-    ev.stopPropagation();
-    this.editorState.selectedClipId.set(clip.id);
-    const startX = ev.clientX;
-    this.dragState = { id: clip.id, startX, origStartTime: clip.startTime, clipRef: clip };
-    (document.body as any).style.userSelect = 'none';
+  onClipSelected(event: ClipSelectEvent) {
+    this.editorState.selectedClipId.set(event.clip.id);
+  }
+
+  onClipDragStarted(event: ClipDragEvent) {
+    this.dragState = { 
+      id: event.clip.id, 
+      startX: event.startX, 
+      origStartTime: event.origStartTime, 
+      clipRef: event.clip 
+    };
+  }
+
+  onClipTrimStarted(event: ClipTrimEvent) {
+    this.trimState = {
+      id: event.clip.id,
+      side: event.side,
+      startX: event.startX,
+      originalTrimStart: event.originalTrimStart,
+      originalTrimEnd: event.originalTrimEnd,
+      originalDuration: event.originalDuration,
+      originalStartTime: event.originalStartTime,
+      clipRef: event.clip
+    };
   }
 
   private lastDragUpdate = 0;
   private rafId: number | null = null;
 
-  startTrimming(event: MouseEvent, clip: Clip, side: 'start' | 'end') {
-    event.stopPropagation();
-    event.preventDefault();
-    
-    this.trimState = {
-      id: clip.id,
-      side: side,
-      startX: event.clientX,
-      originalTrimStart: clip.trimStart || 0,
-      originalTrimEnd: clip.trimEnd || 0,
-      originalDuration: clip.originalDuration,
-      originalStartTime: clip.startTime,
-      clipRef: clip
-    };
-    
-    document.body.style.userSelect = 'none';
-  }
 
   @HostListener('window:mousemove', ['$event'])
   onMouseMove(ev: MouseEvent) {
-    // Handle trimming
-    if (this.trimState) {
-      const dx = ev.clientX - this.trimState.startX;
-      const deltaSeconds = pxToSeconds(dx, this.pxPerSecond());
-      const clip = this.trimState.clipRef;
-      
-      // Calculate with sample precision for accuracy
-      const sampleRate = clip.buffer.sampleRate;
-      const samplesPerSecond = sampleRate;
-      
-      if (this.trimState.side === 'start') {
-        // Trim from start - keep right edge fixed in timeline, adjust left edge only
-        const maxTrimStart = clip.originalDuration - (clip.trimEnd || 0) - 0.001; // Min 1ms
-        let newTrimStart = Math.max(0, Math.min(maxTrimStart, 
-          this.trimState.originalTrimStart + deltaSeconds));
-        
-        // Snap to sample boundaries for precision
-        const trimSamples = Math.floor(newTrimStart * samplesPerSecond);
-        newTrimStart = trimSamples / samplesPerSecond;
-        
-        // FIXED: Keep right edge position constant
-        // Calculate original right edge position
-        const originalRightEdge = this.trimState.originalStartTime + (clip.originalDuration - (this.trimState.originalTrimStart + (this.trimState.originalTrimEnd || 0)));
-        
-        // Set new trim and calculate new start time to maintain right edge position
-        clip.trimStart = newTrimStart;
-        clip.duration = clip.originalDuration - clip.trimStart - (clip.trimEnd || 0);
-        clip.startTime = originalRightEdge - clip.duration; // Right edge stays fixed
-        
-        console.log(`Left trim: trimStart=${newTrimStart.toFixed(3)}, startTime=${clip.startTime.toFixed(3)}, duration=${clip.duration.toFixed(3)}, rightEdge=${originalRightEdge.toFixed(3)}`);
-      } else {
-        // Trim from end - only adjust duration
-        const maxTrimEnd = clip.originalDuration - (clip.trimStart || 0) - 0.001; // Min 1ms
-        let newTrimEnd = Math.max(0, Math.min(maxTrimEnd,
-          this.trimState.originalTrimEnd - deltaSeconds));
-        
-        // Snap to sample boundaries for precision
-        const trimSamples = Math.floor(newTrimEnd * samplesPerSecond);
-        newTrimEnd = trimSamples / samplesPerSecond;
-        
-        clip.trimEnd = newTrimEnd;
-        clip.duration = clip.originalDuration - (clip.trimStart || 0) - clip.trimEnd;
-      }
-      
-      // Ensure minimum duration (1ms minimum for very short clips)
-      if (clip.duration < 0.001) {
-        clip.duration = 0.001;
-      }
-      
-      // Regenerate waveform for trimmed section (throttled)
-      if (!this.waveformUpdateTimeout) {
-        this.waveformUpdateTimeout = setTimeout(() => {
-          this.updateTrimmedWaveform(clip);
-          this.waveformUpdateTimeout = null;
-        }, 50); // Throttle waveform updates
-      }
-      
-      return;
-    }
+    // Trimming is now handled by individual ClipComponents
     
     // Handle clip dragging with optimized updates
     if (this.dragState) {
@@ -762,45 +703,6 @@ export class AudioEditorComponent {
     return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
   }
 
-  updateTrimmedWaveform(clip: Clip): void {
-    const buffer = clip.buffer;
-    const trimStart = clip.trimStart || 0;
-    const trimEnd = clip.trimEnd || 0;
-    
-    // If no trimming, use original waveform
-    if (trimStart === 0 && trimEnd === 0) {
-      clip.waveform = this.waveformService.generateFromBuffer(buffer);
-      return;
-    }
-    
-    // Calculate precise sample positions
-    const sampleRate = buffer.sampleRate;
-    const totalSamples = buffer.length;
-    const startSample = Math.floor(trimStart * sampleRate);
-    const endSample = Math.floor((buffer.duration - trimEnd) * sampleRate);
-    
-    // Ensure we don't go out of bounds
-    const clampedStart = Math.max(0, Math.min(startSample, totalSamples - 1));
-    const clampedEnd = Math.max(clampedStart + 1, Math.min(endSample, totalSamples));
-    
-    // Extract trimmed audio data
-    const channelData = buffer.getChannelData(0);
-    const trimmedData = channelData.slice(clampedStart, clampedEnd);
-    
-    if (trimmedData.length === 0) {
-      // Fallback: create minimal waveform
-      clip.waveform = this.waveformService.generateFromData(new Float32Array([0, 0]), 0.1, {
-        pxPerSecond: this.pxPerSecond()
-      });
-      return;
-    }
-    
-    // Generate waveform for the DISPLAY duration (clip.duration), not the buffer duration
-    // This ensures waveform matches visual clip width
-    clip.waveform = this.waveformService.generateFromData(trimmedData, clip.duration, {
-      pxPerSecond: this.pxPerSecond()
-    });
-  }
 
 
   getSelectedClip(): Clip | null {

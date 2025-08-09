@@ -58,39 +58,13 @@
            (dragleave)="onDragLeave($event)"
            [class.drag-over]="dragOverTrack?.id === track.id">
         <div class="clips" [style.width.px]="duration() * pxPerSecond()">
-          <div class="clip"
-               *ngFor="let clip of track.clips"
-               [class.selected]="clip.id === selectedClipId()"
-               [class.dragging]="dragState?.id === clip.id"
-               [class.trimming]="trimState?.id === clip.id"
-               [style.left.px]="clip.startTime * pxPerSecond()"
-               [style.width.px]="clip.duration * pxPerSecond()"
-               [style.background]="clip.color"
-               (mousedown)="clipMouseDown($event, clip)">
-            
-            <!-- Trim handles -->
-            <div class="resize-handle left" 
-                 (mousedown)="startTrimming($event, clip, 'start')"
-                 *ngIf="clip.id === selectedClipId()">
-            </div>
-            <div class="resize-handle right" 
-                 (mousedown)="startTrimming($event, clip, 'end')"
-                 *ngIf="clip.id === selectedClipId()">
-            </div>
-            
-            <div class="clip-content">
-              <div class="clip-name">{{ clip.name }}</div>
-            </div>
-            <div class="clip-duration-bottom">
-              <div class="clip-duration">{{ formatDuration(clip.duration) }}</div>
-            </div>
-            <img *ngIf="clip.waveform" 
-                 [src]="clip.waveform" 
-                 class="clip-waveform-img"
-                 [style.width.px]="clip.duration * pxPerSecond()"
-                 [style.object-fit]="'fill'"
-                 alt="Waveform">
-          </div>
+          <audio-clip *ngFor="let clip of track.clips"
+                      [clip]="clip"
+                      [pxPerSecond]="pxPerSecond()"
+                      (clipSelected)="onClipSelected($event)"
+                      (dragStarted)="onClipDragStarted($event)"
+                      (trimStarted)="onClipTrimStarted($event)">
+          </audio-clip>
         </div>
         <div class="playhead" [style.left.px]="(playhead() * pxPerSecond())"></div>
       </div>
