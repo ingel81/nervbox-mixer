@@ -75,3 +75,56 @@ Currently no tests implemented. When adding tests:
 - Test signal updates and computed values
 - Mock AudioContext for service tests
 - Test timeline utility functions independently
+
+## Git Repository Setup
+
+### Repository Details
+- **Remote URL**: `git@github.com:ingel81/nervbox-mixer.git` (SSH)
+- **Branch**: `main`
+- **Local Git User**: `ingel81 <ingel81@users.noreply.github.com>`
+
+### Important Git Commands Used
+```bash
+# Initialize repository and connect to remote
+git init
+git remote add origin git@github.com:ingel81/nervbox-mixer.git
+git branch -M main
+
+# Configure local user (avoids GitHub email privacy issues)
+git config --local user.name "ingel81"
+git config --local user.email "ingel81@users.noreply.github.com"
+
+# Handle large files and cleanup
+git rm -r --cached .angular/ dist/ "src/assets/sounds/"
+git reset --soft HEAD~1  # Undo last commit but keep changes
+git checkout c2bfed5 -- src/ *.json  # Restore files from specific commit
+
+# Recovery from git reset --hard
+git reflog  # Shows commit history including reset operations
+git checkout <commit-hash> -- <files>  # Restore files from old commits
+```
+
+### .gitignore Configuration
+The repository excludes:
+- Angular build artifacts (`/dist/`, `/.angular/`)
+- Sound files (`*.wav`, `*.mp3`) - kept locally but not committed
+- Node modules and dependencies
+- Environment files
+
+### Sound Files Management
+- **Location**: `src/assets/sounds/` (bass/, drums/, synth/, fx/)
+- **Status**: Local files maintained, excluded from Git via .gitignore
+- **Formats**: Primarily WAV files, some MP3 in fx/ folder
+- **Size**: Large collection (~900+ files) would exceed GitHub limits
+
+### Recovery Notes
+- When Git shows "files lost", check `git reflog` for commit history
+- Use `git checkout <commit> -- <path>` to restore specific files
+- VS Code may show file changes in Timeline/Local History as backup
+- Always verify .gitignore before committing large file sets
+
+### Deployment Notes
+- Sound files must be deployed separately to production
+- Consider using CDN or external storage for audio assets
+- Build process: `npm run build` creates `/dist` folder
+- Dev server: `npm start` includes auto-browser opening
