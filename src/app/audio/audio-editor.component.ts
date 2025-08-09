@@ -7,6 +7,7 @@ import { DefaultArrangementService } from './default-arrangement.service';
 import { WaveformService } from './waveform.service';
 import { SoundBrowserComponent } from './sound-browser.component';
 import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent } from './clip.component';
+import { TrackComponent, TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackDropEvent, TrackDragEvent } from './track.component';
 import { Clip, Track } from './models';
 import { secondsToPx, pxToSeconds } from './timeline.util';
 
@@ -18,13 +19,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 @Component({
   selector: 'audio-editor',
   standalone: true,
-  imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent, ClipComponent],
+  imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent, ClipComponent, TrackComponent],
   templateUrl: './audio-editor.component.html',
   styleUrls: ['./audio-editor.component.css']
 })
 export class AudioEditorComponent {
   @ViewChild('timeline') timelineEl!: ElementRef<HTMLDivElement>;
-  @ViewChildren('lane') laneEls!: QueryList<ElementRef<HTMLDivElement>>;
 
   // Use signals from EditorStateService
   get pxPerSecond() { return this.editorState.pxPerSecond; }
@@ -282,11 +282,11 @@ export class AudioEditorComponent {
     this.editorState.tracks.update(list => [...list, ...defaultTracks]);
   }
 
-  removeTrack(track: Track) {
+  private removeTrack(track: Track) {
     this.tracks.update(list => list.filter(t => t !== track));
   }
 
-  toggleMute(track: Track) {
+  private toggleMute(track: Track) {
     this.tracks.update(list => 
       list.map(t => t.id === track.id ? { ...t, mute: !t.mute } : t)
     );
@@ -297,7 +297,7 @@ export class AudioEditorComponent {
     }
   }
 
-  toggleSolo(track: Track) {
+  private toggleSolo(track: Track) {
     this.tracks.update(list => {
       const hasSoloTracks = list.some(t => t.solo);
       const isTrackCurrentlySolo = track.solo;
@@ -318,6 +318,39 @@ export class AudioEditorComponent {
     if (this.isPlaying()) {
       this.restartPlaybackFromCurrentPosition();
     }
+  }
+  
+  trackByFn(index: number, track: Track): string {
+    return track.id;
+  }
+
+  // Track event handlers
+  onTrackMuteToggled(event: TrackMuteEvent) {
+    this.toggleMute(event.track);
+  }
+  
+  onTrackSoloToggled(event: TrackSoloEvent) {
+    this.toggleSolo(event.track);
+  }
+  
+  onTrackDeleted(event: TrackDeleteEvent) {
+    this.removeTrack(event.track);
+  }
+  
+  onTrackDrop(event: TrackDropEvent) {
+    this.onDrop(event.event, event.track);
+  }
+  
+  onTrackDragOver(event: TrackDragEvent) {
+    this.onDragOver(event.event);
+  }
+  
+  onTrackDragEnter(event: TrackDragEvent) {
+    this.onDragEnter(event.event, event.track);
+  }
+  
+  onTrackDragLeave(event: TrackDragEvent) {
+    this.onDragLeave(event.event);
   }
 
   private restartPlaybackFromCurrentPosition() {
@@ -397,10 +430,46 @@ export class AudioEditorComponent {
 
   private lastDragUpdate = 0;
   private rafId: number | null = null;
+  private seekingRafId: number | null = null;
 
 
   @HostListener('window:mousemove', ['$event'])
   onMouseMove(ev: MouseEvent) {
+    // Handle seeking (ruler and lane dragging) with throttling
+    if (this.seeking) {
+      // Cancel previous seeking RAF if exists
+      if (this.seekingRafId) {
+        cancelAnimationFrame(this.seekingRafId);
+      }
+      
+      // Throttle seeking updates using RAF for smooth 60fps
+      this.seekingRafId = requestAnimationFrame(() => {
+        if (!this.seeking) return;
+        
+        const target = ev.target as HTMLElement;
+        const timelineEl = target.closest('.ruler') || target.closest('.lane');
+        if (timelineEl) {
+          let rect: DOMRect;
+          let clipsEl: Element | null = null;
+          
+          if (timelineEl.classList.contains('ruler')) {
+            rect = timelineEl.getBoundingClientRect();
+          } else {
+            // For lanes, use the clips element for correct positioning
+            clipsEl = timelineEl.querySelector('.clips');
+            if (!clipsEl) return;
+            rect = clipsEl.getBoundingClientRect();
+          }
+          
+          const x = ev.clientX - rect.left;
+          const timePosition = Math.max(0, pxToSeconds(x, this.pxPerSecond()));
+          this.seekTo(timePosition);
+        }
+        this.seekingRafId = null;
+      });
+      return;
+    }
+    
     // Trimming is now handled by individual ClipComponents
     
     // Handle clip dragging with optimized updates
@@ -470,7 +539,7 @@ export class AudioEditorComponent {
                 let sourceTrackIdx = -1;
                 let clipIdx = -1;
                 for (let ti = 0; ti < list.length; ti++) {
-                  const idx = list[ti]!.clips.findIndex(c => c.id === this.dragState!.id);
+                  const idx = list[ti]!.clips.findIndex(c => c.id === this.dragState!.clipRef?.id);
                   if (idx !== -1) {
                     sourceTrackIdx = ti;
                     clipIdx = idx;
@@ -559,16 +628,8 @@ export class AudioEditorComponent {
       });
     }
     
-    // Handle seeking
-    if (this.seeking) {
-      const lane = this.laneEls?.first?.nativeElement as HTMLElement | undefined;
-      if (!lane) return;
-      const clipsEl = lane.querySelector('.clips');
-      if (!clipsEl) return;
-      const rect = clipsEl.getBoundingClientRect();
-      const x = Math.max(0, ev.clientX - rect.left);
-      this.seekTo(pxToSeconds(x, this.pxPerSecond()));
-    }
+    // Seeking is now handled in the dedicated seeking section above
+    // This legacy seeking code is no longer needed
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -619,6 +680,12 @@ export class AudioEditorComponent {
       this.rafId = null;
     }
     
+    // Cancel seeking RAF if exists
+    if (this.seekingRafId) {
+      cancelAnimationFrame(this.seekingRafId);
+      this.seekingRafId = null;
+    }
+    
     this.dragState = null;
     this.trimState = null;
     this.seeking = false;
@@ -626,9 +693,10 @@ export class AudioEditorComponent {
   }
 
   private getTrackIndexAtClientY(clientY: number): number | null {
-    const lanes = this.laneEls ? this.laneEls.toArray() : [];
-    for (let i = 0; i < lanes.length; i++) {
-      const rect = lanes[i]!.nativeElement.getBoundingClientRect();
+    // Get all lane elements from TrackComponents
+    const trackElements = document.querySelectorAll('audio-track .lane');
+    for (let i = 0; i < trackElements.length; i++) {
+      const rect = trackElements[i]!.getBoundingClientRect();
       if (clientY >= rect.top && clientY <= rect.bottom) return i;
     }
     return null;

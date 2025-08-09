@@ -20,55 +20,26 @@
       </div>
     </div>
 
-    <!-- Track heads column -->
-    <div class="tracks-heads">
-      <div class="track-head" *ngFor="let track of tracks()">
-        <div class="track-controls">
-          <div class="title">{{ track.name }}</div>
-          <div class="track-buttons">
-            <button mat-icon-button 
-                    class="track-btn" 
-                    [class.active]="track.mute"
-                    (click)="toggleMute(track)" 
-                    matTooltip="Mute">
-              <mat-icon>{{ track.mute ? 'volume_off' : 'volume_up' }}</mat-icon>
-            </button>
-            <button mat-icon-button 
-                    class="track-btn" 
-                    [class.active]="track.solo"
-                    (click)="toggleSolo(track)" 
-                    matTooltip="Solo">
-              <mat-icon>headset</mat-icon>
-            </button>
-            <button mat-icon-button class="track-btn delete" (click)="removeTrack(track)" matTooltip="Remove track">
-              <mat-icon>close</mat-icon>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Timeline lanes column -->
-    <div class="tracks-lanes">
-      <div class="lane" *ngFor="let track of tracks()" #lane 
-           (mousedown)="laneMouseDown($event)" 
-           (drop)="onDrop($event, track)" 
-           (dragover)="onDragOver($event)"
-           (dragenter)="onDragEnter($event, track)"
-           (dragleave)="onDragLeave($event)"
-           [class.drag-over]="dragOverTrack?.id === track.id">
-        <div class="clips" [style.width.px]="duration() * pxPerSecond()">
-          <audio-clip *ngFor="let clip of track.clips"
-                      [clip]="clip"
-                      [pxPerSecond]="pxPerSecond()"
-                      (clipSelected)="onClipSelected($event)"
-                      (dragStarted)="onClipDragStarted($event)"
-                      (trimStarted)="onClipTrimStarted($event)">
-          </audio-clip>
-        </div>
-        <div class="playhead" [style.left.px]="(playhead() * pxPerSecond())"></div>
-      </div>
-    </div>
+    <!-- Tracks container for both heads and lanes -->
+    <ng-container *ngFor="let track of tracks(); trackBy: trackByFn">
+      <audio-track [track]="track"
+                   [pxPerSecond]="pxPerSecond()"
+                   [duration]="duration()"
+                   [playhead]="playhead()"
+                   [isDragOver]="dragOverTrack?.id === track.id"
+                   (muteToggled)="onTrackMuteToggled($event)"
+                   (soloToggled)="onTrackSoloToggled($event)"
+                   (trackDeleted)="onTrackDeleted($event)"
+                   (trackDrop)="onTrackDrop($event)"
+                   (trackDragOver)="onTrackDragOver($event)"
+                   (trackDragEnter)="onTrackDragEnter($event)"
+                   (trackDragLeave)="onTrackDragLeave($event)"
+                   (laneMouseDown)="laneMouseDown($event)"
+                   (clipSelected)="onClipSelected($event)"
+                   (clipDragStarted)="onClipDragStarted($event)"
+                   (clipTrimStarted)="onClipTrimStarted($event)">
+      </audio-track>
+    </ng-container>
   </div>
 
   <!-- Sound Browser -->

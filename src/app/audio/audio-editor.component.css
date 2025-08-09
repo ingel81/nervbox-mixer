@@ -71,12 +71,13 @@
   z-index: 2;
   display: grid;
   grid-template-columns: 180px 1fr;
-  grid-template-rows: auto 1fr;
+  grid-auto-rows: minmax(auto, max-content);
 }
 
 /* Tracks header - More compact */
 .tracks-header { 
   grid-column: 1 / -1;
+  grid-row: 1;
   position: sticky; 
   top: 0; 
   z-index: 50;
@@ -197,6 +198,7 @@
 .tracks-lanes {
   overflow-x: auto;
   overflow-y: hidden;
+  /* TrackComponent handles both head and lane now */
 }
 
 /* Tech-style scrollbar for timeline */
@@ -221,182 +223,7 @@
   box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
 }
 
-/* Track - More compact */
-.track { 
-  display: contents;
-}
-
-.track:hover {
-  background: rgba(147, 51, 234, 0.02);
-  border-bottom-color: rgba(147, 51, 234, 0.2);
-}
-
-/* Track head - Compact tech style */
-.track-head { 
-  background: linear-gradient(135deg, rgba(20, 10, 25, 0.6) 0%, rgba(40, 20, 50, 0.3) 100%);
-  border-right: 1px solid rgba(147, 51, 234, 0.2);
-  border-bottom: 1px solid rgba(147, 51, 234, 0.1);
-  padding: 8px 12px;
-  height: 60px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  position: relative;
-  transition: all 0.15s ease;
-}
-
-.track-head:hover {
-  background: linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, rgba(147, 51, 234, 0.04) 100%);
-  border-bottom-color: rgba(147, 51, 234, 0.2);
-}
-
-.track-head::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: linear-gradient(180deg, transparent, rgba(236, 72, 153, 0.5), transparent);
-}
-
-.track-controls {
-  width: 100%;
-}
-
-.track-head .title { 
-  font-weight: 700;
-  font-size: 12px;
-  margin-bottom: 6px;
-  color: rgba(255, 255, 255, 0.95);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.track-buttons {
-  display: flex;
-  gap: 2px;
-}
-
-.track-btn {
-  width: 24px !important;
-  height: 24px !important;
-  padding: 0 !important;
-  min-width: 24px !important;
-  background: rgba(147, 51, 234, 0.1) !important;
-  border: 1px solid rgba(147, 51, 234, 0.2) !important;
-  border-radius: 2px !important;
-  transition: all 0.15s ease !important;
-}
-
-.track-btn mat-icon {
-  font-size: 14px !important;
-  width: 14px !important;
-  height: 14px !important;
-  line-height: 14px !important;
-  color: rgba(147, 51, 234, 0.7) !important;
-}
-
-.track-btn:hover {
-  background: rgba(147, 51, 234, 0.3) !important;
-  border-color: rgba(147, 51, 234, 0.5) !important;
-  box-shadow: 0 0 10px rgba(147, 51, 234, 0.3) !important;
-}
-
-.track-btn:hover mat-icon {
-  color: rgba(236, 72, 153, 1) !important;
-}
-
-.track-btn.delete:hover {
-  background: rgba(239, 68, 68, 0.3) !important;
-  border-color: rgba(239, 68, 68, 0.5) !important;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3) !important;
-}
-
-.track-btn.delete:hover mat-icon {
-  color: #ef4444 !important;
-}
-
-.track-btn.active {
-  background: rgba(147, 51, 234, 0.5) !important;
-  border-color: rgba(147, 51, 234, 0.8) !important;
-  box-shadow: 0 0 15px rgba(147, 51, 234, 0.5) !important;
-}
-
-.track-btn.active mat-icon {
-  color: #ec4899 !important;
-  text-shadow: 0 0 5px rgba(236, 72, 153, 0.8);
-}
-
-/* Lane - Compact height */
-.lane { 
-  position: relative; 
-  overflow: visible;
-  height: 60px;
-  box-sizing: border-box;
-  background: 
-    linear-gradient(90deg, rgba(147, 51, 234, 0.02) 0%, transparent 10%, transparent 90%, rgba(147, 51, 234, 0.02) 100%),
-    rgba(0, 0, 0, 0.2);
-  border-left: 1px solid rgba(147, 51, 234, 0.1);
-  border-bottom: 1px solid rgba(147, 51, 234, 0.1);
-  transition: all 0.15s ease;
-}
-
-.lane:hover {
-  background: 
-    linear-gradient(90deg, rgba(147, 51, 234, 0.05) 0%, rgba(147, 51, 234, 0.02) 10%, rgba(147, 51, 234, 0.02) 90%, rgba(147, 51, 234, 0.05) 100%),
-    rgba(10, 0, 15, 0.3);
-}
-
-.lane.drag-over {
-  background: linear-gradient(90deg, rgba(147, 51, 234, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%);
-  box-shadow: inset 0 0 20px rgba(147, 51, 234, 0.3);
-  animation: pulse-drag 1s ease-in-out infinite;
-}
-
-.lane.drag-over::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border: 2px solid rgba(147, 51, 234, 0.6);
-  pointer-events: none;
-  z-index: 1;
-}
-
-@keyframes pulse-drag {
-  0%, 100% { 
-    box-shadow: inset 0 0 20px rgba(147, 51, 234, 0.3);
-  }
-  50% { 
-    box-shadow: inset 0 0 30px rgba(147, 51, 234, 0.5);
-  }
-}
-
-.clips { 
-  position: relative; 
-  height: 100%;
-  min-width: 100%;
-}
-
-/* Clips container styling */
-
-/* Playhead in lanes */
-.lane .playhead { 
-  position: absolute; 
-  top: 0; 
-  width: 2px; 
-  height: 100%; 
-  background: linear-gradient(180deg, #f97316 0%, #fbbf24 100%);
-  box-shadow: 
-    0 0 20px rgba(249, 115, 22, 0.8),
-    0 0 40px rgba(249, 115, 22, 0.4);
-  pointer-events: none; 
-  z-index: 40;
-}
+/* Track styles moved to track.component.css */
 
 /* Animations */
 @keyframes pulse {
