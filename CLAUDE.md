@@ -2,6 +2,30 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with the **NervBox Mixer** application.
 
+## Table of Contents
+- [Commands](#commands)
+  - [Development](#development)
+  - [Important: No linting commands configured](#important-no-linting-commands-configured)
+- [Architecture](#architecture)
+  - [Core Design: Standalone Angular 18 with Signals](#core-design-standalone-angular-18-with-signals)
+  - [Audio Processing Architecture](#audio-processing-architecture)
+  - [Key Architectural Patterns](#key-architectural-patterns)
+  - [File Structure Focus](#file-structure-focus)
+  - [Critical Implementation Details](#critical-implementation-details)
+  - [Dependencies & Key Libraries](#dependencies--key-libraries)
+  - [Testing Approach](#testing-approach)
+- [Git Repository Setup](#git-repository-setup)
+  - [Repository Details](#repository-details)
+  - [Important Git Commands Used](#important-git-commands-used)
+  - [.gitignore Configuration](#gitignore-configuration)
+  - [Sound Files Management](#sound-files-management)
+  - [Recovery Notes](#recovery-notes)
+  - [Deployment Notes](#deployment-notes)
+- [Development Workflow](#development-workflow)
+  - [Adding New Audio Samples](#adding-new-audio-samples)
+  - [Common Development Tasks](#common-development-tasks)
+  - [GitHub Issues Management](#github-issues-management)
+
 ## Commands
 
 ### Development
@@ -185,3 +209,20 @@ The repository excludes:
 - **Data Models**: Update interfaces in `models.ts`
 - **Timeline Logic**: Coordinate conversion utilities in `timeline.util.ts`
 - **Sound Management**: Library service in `sound-library.service.ts`
+
+### GitHub Issues Management
+```bash
+# View and work with issues
+gh issue list                          # List all open issues
+gh issue view <number>                  # View specific issue details
+gh issue create --title "Bug: ..."     # Create new issue
+gh issue comment <number> --body "..." # Add comment to issue
+
+# Link issues to commits/PRs
+git commit -m "Fix: ... Fixes #<number>"  # Auto-close issue when PR merges
+gh pr create --title "Fix #<number>: ..." # Create PR linked to issue
+
+# Update issue status
+gh issue edit <number> --add-label "in-progress"
+gh issue close <number>                # Close completed issue
+```
