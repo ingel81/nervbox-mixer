@@ -4,23 +4,48 @@ import { SoundLibraryService } from './sound-library.service';
 import { ArrangementService } from './arrangement.service';
 
 export interface SavedArrangement {
-  id: string;
-  name: string;
-  arrangement: ArrangementDefinition; // Use unified format instead of raw tracks
-  createdAt: Date;
-  updatedAt: Date;
+  id: string;                    // UUID für eindeutige ID
+  createdAt: string;             // ISO string für sauberes JSON  
+  updatedAt: string;             // ISO string für sauberes JSON
+  arrangement: ArrangementDefinition; // Minimales Format mit name, bpm, duration, tracks
 }
 
 @Injectable({ providedIn: 'root' })
 export class ArrangementStorageService {
   private readonly STORAGE_KEY = 'nervbox-arrangements';
+  private readonly SCHEMA_KEY = 'nervbox-schema';
+  private readonly CURRENT_SCHEMA = 'v1';
   
   savedArrangements = signal<SavedArrangement[]>([]);
   private soundLibrary = inject(SoundLibraryService);
   private arrangementService = inject(ArrangementService);
 
   constructor() {
+    this.checkSchemaAndCleanup();
     this.loadArrangementsFromStorage();
+  }
+
+  private checkSchemaAndCleanup() {
+    try {
+      const storedSchema = localStorage.getItem(this.SCHEMA_KEY);
+      
+      if (storedSchema !== this.CURRENT_SCHEMA) {
+        console.log('Schema mismatch or not found. Cleaning up old arrangements...');
+        
+        // Remove old arrangement data
+        localStorage.removeItem(this.STORAGE_KEY);
+        
+        // Set current schema
+        localStorage.setItem(this.SCHEMA_KEY, this.CURRENT_SCHEMA);
+        
+        console.log('Old arrangements cleaned up, schema updated to v1');
+      }
+    } catch (error) {
+      console.error('Error checking schema:', error);
+      // On error, assume cleanup needed
+      localStorage.removeItem(this.STORAGE_KEY);
+      localStorage.setItem(this.SCHEMA_KEY, this.CURRENT_SCHEMA);
+    }
   }
 
   private loadArrangementsFromStorage() {
@@ -28,13 +53,8 @@ export class ArrangementStorageService {
       const stored = localStorage.getItem(this.STORAGE_KEY);
       if (stored) {
         const arrangements = JSON.parse(stored);
-        // Convert date strings back to Date objects
-        const arrangementsWithDates = arrangements.map((arr: any) => ({
-          ...arr,
-          createdAt: new Date(arr.createdAt),
-          updatedAt: new Date(arr.updatedAt)
-        }));
-        this.savedArrangements.set(arrangementsWithDates);
+        // Dates are already ISO strings - no conversion needed for clean JSON
+        this.savedArrangements.set(arrangements);
       }
     } catch (error) {
       console.error('Error loading arrangements from localStorage:', error);
@@ -51,8 +71,8 @@ export class ArrangementStorageService {
   }
 
   saveArrangement(name: string, tracks: Track[], bpm: number = 120): string {
-    const now = new Date();
-    const existingIndex = this.savedArrangements().findIndex(arr => arr.name === name);
+    const now = new Date().toISOString();
+    const existingIndex = this.savedArrangements().findIndex(arr => arr.arrangement.name === name);
     
     // Convert tracks to unified arrangement definition format
     const arrangementDef = this.arrangementService.tracksToDefinition(tracks, name, bpm);
@@ -70,7 +90,6 @@ export class ArrangementStorageService {
       // Create new arrangement
       const newArrangement: SavedArrangement = {
         id: crypto.randomUUID(),
-        name,
         arrangement: arrangementDef,
         createdAt: now,
         updatedAt: now
@@ -107,8 +126,11 @@ export class ArrangementStorageService {
     if (index >= 0) {
       arrangements[index] = {
         ...arrangements[index],
-        name: newName,
-        updatedAt: new Date()
+        arrangement: {
+          ...arrangements[index].arrangement,
+          name: newName
+        },
+        updatedAt: new Date().toISOString()
       };
       this.savedArrangements.set(arrangements);
       this.saveArrangementsToStorage();

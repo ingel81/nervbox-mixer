@@ -117,9 +117,9 @@ export class ProjectManagementComponent {
     // Create selection dialog
     let message = 'Select arrangement to load:\n\n';
     arrangements.forEach((arr, index) => {
-      const date = arr.updatedAt.toLocaleDateString();
-      const time = arr.updatedAt.toLocaleTimeString();
-      message += `${index + 1}. ${arr.name} (${date} ${time})\n`;
+      const date = new Date(arr.updatedAt).toLocaleDateString();
+      const time = new Date(arr.updatedAt).toLocaleTimeString();
+      message += `${index + 1}. ${arr.arrangement.name} (${date} ${time})\n`;
     });
     message += '\nEnter number (1-' + arrangements.length + '):';
     
@@ -132,7 +132,7 @@ export class ProjectManagementComponent {
         if (tracks) {
           this.editorState.tracks.set(tracks);
           this.editorState.stop();
-          alert(`Arrangement "${selectedArrangement.name}" loaded.`);
+          alert(`Arrangement "${selectedArrangement.arrangement.name}" loaded.`);
         } else {
           alert('Failed to load arrangement.');
         }
@@ -163,9 +163,9 @@ export class ProjectManagementComponent {
     // Create selection dialog
     let message = 'Select arrangement to delete:\n\n';
     arrangements.forEach((arr, index) => {
-      const date = arr.updatedAt.toLocaleDateString();
-      const time = arr.updatedAt.toLocaleTimeString();
-      message += `${index + 1}. ${arr.name} (${date} ${time})\n`;
+      const date = new Date(arr.updatedAt).toLocaleDateString();
+      const time = new Date(arr.updatedAt).toLocaleTimeString();
+      message += `${index + 1}. ${arr.arrangement.name} (${date} ${time})\n`;
     });
     message += '\nEnter number (1-' + arrangements.length + '):';
     
@@ -174,9 +174,9 @@ export class ProjectManagementComponent {
     
     if (index >= 0 && index < arrangements.length) {
       const selectedArrangement = arrangements[index];
-      if (confirm(`Delete arrangement "${selectedArrangement.name}"? This cannot be undone.`)) {
+      if (confirm(`Delete arrangement "${selectedArrangement.arrangement.name}"? This cannot be undone.`)) {
         this.arrangementStorage.deleteArrangement(selectedArrangement.id);
-        alert(`Arrangement "${selectedArrangement.name}" deleted.`);
+        alert(`Arrangement "${selectedArrangement.arrangement.name}" deleted.`);
       }
     }
   }
