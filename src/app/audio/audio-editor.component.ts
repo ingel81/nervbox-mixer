@@ -56,8 +56,7 @@ export class AudioEditorComponent {
 
   getTimelineMarkers(): number[] {
     const dur = this.duration();
-    const markers = Array.from({length: dur + 1}, (_, i) => i);
-    console.log(`Generated ${markers.length} timeline markers (0-${dur})`);
+    const markers = Array.from({length: dur + 1}, (_, i) => i);    
     return markers;
   }
 
@@ -1093,7 +1092,8 @@ export class AudioEditorComponent {
     if (this.seeking) {
       const lane = this.laneEls?.first?.nativeElement as HTMLElement | undefined;
       if (!lane) return;
-      const clipsEl = lane.querySelector('.clips') as HTMLElement;
+      const clipsEl = lane.querySelector('.clips');
+      if (!clipsEl) return;
       const rect = clipsEl.getBoundingClientRect();
       const x = Math.max(0, ev.clientX - rect.left);
       this.seekTo(pxToSeconds(x, this.pxPerSecond()));
@@ -1761,8 +1761,35 @@ export class AudioEditorComponent {
       }
       
       // Calculate drop position based on mouse position
-      const lane = event.currentTarget as HTMLElement;
-      const clipsEl = lane.querySelector('.clips') as HTMLElement;
+      // Use document.elementFromPoint to get the actual element under the mouse
+      const elementUnderMouse = document.elementFromPoint(event.clientX, event.clientY);
+      const lane = elementUnderMouse?.closest('.lane') as HTMLElement;
+      
+      if (!lane) {
+        console.error('Could not find lane element at drop position');
+        // Fallback to using playhead position
+        const dropTime = this.playhead();
+        this.addSoundToTrack(Object.assign(buffer, {
+          name: soundData.name,
+          category: soundData.category,
+          id: soundData.id
+        }), track, dropTime);
+        return;
+      }
+      
+      const clipsEl = lane.querySelector('.clips');
+      if (!clipsEl) {
+        console.error('Could not find .clips element in lane');
+        // Fallback to using playhead position
+        const dropTime = this.playhead();
+        this.addSoundToTrack(Object.assign(buffer, {
+          name: soundData.name,
+          category: soundData.category,
+          id: soundData.id
+        }), track, dropTime);
+        return;
+      }
+      
       const rect = clipsEl.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const dropTime = Math.max(0, pxToSeconds(x, this.pxPerSecond()));
@@ -1847,7 +1874,8 @@ export class AudioEditorComponent {
     ev.preventDefault();
     ev.stopPropagation();
     const lane = ev.currentTarget as HTMLElement;
-    const clipsEl = lane.querySelector('.clips') as HTMLElement;
+    const clipsEl = lane.querySelector('.clips');
+    if (!clipsEl) return;
     const rect = clipsEl.getBoundingClientRect();
     const x = ev.clientX - rect.left;
     const timePosition = pxToSeconds(x, this.pxPerSecond());
