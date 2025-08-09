@@ -46,7 +46,7 @@ import { AudioEditorComponent } from '../audio/audio-editor.component';
     </mat-toolbar>
 
     <!-- Main Editor -->
-    <audio-editor [hideToolbar]="true"></audio-editor>
+    <audio-editor></audio-editor>
   `,
   styleUrls: ['./shell.component.css']
 })

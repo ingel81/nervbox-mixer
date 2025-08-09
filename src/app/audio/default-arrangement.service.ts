@@ -1,13 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Track, Clip } from './models';
 import { SoundLibraryService } from './sound-library.service';
+import { WaveformService } from './waveform.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DefaultArrangementService {
   
-  constructor(private soundLibrary: SoundLibraryService) {}
+  constructor(
+    private soundLibrary: SoundLibraryService,
+    private waveformService: WaveformService
+  ) {}
   
   async createDefaultHipHopTracks(): Promise<Track[]> {
     // Create multiple tracks for a complete 90s hip hop setup (20 seconds)
@@ -89,7 +93,11 @@ export class DefaultArrangementService {
         originalDuration: buffer.duration,
         buffer,
         color,
-        waveform: this.generateWaveform(buffer, Math.floor(buffer.duration * pxPerSecond), 44, color),
+        waveform: this.waveformService.generateFromBuffer(buffer, {
+          width: Math.floor(buffer.duration * pxPerSecond),
+          height: 44,
+          clipColor: color
+        }),
         soundId
       } as any);
 
@@ -198,87 +206,4 @@ export class DefaultArrangementService {
     return [kickTrack, snareTrack, hihatClosedTrack, hihatOpenTrack, bassTrack];
   }
 
-  private generateWaveform(buffer: AudioBuffer, width: number = 200, height: number = 44, clipColor: string = ''): string {
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d')!;
-    
-    // Get audio data
-    const data = buffer.getChannelData(0);
-    const samplesPerPixel = Math.floor(data.length / width);
-    
-    // Set waveform color based on clip color
-    const waveformColor = this.getWaveformColor(clipColor);
-    
-    // Clear and fill background
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-    ctx.fillRect(0, 0, width, height);
-    
-    // Draw waveform
-    ctx.fillStyle = waveformColor;
-    ctx.strokeStyle = waveformColor;
-    ctx.lineWidth = 1;
-    
-    ctx.beginPath();
-    ctx.moveTo(0, height / 2);
-    
-    // Draw the top half of the waveform
-    for (let x = 0; x < width; x++) {
-      const startIdx = x * samplesPerPixel;
-      const endIdx = Math.min(startIdx + samplesPerPixel, data.length);
-      
-      let max = 0;
-      
-      for (let i = startIdx; i < endIdx; i++) {
-        const sample = data[i];
-        max = Math.max(max, Math.abs(sample));
-      }
-      
-      const yMax = (height / 2) - (max * height / 2);
-      ctx.lineTo(x, yMax);
-    }
-    
-    // Draw the bottom half of the waveform
-    for (let x = width - 1; x >= 0; x--) {
-      const startIdx = x * samplesPerPixel;
-      const endIdx = Math.min(startIdx + samplesPerPixel, data.length);
-      
-      let min = 0;
-      
-      for (let i = startIdx; i < endIdx; i++) {
-        const sample = data[i];
-        min = Math.min(min, sample);
-      }
-      
-      const yMin = (height / 2) + (min * height / 2);
-      ctx.lineTo(x, yMin);
-    }
-    
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    
-    return canvas.toDataURL();
-  }
-
-  private getWaveformColor(clipColor: string): string {
-    // For red/pink clips, use pure white for maximum contrast
-    if (clipColor.includes('dc2626') || clipColor.includes('b91c1c') || 
-        clipColor.includes('f093fb') || clipColor.includes('f5576c') || 
-        clipColor.includes('fa709a') || clipColor.includes('ff9a9e') ||
-        clipColor.includes('ff6e7f')) {
-      return '#ffffff'; // Pure white for red/pink clips
-    }
-    
-    // For purple/dark clips, use light gray
-    if (clipColor.includes('7c3aed') || clipColor.includes('6d28d9') ||
-        clipColor.includes('667eea') || clipColor.includes('764ba2') ||
-        clipColor.includes('330867')) { // Purple
-      return '#f3f4f6';
-    }
-    
-    // For bright clips, use darker gray
-    return '#9ca3af'; // Medium gray for bright backgrounds
-  }
 }

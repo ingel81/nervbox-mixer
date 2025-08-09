@@ -1,9 +1,10 @@
-import { Component, ElementRef, HostListener, ViewChild, ViewChildren, QueryList, Input, computed, effect, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild, ViewChildren, QueryList, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AudioEngineService } from './audio-engine.service';
 import { SoundLibraryService } from './sound-library.service';
 import { EditorStateService } from './editor-state.service';
 import { DefaultArrangementService } from './default-arrangement.service';
+import { WaveformService } from './waveform.service';
 import { SoundBrowserComponent } from './sound-browser.component';
 import { Clip, Track } from './models';
 import { secondsToPx, pxToSeconds } from './timeline.util';
@@ -21,9 +22,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   styleUrls: ['./audio-editor.component.css']
 })
 export class AudioEditorComponent {
-  @Input() hideToolbar = false;
-  
-  @ViewChild('fileInput', { static: false }) fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('timeline') timelineEl!: ElementRef<HTMLDivElement>;
   @ViewChildren('lane') laneEls!: QueryList<ElementRef<HTMLDivElement>>;
 
@@ -65,7 +63,8 @@ export class AudioEditorComponent {
     private audio: AudioEngineService, 
     private soundLibrary: SoundLibraryService,
     public editorState: EditorStateService,
-    private defaultArrangement: DefaultArrangementService
+    private defaultArrangement: DefaultArrangementService,
+    private waveformService: WaveformService
   ) {
     this.addDefaultHipHopTrack();
     
@@ -183,7 +182,11 @@ export class AudioEditorComponent {
         buffers.forEach((buf, i) => {
           const name = filesArray[i]?.name.replace(/\.[^.]+$/, '') || `Audio ${i + 1}`;
           const color = this.randomColor();
-          const waveform = this.generateWaveform(buf, Math.floor(buf.duration * this.pxPerSecond()), 44, color);
+          const waveform = this.waveformService.generateFromBuffer(buf, {
+            width: Math.floor(buf.duration * this.pxPerSecond()),
+            height: 44,
+            clipColor: color
+          });
           track.clips.push({ 
             id: crypto.randomUUID(), 
             name, 
@@ -205,7 +208,11 @@ export class AudioEditorComponent {
         buffers.forEach((buf, i) => {
           const name = filesArray[i]?.name.replace(/\.[^.]+$/, '') || `Audio ${i + 1}`;
           const color = this.randomColor();
-          const waveform = this.generateWaveform(buf, Math.floor(buf.duration * this.pxPerSecond()), 44, color);
+          const waveform = this.waveformService.generateFromBuffer(buf, {
+            width: Math.floor(buf.duration * this.pxPerSecond()),
+            height: 44,
+            clipColor: color
+          });
           
           // Try to find a track with space at playhead position
           let placedOnExistingTrack = false;
@@ -268,7 +275,6 @@ export class AudioEditorComponent {
     });
   }
 
-  // addTrack moved to ContentCreationComponent
 
   async addDefaultHipHopTrack() {
     const defaultTracks = await this.defaultArrangement.createDefaultHipHopTracks();
@@ -344,12 +350,6 @@ export class AudioEditorComponent {
       })));
   }
 
-  // saveArrangement moved to ProjectManagementComponent
-
-  // Project management methods moved to ProjectManagementComponent
-  // Transport controls moved to TransportControlsComponent
-
-  // exportMixdown moved to ExportControlsComponent
 
   private flattenClips(): Clip[] {
     return this.editorState.flattenedClips();
@@ -715,7 +715,6 @@ export class AudioEditorComponent {
     this.tickRAF = requestAnimationFrame(loop);
   }
 
-  // Spacebar shortcut moved to TransportControlsComponent
 
   seekTo(sec: number) { 
     this.playhead.set(sec);
@@ -770,7 +769,7 @@ export class AudioEditorComponent {
     
     // If no trimming, use original waveform
     if (trimStart === 0 && trimEnd === 0) {
-      clip.waveform = this.generateWaveform(buffer);
+      clip.waveform = this.waveformService.generateFromBuffer(buffer);
       return;
     }
     
@@ -790,86 +789,19 @@ export class AudioEditorComponent {
     
     if (trimmedData.length === 0) {
       // Fallback: create minimal waveform
-      clip.waveform = this.generateWaveformFromData(new Float32Array([0, 0]), 0.1);
+      clip.waveform = this.waveformService.generateFromData(new Float32Array([0, 0]), 0.1, {
+        pxPerSecond: this.pxPerSecond()
+      });
       return;
     }
     
     // Generate waveform for the DISPLAY duration (clip.duration), not the buffer duration
     // This ensures waveform matches visual clip width
-    clip.waveform = this.generateWaveformFromData(trimmedData, clip.duration);
+    clip.waveform = this.waveformService.generateFromData(trimmedData, clip.duration, {
+      pxPerSecond: this.pxPerSecond()
+    });
   }
 
-  generateWaveformFromData(audioData: Float32Array, duration: number): string {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
-    
-    // Use exact pixel width to match visual clip width
-    const width = Math.max(50, Math.floor(duration * this.pxPerSecond()));
-    const height = 32;
-    
-    canvas.width = width;
-    canvas.height = height;
-    
-    console.log(`Generating waveform: duration=${duration}s, width=${width}px, samples=${audioData.length}`);
-    
-    // Clear canvas
-    ctx.fillStyle = 'rgba(0,0,0,0)';
-    ctx.fillRect(0, 0, width, height);
-    
-    // Sample the audio data
-    const samplesPerPixel = Math.max(1, Math.floor(audioData.length / width));
-    
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.lineWidth = 1;
-    
-    ctx.beginPath();
-    
-    for (let x = 0; x < width; x++) {
-      const startIdx = x * samplesPerPixel;
-      const endIdx = Math.min(startIdx + samplesPerPixel, audioData.length);
-      
-      let min = 0;
-      let max = 0;
-      
-      for (let i = startIdx; i < endIdx; i++) {
-        const sample = audioData[i];
-        min = Math.min(min, sample);
-        max = Math.max(max, sample);
-      }
-      
-      const yMin = (height / 2) + (min * height / 2);
-      const yMax = (height / 2) + (max * height / 2);
-      
-      if (x === 0) {
-        ctx.moveTo(x, yMax);
-      } else {
-        ctx.lineTo(x, yMax);
-      }
-    }
-    
-    // Draw the waveform
-    for (let x = width - 1; x >= 0; x--) {
-      const startIdx = x * samplesPerPixel;
-      const endIdx = Math.min(startIdx + samplesPerPixel, audioData.length);
-      
-      let min = 0;
-      
-      for (let i = startIdx; i < endIdx; i++) {
-        const sample = audioData[i];
-        min = Math.min(min, sample);
-      }
-      
-      const yMin = (height / 2) + (min * height / 2);
-      ctx.lineTo(x, yMin);
-    }
-    
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    
-    return canvas.toDataURL();
-  }
 
   getSelectedClip(): Clip | null {
     const selectedId = this.editorState.selectedClipId();
@@ -948,140 +880,14 @@ export class AudioEditorComponent {
     });
   }
 
-  // Helper to convert hex to RGB
-  private hexToRgb(hex: string): {r: number, g: number, b: number} {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : {r: 255, g: 255, b: 255};
-  }
-
-  // Use smart color selection for maximum visibility
-  private getWaveformColor(clipColor: string): string {
-    // For red/pink clips, use pure white for maximum contrast
-    if (clipColor.includes('dc2626') || clipColor.includes('b91c1c') || 
-        clipColor.includes('f093fb') || clipColor.includes('f5576c') || 
-        clipColor.includes('fa709a') || clipColor.includes('ff9a9e') ||
-        clipColor.includes('ff6e7f')) {
-      return '#ffffff'; // Pure white for red/pink clips
-    }
-    
-    // For purple/dark clips, use light gray
-    if (clipColor.includes('7c3aed') || clipColor.includes('6d28d9') ||
-        clipColor.includes('667eea') || clipColor.includes('764ba2') ||
-        clipColor.includes('330867')) { // Purple
-      return '#f3f4f6';
-    }
-    
-    // For bright clips, use darker gray
-    return '#9ca3af'; // Medium gray for bright backgrounds
-  }
-
-  // Check if clip needs outline for visibility
-  private needsOutline(clipColor: string): boolean {
-    return clipColor.includes('dc2626') || clipColor.includes('b91c1c') ||
-           clipColor.includes('f093fb') || clipColor.includes('f5576c') || 
-           clipColor.includes('fa709a') || clipColor.includes('ff9a9e') ||
-           clipColor.includes('ff6e7f');
-  }
-
-  generateWaveform(buffer: AudioBuffer, width: number = 200, height: number = 44, clipColor: string = ''): string {
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d')!;
-    
-    // Get audio data
-    const data = buffer.getChannelData(0);
-    const step = Math.ceil(data.length / width);
-    const amp = height / 2;
-    
-    // Clear canvas with slight background
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-    ctx.fillRect(0, 0, width, height);
-    
-    // Use consistent gray for all waveforms
-    const waveColor = this.getWaveformColor(clipColor);
-    
-    // Create stronger gray gradient for better visibility
-    const waveGradient = ctx.createLinearGradient(0, 0, 0, height);
-    const rgb = this.hexToRgb(waveColor);
-    waveGradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1.0)`);
-    waveGradient.addColorStop(0.3, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`);
-    waveGradient.addColorStop(0.7, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`);
-    waveGradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1.0)`);
-    
-    // Draw filled waveform
-    ctx.beginPath();
-    ctx.moveTo(0, amp);
-    
-    for (let i = 0; i < width; i++) {
-      let min = 1.0;
-      let max = -1.0;
-      
-      for (let j = 0; j < step; j++) {
-        const datum = data[(i * step) + j];
-        if (datum !== undefined) {
-          if (datum < min) min = datum;
-          if (datum > max) max = datum;
-        }
-      }
-      
-      // Amplify weak signals for better visibility
-      min *= 1.5;
-      max *= 1.5;
-      min = Math.max(-1, min);
-      max = Math.min(1, max);
-      
-      ctx.lineTo(i, (1 + max) * amp);
-    }
-    
-    // Complete the path for filled waveform
-    for (let i = width - 1; i >= 0; i--) {
-      let min = 1.0;
-      let max = -1.0;
-      
-      for (let j = 0; j < step; j++) {
-        const datum = data[(i * step) + j];
-        if (datum !== undefined) {
-          if (datum < min) min = datum;
-          if (datum > max) max = datum;
-        }
-      }
-      
-      // Amplify weak signals
-      min *= 1.5;
-      max *= 1.5;
-      min = Math.max(-1, min);
-      max = Math.min(1, max);
-      
-      ctx.lineTo(i, (1 + min) * amp);
-    }
-    
-    ctx.closePath();
-    
-    // For red clips, add black outline for visibility
-    if (this.needsOutline(clipColor)) {
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-    
-    // Fill with color
-    ctx.fillStyle = waveGradient;
-    ctx.fill();
-    
-    return canvas.toDataURL();
-  }
-
-  // Opens the native file picker reliably
-  // File import and sound browser methods moved to ContentCreationComponent
 
   async onSoundSelected(buffer: AudioBuffer & { name: string; category: string; id?: string }) {
     const color = this.randomColor();
-    const waveform = this.generateWaveform(buffer, Math.floor(buffer.duration * this.pxPerSecond()), 44, color);
+    const waveform = this.waveformService.generateFromBuffer(buffer, {
+      width: Math.floor(buffer.duration * this.pxPerSecond()),
+      height: 44,
+      clipColor: color
+    });
     const playheadPosition = this.playhead();
     
     this.tracks.update(list => {
@@ -1334,7 +1140,11 @@ export class AudioEditorComponent {
 
   private addSoundToTrack(buffer: AudioBuffer & { name: string; category: string; id?: string }, track: Track, startTime: number) {
     const color = this.randomColor();
-    const waveform = this.generateWaveform(buffer, Math.floor(buffer.duration * this.pxPerSecond()), 44, color);
+    const waveform = this.waveformService.generateFromBuffer(buffer, {
+      width: Math.floor(buffer.duration * this.pxPerSecond()),
+      height: 44,
+      clipColor: color
+    });
     
     // Check for overlaps and find suitable position
     let finalStartTime = startTime;
