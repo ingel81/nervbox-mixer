@@ -1,0 +1,1593 @@
+import { Component, ElementRef, HostListener, ViewChild, ViewChildren, QueryList, computed, effect, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { AudioEngineService } from './audio-engine.service';
+import { SoundLibraryService } from './sound-library.service';
+import { ArrangementStorageService } from './arrangement-storage.service';
+import { SoundBrowserComponent } from './sound-browser.component';
+import { Clip, Track } from './models';
+import { secondsToPx, pxToSeconds } from './timeline.util';
+
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
+
+@Component({
+  selector: 'audio-editor',
+  standalone: true,
+  imports: [CommonModule, MatToolbarModule, MatIconModule, MatButtonModule, MatSliderModule, MatMenuModule, MatDividerModule, MatTooltipModule, SoundBrowserComponent],
+  templateUrl: './audio-editor.component.html',
+  styleUrls: ['./audio-editor.component.css']
+})
+export class AudioEditorComponent {
+  @ViewChild('fileInput', { static: false }) fileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('timeline') timelineEl!: ElementRef<HTMLDivElement>;
+  @ViewChildren('lane') laneEls!: QueryList<ElementRef<HTMLDivElement>>;
+
+  pxPerSecond = signal(120);
+  scrollX = signal(0);
+  playhead = signal(0);
+  isPlaying = signal(false);
+
+  tracks = signal<Track[]>([]);
+  selectedClipId = signal<string | null>(null);
+  showSoundBrowser = signal<boolean>(false);
+
+  duration = computed(() => {
+    const t = this.tracks();
+    let max = 0;
+    for (const tr of t) {
+      for (const c of tr.clips) {
+        max = Math.max(max, c.startTime + c.duration);
+      }
+    }
+    const result = Math.max(10, Math.ceil(max));
+    console.log(`Duration calculated: ${result}s from ${t.length} tracks with total ${t.reduce((sum, tr) => sum + tr.clips.length, 0)} clips`);
+    return result;
+  });
+
+  constructor(
+    private audio: AudioEngineService, 
+    private soundLibrary: SoundLibraryService,
+    private arrangementStorage: ArrangementStorageService
+  ) {
+    this.addDefaultHipHopTrack();
+    
+    // Initialize sound library
+    this.soundLibrary.preloadEssentials().catch(console.error);
+    
+    effect(() => {
+      if (!this.isPlaying()) this.audio.stop();
+    });
+  }
+
+  async onFilesSelected(files: FileList | null, targetTrack?: Track) {
+    if (!files || files.length === 0) return;
+    
+    console.log(`Importing ${files.length} audio files...`);
+    
+    // Process files in batches to avoid memory issues
+    const filesArray = Array.from(files);
+    const batchSize = 10;
+    const buffers: AudioBuffer[] = [];
+    
+    // Decode in batches
+    for (let i = 0; i < filesArray.length; i += batchSize) {
+      const batch = filesArray.slice(i, i + batchSize);
+      try {
+        const batchBuffers = await Promise.all(
+          batch.map(async (f) => {
+            try {
+              return await this.audio.decode(f);
+            } catch (err) {
+              console.error(`Failed to decode ${f.name}:`, err);
+              return null;
+            }
+          })
+        );
+        buffers.push(...batchBuffers.filter(b => b !== null) as AudioBuffer[]);
+        console.log(`Processed ${Math.min(i + batchSize, filesArray.length)} of ${filesArray.length} files`);
+      } catch (err) {
+        console.error('Batch decode error:', err);
+      }
+    }
+    
+    if (buffers.length === 0) {
+      console.error('No files could be decoded');
+      return;
+    }
+    
+    console.log(`Successfully imported ${buffers.length} files`);
+    
+    this.tracks.update(list => {
+      const createTrack = (): Track => ({ id: crypto.randomUUID(), name: `Track ${list.length + 1}`, clips: [] as Clip[], mute: false, solo: false, volume: 1, pan: 0 });
+
+      if (targetTrack) {
+        // Files dropped on specific track - add them at playhead position or after existing clips
+        const idx = list.findIndex(t => t === targetTrack);
+        const track = idx >= 0 ? list[idx]! : (list[0] ?? (list[0] = createTrack()));
+        
+        let startTime = this.playhead();
+        
+        // Check if playhead position is available on this track
+        const playheadAvailable = !track.clips.some(clip => {
+          const clipStart = clip.startTime;
+          const clipEnd = clip.startTime + clip.duration;
+          return startTime >= clipStart && startTime < clipEnd;
+        });
+        
+        if (!playheadAvailable && track.clips.length > 0) {
+          // Find next available position after playhead
+          const clipsAfterPlayhead = track.clips.filter(c => c.startTime >= startTime);
+          if (clipsAfterPlayhead.length > 0) {
+            // Find gap after playhead
+            clipsAfterPlayhead.sort((a, b) => a.startTime - b.startTime);
+            let gapFound = false;
+            
+            for (let i = 0; i < clipsAfterPlayhead.length; i++) {
+              const currentClip = clipsAfterPlayhead[i];
+              const nextClip = clipsAfterPlayhead[i + 1];
+              
+              if (!nextClip) {
+                // After last clip
+                startTime = currentClip.startTime + currentClip.duration + 0.1;
+                gapFound = true;
+                break;
+              } else {
+                // Check gap between clips
+                const gapStart = currentClip.startTime + currentClip.duration;
+                const gapSize = nextClip.startTime - gapStart;
+                const totalDuration = buffers.reduce((sum, buf) => sum + buf.duration, 0) + (buffers.length - 1) * 0.1;
+                
+                if (gapSize >= totalDuration) {
+                  startTime = gapStart + 0.1;
+                  gapFound = true;
+                  break;
+                }
+              }
+            }
+            
+            if (!gapFound) {
+              // Place after all clips
+              const lastClip = track.clips.reduce((latest, clip) => 
+                (clip.startTime + clip.duration) > (latest.startTime + latest.duration) ? clip : latest
+              );
+              startTime = lastClip.startTime + lastClip.duration + 0.1;
+            }
+          } else {
+            // Place after all clips
+            const lastClip = track.clips.reduce((latest, clip) => 
+              (clip.startTime + clip.duration) > (latest.startTime + latest.duration) ? clip : latest
+            );
+            startTime = lastClip.startTime + lastClip.duration + 0.1;
+          }
+        }
+        
+        // Add all clips to this track
+        buffers.forEach((buf, i) => {
+          const name = filesArray[i]?.name.replace(/\.[^.]+$/, '') || `Audio ${i + 1}`;
+          const color = this.randomColor();
+          const waveform = this.generateWaveform(buf);
+          track.clips.push({ 
+            id: crypto.randomUUID(), 
+            name, 
+            startTime: startTime, 
+            duration: buf.duration, 
+            offset: 0, 
+            buffer: buf, 
+            color, 
+            waveform,
+            trimStart: 0,
+            trimEnd: 0,
+            originalDuration: buf.duration 
+          });
+          startTime += buf.duration + 0.1;
+        });
+        console.log(`Added ${buffers.length} files to ${track.name} starting at ${startTime.toFixed(2)}s`);
+      } else {
+        // Files dropped in general area - distribute intelligently
+        buffers.forEach((buf, i) => {
+          const name = filesArray[i]?.name.replace(/\.[^.]+$/, '') || `Audio ${i + 1}`;
+          const color = this.randomColor();
+          const waveform = this.generateWaveform(buf);
+          
+          // Try to find a track with space at playhead position
+          let placedOnExistingTrack = false;
+          const playheadPos = this.playhead();
+          
+          for (const track of list) {
+            const canPlace = !track.clips.some(clip => {
+              const clipStart = clip.startTime;
+              const clipEnd = clip.startTime + clip.duration;
+              const newClipEnd = playheadPos + buf.duration;
+              return !(newClipEnd <= clipStart || playheadPos >= clipEnd);
+            });
+            
+            if (canPlace) {
+              track.clips.push({ 
+                id: crypto.randomUUID(), 
+                name, 
+                startTime: playheadPos, 
+                duration: buf.duration, 
+                offset: 0, 
+                buffer: buf, 
+                color, 
+                waveform,
+                trimStart: 0,
+                trimEnd: 0,
+                originalDuration: buf.duration 
+              });
+              placedOnExistingTrack = true;
+              console.log(`Added ${name} to existing ${track.name} at playhead`);
+              break;
+            }
+          }
+          
+          if (!placedOnExistingTrack) {
+            // Create new track
+            const newTrack = createTrack();
+            newTrack.clips.push({ 
+              id: crypto.randomUUID(), 
+              name, 
+              startTime: playheadPos, 
+              duration: buf.duration, 
+              offset: 0, 
+              buffer: buf, 
+              color, 
+              waveform,
+              trimStart: 0,
+              trimEnd: 0,
+              originalDuration: buf.duration 
+            });
+            list.push(newTrack);
+            console.log(`Added ${name} to new ${newTrack.name} at playhead`);
+          }
+        });
+      }
+      // Return new array with deep copy to ensure change detection
+      return list.map(track => ({
+        ...track,
+        clips: [...track.clips]
+      }));
+    });
+  }
+
+  addTrack() {
+    this.tracks.update(list => [
+      ...list,
+      { id: crypto.randomUUID(), name: `Track ${list.length + 1}` , clips: [], mute: false, solo: false, volume: 1, pan: 0 }
+    ]);
+  }
+
+  async addDefaultHipHopTrack() {
+    // Create multiple tracks for a complete 90s hip hop setup (20 seconds)
+    const kickTrack: Track = { 
+      id: crypto.randomUUID(), 
+      name: 'Kick', 
+      clips: [], 
+      mute: false, 
+      solo: false, 
+      volume: 1, 
+      pan: 0 
+    };
+
+    const snareTrack: Track = { 
+      id: crypto.randomUUID(), 
+      name: 'Snare', 
+      clips: [], 
+      mute: false, 
+      solo: false, 
+      volume: 0.9, 
+      pan: 0 
+    };
+
+    // Two separate hi-hat tracks to avoid overlapping issues
+    const hihatClosedTrack: Track = { 
+      id: crypto.randomUUID(), 
+      name: 'Hi-Hat Closed', 
+      clips: [], 
+      mute: false, 
+      solo: false, 
+      volume: 0.6, 
+      pan: 0.1 
+    };
+
+    const hihatOpenTrack: Track = { 
+      id: crypto.randomUUID(), 
+      name: 'Hi-Hat Open', 
+      clips: [], 
+      mute: false, 
+      solo: false, 
+      volume: 0.5, 
+      pan: -0.1 
+    };
+
+    const bassTrack: Track = { 
+      id: crypto.randomUUID(), 
+      name: 'Bass', 
+      clips: [], 
+      mute: false, 
+      solo: false, 
+      volume: 0.8, 
+      pan: 0 
+    };
+
+    // Try to load and create beat pattern clips
+    try {
+      // Load sounds from our library
+      const kickBuffer = await this.soundLibrary.loadSound('kick-1'); // Classic 90s kick
+      const snareBuffer = await this.soundLibrary.loadSound('snare-2'); // Crispy snare
+      const hihatClosedBuffer = await this.soundLibrary.loadSound('hi-hat-3'); // Closed hi-hat
+      const hihatOpenBuffer = await this.soundLibrary.loadSound('hi-hat-10'); // Open hi-hat
+      const bassBuffer = await this.soundLibrary.loadSound('bass-1-g2'); // Deep bass
+
+      // Extended 90s hip hop pattern (20 seconds at 90 BPM = ~7.5 bars)
+      const barLength = 2.67; // seconds per bar at 90 BPM
+      const beatInterval = barLength / 4; // quarter notes
+      const totalBars = Math.floor(20 / barLength); // ~7 bars for 20 seconds
+
+      // Kick pattern: Classic boom-bap with variation every 2 bars
+      if (kickBuffer) {
+        for (let bar = 0; bar < totalBars; bar++) {
+          const barStart = bar * barLength;
+          const isVariationBar = bar % 4 >= 2; // Variation every 2 bars
+          
+          // Beat 1 - always kick
+          kickTrack.clips.push({
+            id: crypto.randomUUID(),
+            name: 'Kick',
+            startTime: barStart,
+            duration: kickBuffer.duration,
+            offset: 0,
+            trimStart: 0,
+            trimEnd: 0,
+            originalDuration: kickBuffer.duration,
+            buffer: kickBuffer,
+            color: 'linear-gradient(45deg, #dc2626, #b91c1c)',
+            waveform: undefined,
+            soundId: 'kick-1'
+          } as any);
+          
+          // Beat 2.5 - syncopated kick
+          if (!isVariationBar || bar % 2 === 0) {
+            kickTrack.clips.push({
+              id: crypto.randomUUID(),
+              name: 'Kick',
+              startTime: barStart + beatInterval * 1.5,
+              duration: kickBuffer.duration,
+              offset: 0,
+              trimStart: 0,
+              trimEnd: 0,
+              originalDuration: kickBuffer.duration,
+              buffer: kickBuffer,
+              color: 'linear-gradient(45deg, #dc2626, #b91c1c)',
+              waveform: undefined,
+              soundId: 'kick-1'
+            } as any);
+          }
+          
+          // Beat 4 - less frequent for variation
+          if (bar % 3 !== 0) {
+            kickTrack.clips.push({
+              id: crypto.randomUUID(),
+              name: 'Kick',
+              startTime: barStart + beatInterval * 3,
+              duration: kickBuffer.duration,
+              offset: 0,
+              trimStart: 0,
+              trimEnd: 0,
+              originalDuration: kickBuffer.duration,
+              buffer: kickBuffer,
+              color: 'linear-gradient(45deg, #dc2626, #b91c1c)',
+              waveform: undefined,
+              soundId: 'kick-1'
+            } as any);
+          }
+        }
+      }
+
+      // Snare pattern: backbeat on 2 and 4 with occasional ghost notes
+      if (snareBuffer) {
+        for (let bar = 0; bar < totalBars; bar++) {
+          const barStart = bar * barLength;
+          
+          // Beat 2 - main snare
+          snareTrack.clips.push({
+            id: crypto.randomUUID(),
+            name: 'Snare',
+            startTime: barStart + beatInterval * 1,
+            duration: snareBuffer.duration,
+            offset: 0,
+            trimStart: 0,
+            trimEnd: 0,
+            originalDuration: snareBuffer.duration,
+            buffer: snareBuffer,
+            color: 'linear-gradient(45deg, #f59e0b, #d97706)',
+            waveform: undefined,
+            soundId: 'snare-2'
+          } as any);
+          
+          // Beat 4 - main snare
+          snareTrack.clips.push({
+            id: crypto.randomUUID(),
+            name: 'Snare',
+            startTime: barStart + beatInterval * 3,
+            duration: snareBuffer.duration,
+            offset: 0,
+            trimStart: 0,
+            trimEnd: 0,
+            originalDuration: snareBuffer.duration,
+            buffer: snareBuffer,
+            color: 'linear-gradient(45deg, #f59e0b, #d97706)',
+            waveform: undefined,
+            soundId: 'snare-2'
+          } as any);
+          
+          // Ghost notes occasionally on off-beats for groove
+          if (bar % 4 === 2) {
+            snareTrack.clips.push({
+              id: crypto.randomUUID(),
+              name: 'Snare',
+              startTime: barStart + beatInterval * 0.75,
+              duration: snareBuffer.duration * 0.6,
+              offset: 0,
+              trimStart: 0,
+              trimEnd: 0,
+              originalDuration: snareBuffer.duration,
+              buffer: snareBuffer,
+              color: 'linear-gradient(45deg, #f59e0b, #d97706)',
+              waveform: undefined,
+              soundId: 'snare-2'
+            } as any);
+          }
+        }
+      }
+
+      // Hi-hat closed pattern: steady 8th notes
+      if (hihatClosedBuffer) {
+        for (let bar = 0; bar < totalBars; bar++) {
+          const barStart = bar * barLength;
+          const eighthNote = beatInterval / 2;
+          
+          // Steady 8th note pattern with some gaps for groove
+          for (let i = 0; i < 8; i++) {
+            // Skip some beats to create groove and avoid snare conflicts
+            if (i !== 2 && i !== 6 && !(bar % 2 === 1 && i === 4)) {
+              hihatClosedTrack.clips.push({
+                id: crypto.randomUUID(),
+                name: 'Hi-Hat Closed',
+                startTime: barStart + (i * eighthNote),
+                duration: hihatClosedBuffer.duration,
+                offset: 0,
+                trimStart: 0,
+                trimEnd: 0,
+                originalDuration: hihatClosedBuffer.duration,
+                buffer: hihatClosedBuffer,
+                color: 'linear-gradient(45deg, #06b6d4, #0891b2)',
+                waveform: undefined,
+                soundId: 'hi-hat-3'
+              } as any);
+            }
+          }
+        }
+      }
+
+      // Hi-hat open pattern: accent on off-beats
+      if (hihatOpenBuffer) {
+        for (let bar = 0; bar < totalBars; bar++) {
+          const barStart = bar * barLength;
+          
+          // Open hi-hats on specific beats for accent
+          if (bar % 4 === 3) { // Every 4th bar
+            hihatOpenTrack.clips.push({
+              id: crypto.randomUUID(),
+              name: 'Hi-Hat Open',
+              startTime: barStart + beatInterval * 2.5,
+              duration: hihatOpenBuffer.duration,
+              offset: 0,
+              trimStart: 0,
+              trimEnd: 0,
+              originalDuration: hihatOpenBuffer.duration,
+              buffer: hihatOpenBuffer,
+              color: 'linear-gradient(45deg, #0ea5e9, #0284c7)',
+              waveform: undefined,
+              soundId: 'hi-hat-10'
+            } as any);
+          }
+          
+          // Additional open hi-hats for variation
+          if (bar % 6 === 1) {
+            hihatOpenTrack.clips.push({
+              id: crypto.randomUUID(),
+              name: 'Hi-Hat Open',
+              startTime: barStart + beatInterval * 3.75,
+              duration: hihatOpenBuffer.duration,
+              offset: 0,
+              trimStart: 0,
+              trimEnd: 0,
+              originalDuration: hihatOpenBuffer.duration,
+              buffer: hihatOpenBuffer,
+              color: 'linear-gradient(45deg, #0ea5e9, #0284c7)',
+              waveform: undefined,
+              soundId: 'hi-hat-10'
+            } as any);
+          }
+        }
+      }
+
+      // Bass pattern: Longer melodic bassline
+      if (bassBuffer) {
+        for (let bar = 0; bar < totalBars; bar++) {
+          const barStart = bar * barLength;
+          
+          // Main bass on beat 1
+          bassTrack.clips.push({
+            id: crypto.randomUUID(),
+            name: 'Bass',
+            startTime: barStart,
+            duration: bassBuffer.duration * 0.9,
+            offset: 0,
+            trimStart: 0,
+            trimEnd: 0,
+            originalDuration: bassBuffer.duration,
+            buffer: bassBuffer,
+            color: 'linear-gradient(45deg, #7c3aed, #6d28d9)',
+            waveform: undefined,
+            soundId: 'bass-1-g2'
+          } as any);
+          
+          // Syncopated bass
+          if (bar % 2 === 0) {
+            bassTrack.clips.push({
+              id: crypto.randomUUID(),
+              name: 'Bass',
+              startTime: barStart + beatInterval * 2.5,
+              duration: bassBuffer.duration * 0.6,
+              offset: 0,
+              trimStart: 0,
+              trimEnd: 0,
+              originalDuration: bassBuffer.duration,
+              buffer: bassBuffer,
+              color: 'linear-gradient(45deg, #7c3aed, #6d28d9)',
+              waveform: undefined,
+              soundId: 'bass-1-g2'
+            } as any);
+          }
+          
+          // Additional bass notes for groove variation
+          if (bar % 4 === 1) {
+            bassTrack.clips.push({
+              id: crypto.randomUUID(),
+              name: 'Bass',
+              startTime: barStart + beatInterval * 1.75,
+              duration: bassBuffer.duration * 0.5,
+              offset: 0,
+              trimStart: 0,
+              trimEnd: 0,
+              originalDuration: bassBuffer.duration,
+              buffer: bassBuffer,
+              color: 'linear-gradient(45deg, #7c3aed, #6d28d9)',
+              waveform: undefined,
+              soundId: 'bass-1-g2'
+            } as any);
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error('Error loading default hip hop sounds:', error);
+    }
+
+    // Add all tracks (now with dual hi-hat tracks)
+    this.tracks.update(list => [
+      ...list,
+      kickTrack,
+      snareTrack, 
+      hihatClosedTrack,
+      hihatOpenTrack,
+      bassTrack
+    ]);
+  }
+
+  removeTrack(track: Track) {
+    this.tracks.update(list => list.filter(t => t !== track));
+  }
+
+  saveArrangement() {
+    const name = prompt('Enter arrangement name:');
+    if (name?.trim()) {
+      this.arrangementStorage.saveArrangement(name.trim(), this.tracks());
+      alert(`Arrangement "${name}" saved successfully!`);
+    }
+  }
+
+  async loadArrangement() {
+    const arrangements = this.arrangementStorage.savedArrangements();
+    if (arrangements.length === 0) {
+      alert('No saved arrangements found.');
+      return;
+    }
+
+    // Create selection dialog
+    let message = 'Select arrangement to load:\n\n';
+    arrangements.forEach((arr, index) => {
+      const date = arr.updatedAt.toLocaleDateString();
+      const time = arr.updatedAt.toLocaleTimeString();
+      message += `${index + 1}. ${arr.name} (${date} ${time})\n`;
+    });
+    message += '\nEnter number (1-' + arrangements.length + '):';
+
+    const selection = prompt(message);
+    const index = parseInt(selection || '') - 1;
+    
+    if (index >= 0 && index < arrangements.length) {
+      const selectedArrangement = arrangements[index];
+      
+      try {
+        // Stop playback before loading
+        this.pause();
+        this.playhead.set(0);
+        
+        // Show loading message
+        console.log(`Loading arrangement "${selectedArrangement.name}"...`);
+        
+        const tracks = await this.arrangementStorage.loadArrangement(selectedArrangement.id);
+        
+        if (tracks) {
+          // Load the arrangement
+          this.tracks.set(tracks);
+          alert(`Arrangement "${selectedArrangement.name}" loaded successfully!`);
+        } else {
+          alert('Error loading arrangement.');
+        }
+      } catch (error) {
+        console.error('Error loading arrangement:', error);
+        alert('Error loading arrangement. Some sounds may be missing.');
+      }
+    }
+  }
+
+  newArrangement() {
+    if (confirm('Create new arrangement? This will clear the current arrangement.')) {
+      this.pause();
+      this.playhead.set(0);
+      this.tracks.set([]);
+      this.selectedClipId.set(null);
+      this.addDefaultHipHopTrack();
+    }
+  }
+
+  deleteArrangement() {
+    const arrangements = this.arrangementStorage.savedArrangements();
+    if (arrangements.length === 0) {
+      alert('No saved arrangements found.');
+      return;
+    }
+
+    // Create selection dialog
+    let message = 'Select arrangement to delete:\n\n';
+    arrangements.forEach((arr, index) => {
+      const date = arr.updatedAt.toLocaleDateString();
+      const time = arr.updatedAt.toLocaleTimeString();
+      message += `${index + 1}. ${arr.name} (${date} ${time})\n`;
+    });
+    message += '\nEnter number (1-' + arrangements.length + '):';
+
+    const selection = prompt(message);
+    const index = parseInt(selection || '') - 1;
+    
+    if (index >= 0 && index < arrangements.length) {
+      const selectedArrangement = arrangements[index];
+      if (confirm(`Delete arrangement "${selectedArrangement.name}"? This cannot be undone.`)) {
+        this.arrangementStorage.deleteArrangement(selectedArrangement.id);
+        alert(`Arrangement "${selectedArrangement.name}" deleted.`);
+      }
+    }
+  }
+
+  play() {
+    const all = this.flattenClips();
+    this.audio.play(all.map(c => ({
+      buffer: c.buffer,
+      startTime: c.startTime,
+      duration: c.duration,
+      offset: c.offset,
+      gain: 1,
+      pan: 0,
+      muted: false,
+      trimStart: c.trimStart,
+      trimEnd: c.trimEnd
+    })), this.playhead());
+    this.isPlaying.set(true);
+    this.tickPlayhead();
+  }
+
+  pause() {
+    this.audio.pause();
+    this.isPlaying.set(false);
+  }
+
+  stop() {
+    this.audio.stop();
+    this.isPlaying.set(false);
+  }
+
+  async exportMixdown(format: 'wav' | 'mp3' = 'wav') {
+    const clips = this.flattenClips().map(c => {
+      const exportClip = {
+        buffer: c.buffer,
+        startTime: c.startTime,
+        duration: c.duration,
+        offset: c.offset + (c.trimStart || 0), // Include trim offset
+        gain: 1,
+        pan: 0,
+        muted: false,
+      };
+      
+      // Debug log for trimmed clips
+      if (c.trimStart || c.trimEnd) {
+        console.log(`Export clip ${c.name}: offset=${exportClip.offset}, trimStart=${c.trimStart}, trimEnd=${c.trimEnd}, duration=${exportClip.duration}`);
+      }
+      
+      return exportClip;
+    });
+
+    try {
+      let blob: Blob;
+      let actualFormat = format;
+
+      if (format === 'mp3') {
+        blob = await this.audio.renderToMp3({ clips, duration: this.duration() });
+      } else {
+        blob = await this.audio.renderToWav({ clips, duration: this.duration() });
+      }
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `nervbox-export.${actualFormat}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      console.log(`${actualFormat.toUpperCase()} export completed successfully`);
+    } catch (err) {
+      console.error(`Export failed:`, err);
+      alert(`Export failed: ${err}`);
+    }
+  }
+
+  private flattenClips(): Clip[] {
+    return this.tracks().flatMap(t => t.clips);
+  }
+
+  dragState: { id: string; startX: number; origStartTime: number; clipRef?: Clip } | null = null;
+  trimState: { id: string; side: 'start' | 'end'; startX: number; originalTrimStart: number; originalTrimEnd: number; originalDuration: number; originalStartTime: number; clipRef: Clip } | null = null;
+  
+  // Clipboard for copy/paste
+  clipboardClip: Clip | null = null;
+  
+  // Waveform update throttling
+  private waveformUpdateTimeout: number | null = null;
+
+  clipMouseDown(ev: MouseEvent, clip: Clip) {
+    ev.stopPropagation();
+    this.selectedClipId.set(clip.id);
+    const startX = ev.clientX;
+    this.dragState = { id: clip.id, startX, origStartTime: clip.startTime, clipRef: clip };
+    (document.body as any).style.userSelect = 'none';
+  }
+
+  private lastDragUpdate = 0;
+  private rafId: number | null = null;
+
+  startTrimming(event: MouseEvent, clip: Clip, side: 'start' | 'end') {
+    event.stopPropagation();
+    event.preventDefault();
+    
+    this.trimState = {
+      id: clip.id,
+      side: side,
+      startX: event.clientX,
+      originalTrimStart: clip.trimStart || 0,
+      originalTrimEnd: clip.trimEnd || 0,
+      originalDuration: clip.originalDuration,
+      originalStartTime: clip.startTime,
+      clipRef: clip
+    };
+    
+    document.body.style.userSelect = 'none';
+  }
+
+  @HostListener('window:mousemove', ['$event'])
+  onMouseMove(ev: MouseEvent) {
+    // Handle trimming
+    if (this.trimState) {
+      const dx = ev.clientX - this.trimState.startX;
+      const deltaSeconds = pxToSeconds(dx, this.pxPerSecond());
+      const clip = this.trimState.clipRef;
+      
+      // Calculate with sample precision for accuracy
+      const sampleRate = clip.buffer.sampleRate;
+      const samplesPerSecond = sampleRate;
+      
+      if (this.trimState.side === 'start') {
+        // Trim from start - adjust start time and duration
+        const maxTrimStart = clip.originalDuration - (clip.trimEnd || 0) - 0.001; // Min 1ms
+        let newTrimStart = Math.max(0, Math.min(maxTrimStart, 
+          this.trimState.originalTrimStart + deltaSeconds));
+        
+        // Snap to sample boundaries for precision
+        const trimSamples = Math.floor(newTrimStart * samplesPerSecond);
+        newTrimStart = trimSamples / samplesPerSecond;
+        
+        // Calculate the change and adjust timeline position
+        const trimDelta = newTrimStart - (clip.trimStart || 0);
+        clip.trimStart = newTrimStart;
+        clip.startTime = this.trimState.originalStartTime + trimDelta;
+        clip.duration = clip.originalDuration - clip.trimStart - (clip.trimEnd || 0);
+      } else {
+        // Trim from end - only adjust duration
+        const maxTrimEnd = clip.originalDuration - (clip.trimStart || 0) - 0.001; // Min 1ms
+        let newTrimEnd = Math.max(0, Math.min(maxTrimEnd,
+          this.trimState.originalTrimEnd - deltaSeconds));
+        
+        // Snap to sample boundaries for precision
+        const trimSamples = Math.floor(newTrimEnd * samplesPerSecond);
+        newTrimEnd = trimSamples / samplesPerSecond;
+        
+        clip.trimEnd = newTrimEnd;
+        clip.duration = clip.originalDuration - (clip.trimStart || 0) - clip.trimEnd;
+      }
+      
+      // Ensure minimum duration (1ms minimum for very short clips)
+      if (clip.duration < 0.001) {
+        clip.duration = 0.001;
+      }
+      
+      // Regenerate waveform for trimmed section (throttled)
+      if (!this.waveformUpdateTimeout) {
+        this.waveformUpdateTimeout = setTimeout(() => {
+          this.updateTrimmedWaveform(clip);
+          this.waveformUpdateTimeout = null;
+        }, 50); // Throttle waveform updates
+      }
+      
+      return;
+    }
+    
+    // Handle clip dragging with optimized updates
+    if (this.dragState) {
+      // Cancel previous RAF
+      if (this.rafId) {
+        cancelAnimationFrame(this.rafId);
+      }
+      
+      // Throttle updates using RAF for smooth 60fps
+      this.rafId = requestAnimationFrame(() => {
+        if (!this.dragState) return;
+        
+        const dx = ev.clientX - this.dragState.startX;
+        const deltaSec = pxToSeconds(dx, this.pxPerSecond());
+        const newTime = Math.max(0, this.dragState.origStartTime + deltaSec);
+        
+        // Direct update for smoother dragging
+        if (this.dragState.clipRef) {
+          // Check for overlaps with other clips on the same track
+          const draggedClip = this.dragState.clipRef;
+          let finalTime = newTime;
+          
+          // Find the track containing this clip
+          const tracks = this.tracks();
+          let currentTrack: Track | null = null;
+          for (const track of tracks) {
+            if (track.clips.some(c => c.id === draggedClip.id)) {
+              currentTrack = track;
+              break;
+            }
+          }
+          
+          if (currentTrack) {
+            // Check for overlaps with other clips on same track
+            const otherClips = currentTrack.clips.filter(c => c.id !== draggedClip.id);
+            
+            for (const otherClip of otherClips) {
+              const draggedStart = finalTime;
+              const draggedEnd = finalTime + draggedClip.duration;
+              const otherStart = otherClip.startTime;
+              const otherEnd = otherClip.startTime + otherClip.duration;
+              
+              // Check if clips would overlap
+              if (!(draggedEnd <= otherStart || draggedStart >= otherEnd)) {
+                // Snap to avoid overlap - position after the blocking clip
+                if (draggedStart < otherStart) {
+                  finalTime = Math.max(0, otherStart - draggedClip.duration - 0.05);
+                } else {
+                  finalTime = otherEnd + 0.05; // 50ms gap
+                }
+              }
+            }
+          }
+          
+          this.dragState.clipRef.startTime = Math.max(0, finalTime);
+          
+          // Only check for track changes occasionally to reduce overhead
+          const now = performance.now();
+          if (now - this.lastDragUpdate > 100) { // Every 100ms
+            const targetTrackIdx = this.getTrackIndexAtClientY(ev.clientY);
+            
+            // Only proceed if we're actually changing tracks
+            if (targetTrackIdx !== null) {
+              this.tracks.update(list => {
+                // Find current track
+                let sourceTrackIdx = -1;
+                let clipIdx = -1;
+                for (let ti = 0; ti < list.length; ti++) {
+                  const idx = list[ti]!.clips.findIndex(c => c.id === this.dragState!.id);
+                  if (idx !== -1) {
+                    sourceTrackIdx = ti;
+                    clipIdx = idx;
+                    break;
+                  }
+                }
+                
+                // Move between tracks if needed
+                if (targetTrackIdx !== sourceTrackIdx && 
+                    targetTrackIdx >= 0 && targetTrackIdx < list.length && 
+                    sourceTrackIdx >= 0 && this.dragState!.clipRef) {
+                  
+                  const sourceTrack = list[sourceTrackIdx]!;
+                  const targetTrack = list[targetTrackIdx]!;
+                  const draggedClip = this.dragState!.clipRef;
+                  let targetStartTime = draggedClip.startTime;
+                  
+                  // Check if current position on target track is available
+                  const positionAvailable = !targetTrack.clips.some(clip => {
+                    const clipStart = clip.startTime;
+                    const clipEnd = clip.startTime + clip.duration;
+                    const draggedEnd = targetStartTime + draggedClip.duration;
+                    return !(draggedEnd <= clipStart || targetStartTime >= clipEnd);
+                  });
+                  
+                  if (!positionAvailable) {
+                    // Find nearest available position
+                    const sortedClips = [...targetTrack.clips].sort((a, b) => a.startTime - b.startTime);
+                    let foundPosition = false;
+                    
+                    // Check if we can fit before the first clip
+                    if (sortedClips.length > 0 && sortedClips[0].startTime >= draggedClip.duration + 0.05) {
+                      targetStartTime = 0;
+                      foundPosition = true;
+                    }
+                    
+                    // Try to find a gap between clips
+                    if (!foundPosition) {
+                      for (let i = 0; i < sortedClips.length - 1; i++) {
+                        const currentClip = sortedClips[i];
+                        const nextClip = sortedClips[i + 1];
+                        const gapStart = currentClip.startTime + currentClip.duration + 0.05;
+                        const gapEnd = nextClip.startTime;
+                        const requiredSpace = draggedClip.duration + 0.05;
+                        
+                        if ((gapEnd - gapStart) >= requiredSpace) {
+                          targetStartTime = gapStart;
+                          foundPosition = true;
+                          break;
+                        }
+                      }
+                    }
+                    
+                    // Place after all existing clips
+                    if (!foundPosition) {
+                      if (sortedClips.length > 0) {
+                        const lastClip = sortedClips[sortedClips.length - 1];
+                        targetStartTime = lastClip.startTime + lastClip.duration + 0.05;
+                      } else {
+                        targetStartTime = Math.max(0, targetStartTime);
+                      }
+                    }
+                  }
+                  
+                  // Remove from source track
+                  sourceTrack.clips.splice(clipIdx, 1);
+                  
+                  // Update clip position and add to target track
+                  draggedClip.startTime = Math.max(0, targetStartTime);
+                  targetTrack.clips.push(draggedClip);
+                  
+                  console.log(`Moved "${draggedClip.name}" from ${sourceTrack.name} to ${targetTrack.name} at ${targetStartTime.toFixed(2)}s`);
+                }
+                
+                // Return new array to trigger change detection
+                return list.map(track => ({
+                  ...track,
+                  clips: [...track.clips]
+                }));
+              });
+            }
+            
+            this.lastDragUpdate = now;
+          }
+        }
+      });
+    }
+    
+    // Handle seeking
+    if (this.seeking) {
+      const lane = this.laneEls?.first?.nativeElement as HTMLElement | undefined;
+      if (!lane) return;
+      const clipsEl = lane.querySelector('.clips') as HTMLElement;
+      const rect = clipsEl.getBoundingClientRect();
+      const x = Math.max(0, ev.clientX - rect.left);
+      this.seekTo(pxToSeconds(x, this.pxPerSecond()));
+    }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent) {
+    // Ignore if user is typing in input field
+    const target = event.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+      return;
+    }
+
+    console.log('Key pressed:', event.key, 'Ctrl:', event.ctrlKey); // Debug
+
+    const selectedClip = this.getSelectedClip();
+    console.log('Selected clip:', selectedClip?.name || 'none'); // Debug
+
+    // Copy (Ctrl+C)
+    if (event.ctrlKey && (event.key === 'c' || event.key === 'C') && selectedClip) {
+      event.preventDefault();
+      console.log('Copying clip:', selectedClip.name);
+      this.copyClip(selectedClip);
+      return;
+    }
+
+    // Paste (Ctrl+V)
+    if (event.ctrlKey && (event.key === 'v' || event.key === 'V')) {
+      event.preventDefault();
+      console.log('Pasting clip, clipboard has:', this.clipboardClip?.name || 'nothing');
+      if (this.clipboardClip) {
+        this.pasteClip();
+      }
+      return;
+    }
+
+    // Delete (Del)
+    if (event.key === 'Delete' && selectedClip) {
+      event.preventDefault();
+      console.log('Deleting clip:', selectedClip.name);
+      this.deleteClip(selectedClip);
+      return;
+    }
+  }
+
+  @HostListener('window:mouseup')
+  onMouseUp() {
+    // Cancel any pending RAF updates
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+    
+    this.dragState = null;
+    this.trimState = null;
+    this.seeking = false;
+    (document.body as any).style.userSelect = '';
+  }
+
+  private getTrackIndexAtClientY(clientY: number): number | null {
+    const lanes = this.laneEls ? this.laneEls.toArray() : [];
+    for (let i = 0; i < lanes.length; i++) {
+      const rect = lanes[i]!.nativeElement.getBoundingClientRect();
+      if (clientY >= rect.top && clientY <= rect.bottom) return i;
+    }
+    return null;
+  }
+
+  onWheel(ev: WheelEvent) {
+    if (!ev.ctrlKey) return;
+    ev.preventDefault();
+    const factor = ev.deltaY > 0 ? 0.9 : 1.1;
+    const next = Math.min(600, Math.max(40, Math.round(this.pxPerSecond() * factor)));
+    this.pxPerSecond.set(next);
+  }
+
+  private tickRAF?: number;
+  private tickPlayhead() {
+    cancelAnimationFrame(this.tickRAF!);
+    const start = performance.now();
+    const origin = this.playhead();
+    const loop = (t: number) => {
+      if (!this.isPlaying()) return;
+      const sec = (t - start) / 1000;
+      this.playhead.set(origin + sec);
+      this.tickRAF = requestAnimationFrame(loop);
+    };
+    this.tickRAF = requestAnimationFrame(loop);
+  }
+
+  @HostListener('window:keydown', ['$event']) onKey(ev: KeyboardEvent) {
+    if (ev.code === 'Space') { ev.preventDefault(); this.isPlaying() ? this.pause() : this.play(); }
+  }
+
+  seekTo(sec: number) { 
+    this.playhead.set(sec);
+    
+    // If playing, restart from new position
+    if (this.isPlaying()) {
+      this.audio.stop();
+      const all = this.flattenClips();
+      this.audio.play(all.map(c => ({
+        buffer: c.buffer,
+        startTime: c.startTime,
+        duration: c.duration,
+        offset: c.offset,
+        gain: 1,
+        pan: 0,
+        muted: false,
+        trimStart: c.trimStart,
+        trimEnd: c.trimEnd
+      })), sec);
+    }
+  }
+
+  randomColor() { 
+    const colors = [
+      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+      'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+      'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+      'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+      'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+      'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+      'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+      'linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%)'
+    ];
+    return colors[Math.floor(Math.random() * colors.length)]!;
+  }
+
+  formatDuration(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    const ms = Math.floor((seconds % 1) * 100);
+    return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+  }
+
+  updateTrimmedWaveform(clip: Clip): void {
+    const buffer = clip.buffer;
+    const trimStart = clip.trimStart || 0;
+    const trimEnd = clip.trimEnd || 0;
+    
+    // If no trimming, use original waveform
+    if (trimStart === 0 && trimEnd === 0) {
+      clip.waveform = this.generateWaveform(buffer);
+      return;
+    }
+    
+    // Calculate precise sample positions
+    const sampleRate = buffer.sampleRate;
+    const totalSamples = buffer.length;
+    const startSample = Math.floor(trimStart * sampleRate);
+    const endSample = Math.floor((buffer.duration - trimEnd) * sampleRate);
+    
+    // Ensure we don't go out of bounds
+    const clampedStart = Math.max(0, Math.min(startSample, totalSamples - 1));
+    const clampedEnd = Math.max(clampedStart + 1, Math.min(endSample, totalSamples));
+    
+    // Extract trimmed audio data
+    const channelData = buffer.getChannelData(0);
+    const trimmedData = channelData.slice(clampedStart, clampedEnd);
+    
+    if (trimmedData.length === 0) {
+      // Fallback: create minimal waveform
+      clip.waveform = this.generateWaveformFromData(new Float32Array([0, 0]), 0.1);
+      return;
+    }
+    
+    // Generate waveform for the DISPLAY duration (clip.duration), not the buffer duration
+    // This ensures waveform matches visual clip width
+    clip.waveform = this.generateWaveformFromData(trimmedData, clip.duration);
+  }
+
+  generateWaveformFromData(audioData: Float32Array, duration: number): string {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    
+    // Use exact pixel width to match visual clip width
+    const width = Math.max(50, Math.floor(duration * this.pxPerSecond()));
+    const height = 32;
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    console.log(`Generating waveform: duration=${duration}s, width=${width}px, samples=${audioData.length}`);
+    
+    // Clear canvas
+    ctx.fillStyle = 'rgba(0,0,0,0)';
+    ctx.fillRect(0, 0, width, height);
+    
+    // Sample the audio data
+    const samplesPerPixel = Math.max(1, Math.floor(audioData.length / width));
+    
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.lineWidth = 1;
+    
+    ctx.beginPath();
+    
+    for (let x = 0; x < width; x++) {
+      const startIdx = x * samplesPerPixel;
+      const endIdx = Math.min(startIdx + samplesPerPixel, audioData.length);
+      
+      let min = 0;
+      let max = 0;
+      
+      for (let i = startIdx; i < endIdx; i++) {
+        const sample = audioData[i];
+        min = Math.min(min, sample);
+        max = Math.max(max, sample);
+      }
+      
+      const yMin = (height / 2) + (min * height / 2);
+      const yMax = (height / 2) + (max * height / 2);
+      
+      if (x === 0) {
+        ctx.moveTo(x, yMax);
+      } else {
+        ctx.lineTo(x, yMax);
+      }
+    }
+    
+    // Draw the waveform
+    for (let x = width - 1; x >= 0; x--) {
+      const startIdx = x * samplesPerPixel;
+      const endIdx = Math.min(startIdx + samplesPerPixel, audioData.length);
+      
+      let min = 0;
+      
+      for (let i = startIdx; i < endIdx; i++) {
+        const sample = audioData[i];
+        min = Math.min(min, sample);
+      }
+      
+      const yMin = (height / 2) + (min * height / 2);
+      ctx.lineTo(x, yMin);
+    }
+    
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    
+    return canvas.toDataURL();
+  }
+
+  getSelectedClip(): Clip | null {
+    const selectedId = this.selectedClipId();
+    if (!selectedId) return null;
+    
+    return this.flattenClips().find(c => c.id === selectedId) || null;
+  }
+
+  copyClip(clip: Clip): void {
+    // Create a deep copy of the clip (without the buffer reference)
+    this.clipboardClip = {
+      ...clip,
+      id: crypto.randomUUID(), // New ID for the copy
+      startTime: 0 // Reset position for pasting
+    };
+    console.log(`Clip "${clip.name}" copied to clipboard`);
+  }
+
+  pasteClip(): void {
+    if (!this.clipboardClip) return;
+
+    this.tracks.update(list => {
+      // Find first empty track or create new one
+      let targetTrack = list.find(t => t.clips.length === 0);
+      
+      if (!targetTrack) {
+        // Create new track
+        targetTrack = {
+          id: crypto.randomUUID(),
+          name: `Track ${list.length + 1}`,
+          clips: [],
+          mute: false,
+          solo: false,
+          volume: 1,
+          pan: 0
+        };
+        list.push(targetTrack);
+      }
+
+      // Create the pasted clip with a new ID
+      const pastedClip: Clip = {
+        ...this.clipboardClip!,
+        id: crypto.randomUUID(),
+        startTime: this.playhead(), // Paste at current playhead position
+        color: this.randomColor() // New color
+      };
+
+      targetTrack.clips.push(pastedClip);
+      
+      // Select the newly pasted clip
+      this.selectedClipId.set(pastedClip.id);
+      
+      console.log(`Clip "${pastedClip.name}" pasted to ${targetTrack.name}`);
+      
+      return [...list];
+    });
+  }
+
+  deleteClip(clip: Clip): void {
+    this.tracks.update(list => {
+      for (const track of list) {
+        const clipIndex = track.clips.findIndex(c => c.id === clip.id);
+        if (clipIndex !== -1) {
+          track.clips.splice(clipIndex, 1);
+          console.log(`Clip "${clip.name}" deleted`);
+          break;
+        }
+      }
+      
+      // Clear selection if deleted clip was selected
+      if (this.selectedClipId() === clip.id) {
+        this.selectedClipId.set(null);
+      }
+      
+      return [...list];
+    });
+  }
+
+  generateWaveform(buffer: AudioBuffer, width: number = 200, height: number = 44): string {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d')!;
+    
+    // Get audio data
+    const data = buffer.getChannelData(0);
+    const step = Math.ceil(data.length / width);
+    const amp = height / 2;
+    
+    // Clear canvas with slight background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillRect(0, 0, width, height);
+    
+    // Create gradient for waveform
+    const waveGradient = ctx.createLinearGradient(0, 0, 0, height);
+    waveGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+    waveGradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.7)');
+    waveGradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.7)');
+    waveGradient.addColorStop(1, 'rgba(255, 255, 255, 0.9)');
+    
+    // Draw filled waveform
+    ctx.beginPath();
+    ctx.moveTo(0, amp);
+    
+    for (let i = 0; i < width; i++) {
+      let min = 1.0;
+      let max = -1.0;
+      
+      for (let j = 0; j < step; j++) {
+        const datum = data[(i * step) + j];
+        if (datum !== undefined) {
+          if (datum < min) min = datum;
+          if (datum > max) max = datum;
+        }
+      }
+      
+      // Amplify weak signals for better visibility
+      min *= 1.5;
+      max *= 1.5;
+      min = Math.max(-1, min);
+      max = Math.min(1, max);
+      
+      ctx.lineTo(i, (1 + max) * amp);
+    }
+    
+    // Complete the path for filled waveform
+    for (let i = width - 1; i >= 0; i--) {
+      let min = 1.0;
+      let max = -1.0;
+      
+      for (let j = 0; j < step; j++) {
+        const datum = data[(i * step) + j];
+        if (datum !== undefined) {
+          if (datum < min) min = datum;
+          if (datum > max) max = datum;
+        }
+      }
+      
+      // Amplify weak signals
+      min *= 1.5;
+      max *= 1.5;
+      min = Math.max(-1, min);
+      max = Math.min(1, max);
+      
+      ctx.lineTo(i, (1 + min) * amp);
+    }
+    
+    ctx.closePath();
+    ctx.fillStyle = waveGradient;
+    ctx.fill();
+    
+    // Add outline for definition
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+    
+    return canvas.toDataURL();
+  }
+
+  // Opens the native file picker reliably
+  openFileDialog() {
+    const el = this.fileInput?.nativeElement;
+    if (el) {
+      (el as any).value = '';
+      el.click();
+    }
+  }
+
+  toggleSoundBrowser() {
+    this.showSoundBrowser.update(show => !show);
+  }
+
+  async onSoundSelected(buffer: AudioBuffer & { name: string; category: string; id?: string }) {
+    const color = this.randomColor();
+    const waveform = this.generateWaveform(buffer);
+    const playheadPosition = this.playhead();
+    
+    this.tracks.update(list => {
+      // Strategy: Try to place at playhead position on existing track, otherwise create new track
+      let targetTrack: Track | null = null;
+      let targetStartTime = playheadPosition;
+      let placementStrategy = '';
+      
+      // First pass: Look for exact playhead position availability
+      for (const track of list) {
+        const isPositionFree = !track.clips.some(clip => {
+          const clipStart = clip.startTime;
+          const clipEnd = clip.startTime + clip.duration;
+          const newClipEnd = playheadPosition + buffer.duration;
+          return !(newClipEnd <= clipStart || playheadPosition >= clipEnd);
+        });
+        
+        if (isPositionFree) {
+          targetTrack = track;
+          targetStartTime = playheadPosition;
+          placementStrategy = `at playhead on ${track.name}`;
+          break;
+        }
+      }
+      
+      // Second pass: If playhead position not available, look for nearest gap on any track
+      if (!targetTrack) {
+        let bestOption: { track: Track; startTime: number; distance: number } | null = null;
+        
+        for (const track of list) {
+          const sortedClips = [...track.clips].sort((a, b) => a.startTime - b.startTime);
+          
+          // Check gap before first clip
+          if (sortedClips.length > 0 && sortedClips[0].startTime >= buffer.duration + 0.05) {
+            const distance = Math.abs(0 - playheadPosition);
+            if (!bestOption || distance < bestOption.distance) {
+              bestOption = { track, startTime: 0, distance };
+            }
+          }
+          
+          // Check gaps between clips
+          for (let i = 0; i < sortedClips.length - 1; i++) {
+            const currentClip = sortedClips[i];
+            const nextClip = sortedClips[i + 1];
+            const gapStart = currentClip.startTime + currentClip.duration + 0.05;
+            const gapSize = nextClip.startTime - gapStart;
+            
+            if (gapSize >= buffer.duration) {
+              const distance = Math.abs(gapStart - playheadPosition);
+              if (!bestOption || distance < bestOption.distance) {
+                bestOption = { track, startTime: gapStart, distance };
+              }
+            }
+          }
+          
+          // Check position after last clip
+          if (sortedClips.length > 0) {
+            const lastClip = sortedClips[sortedClips.length - 1];
+            const afterLastPosition = lastClip.startTime + lastClip.duration + 0.05;
+            const distance = Math.abs(afterLastPosition - playheadPosition);
+            if (!bestOption || distance < bestOption.distance) {
+              bestOption = { track, startTime: afterLastPosition, distance };
+            }
+          }
+        }
+        
+        if (bestOption) {
+          targetTrack = bestOption.track;
+          targetStartTime = bestOption.startTime;
+          placementStrategy = `in nearest gap on ${bestOption.track.name}`;
+        }
+      }
+      
+      if (targetTrack) {
+        // Add to existing track
+        const newClip = {
+          id: crypto.randomUUID(),
+          name: buffer.name,
+          startTime: targetStartTime,
+          duration: buffer.duration,
+          offset: 0,
+          buffer: buffer,
+          color,
+          waveform,
+          trimStart: 0,
+          trimEnd: 0,
+          originalDuration: buffer.duration,
+          soundId: buffer.id
+        } as any;
+        targetTrack.clips.push(newClip);
+        console.log(`Added ${buffer.name} ${placementStrategy} at ${targetStartTime.toFixed(2)}s`);
+        console.log(`Track "${targetTrack.name}" now has ${targetTrack.clips.length} clips:`, 
+                    targetTrack.clips.map(c => `${c.name}@${c.startTime.toFixed(1)}s`));
+      } else {
+        // Create new track - all existing tracks are too busy
+        const newTrack: Track = {
+          id: crypto.randomUUID(),
+          name: `Track ${list.length + 1}`,
+          clips: [{
+            id: crypto.randomUUID(),
+            name: buffer.name,
+            startTime: playheadPosition,
+            duration: buffer.duration,
+            offset: 0,
+            buffer: buffer,
+            color,
+            waveform,
+            trimStart: 0,
+            trimEnd: 0,
+            originalDuration: buffer.duration,
+            soundId: buffer.id
+          } as any],
+          mute: false,
+          solo: false,
+          volume: 1,
+          pan: 0
+        };
+        list.push(newTrack);
+        console.log(`Added ${buffer.name} on new ${newTrack.name} at playhead ${playheadPosition.toFixed(2)}s`);
+      }
+      
+      // Return new array with deep copy to ensure change detection
+      return list.map(track => ({
+        ...track,
+        clips: [...track.clips]
+      }));
+    });
+  }
+
+  // --- Seeking per Maus in Ruler/Lane ---
+  private seeking = false;
+  rulerMouseDown(ev: MouseEvent) {
+    const rect = (ev.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    this.seekTo(pxToSeconds(x, this.pxPerSecond()));
+    this.seeking = true;
+    (document.body as any).style.userSelect = 'none';
+  }
+  laneMouseDown(ev: MouseEvent) {
+    // Wenn auf einem Clip (oder innerhalb), kein Seeking auslösen
+    if ((ev.target as HTMLElement)?.closest('.clip')) return;
+    const lane = ev.currentTarget as HTMLElement;
+    const clipsEl = lane.querySelector('.clips') as HTMLElement;
+    const rect = clipsEl.getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    this.seekTo(pxToSeconds(x, this.pxPerSecond()));
+    this.seeking = true;
+    (document.body as any).style.userSelect = 'none';
+  }
+
+}
