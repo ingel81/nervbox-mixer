@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "angular-audio-editor": {
+    "nervbox-mixer": {
       "projectType": "application",
       "root": "",
       "sourceRoot": "src",
@@ -12,7 +12,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/angular-audio-editor",
+            "outputPath": "dist/nervbox-mixer",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": [],
@@ -60,10 +60,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "angular-audio-editor:build:production"
+              "browserTarget": "nervbox-mixer:build:production"
             },
             "development": {
-              "browserTarget": "angular-audio-editor:build:development"
+              "browserTarget": "nervbox-mixer:build:development"
             }
           },
           "defaultConfiguration": "development"
