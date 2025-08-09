@@ -79,20 +79,20 @@ Currently no tests implemented. When adding tests:
 ## Git Repository Setup
 
 ### Repository Details
-- **Remote URL**: `git@github.com:ingel81/nervbox-mixer.git` (SSH)
+- **Remote URL**: SSH connection to GitHub repository
 - **Branch**: `main`
-- **Local Git User**: `ingel81 <ingel81@users.noreply.github.com>`
+- **Local Git User**: Use GitHub noreply email format to avoid privacy issues
 
 ### Important Git Commands Used
 ```bash
 # Initialize repository and connect to remote
 git init
-git remote add origin git@github.com:ingel81/nervbox-mixer.git
+git remote add origin git@github.com:USERNAME/REPOSITORY.git
 git branch -M main
 
 # Configure local user (avoids GitHub email privacy issues)
-git config --local user.name "ingel81"
-git config --local user.email "ingel81@users.noreply.github.com"
+git config --local user.name "USERNAME"
+git config --local user.email "USERNAME@users.noreply.github.com"
 
 # Handle large files and cleanup
 git rm -r --cached .angular/ dist/ "src/assets/sounds/"
