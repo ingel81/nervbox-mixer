@@ -22,6 +22,10 @@
 # TypeScript cache
 *.tsbuildinfo
 
+# Sound files - keep local but don't commit
+*.wav
+*.mp3
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
