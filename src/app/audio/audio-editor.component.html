@@ -2,20 +2,12 @@
   <span class="logo"><span class="logo-text">NervBox</span> <span class="logo-subtitle">Mixer</span> <span class="alpha-badge">ALPHA</span></span>
   <span class="spacer"></span>
 
-  <button mat-icon-button (click)="openFileDialog()" matTooltip="Import audio files">
-    <mat-icon>file_upload</mat-icon>
-  </button>
-  <input #fileInput type="file" multiple accept="audio/*" (change)="onFilesSelected($event.target.files)" hidden>
-
-  <button mat-icon-button (click)="addTrack()" matTooltip="Add track">
-    <mat-icon>queue</mat-icon>
+  <!-- Transport Controls (Primary) -->
+  <button mat-icon-button (click)="isPlaying() ? pause() : play()" matTooltip="Play/Pause">
+    <mat-icon>{{ isPlaying() ? 'pause' : 'play_arrow' }}</mat-icon>
   </button>
 
-  <button mat-icon-button (click)="toggleSoundBrowser()" matTooltip="Sound Library" 
-          [class.active]="showSoundBrowser()">
-    <mat-icon>library_music</mat-icon>
-  </button>
-
+  <!-- Project Management -->
   <button mat-button [matMenuTriggerFor]="arrangementMenu" class="arrangement-btn" matTooltip="Arrangements">
     <mat-icon>folder</mat-icon>
     Arrangements
@@ -41,8 +33,19 @@
     </button>
   </mat-menu>
 
-  <button mat-icon-button (click)="isPlaying() ? pause() : play()" matTooltip="Play/Pause">
-    <mat-icon>{{ isPlaying() ? 'pause' : 'play_arrow' }}</mat-icon>
+  <!-- Content Creation -->
+  <button mat-icon-button (click)="addTrack()" matTooltip="Add track">
+    <mat-icon>queue</mat-icon>
+  </button>
+
+  <button mat-icon-button (click)="openFileDialog()" matTooltip="Import audio files">
+    <mat-icon>file_upload</mat-icon>
+  </button>
+  <input #fileInput type="file" multiple accept="audio/*" (change)="onFilesSelected($event.target.files)" hidden>
+
+  <button mat-icon-button (click)="toggleSoundBrowser()" matTooltip="Sound Library" 
+          [class.active]="showSoundBrowser()">
+    <mat-icon>library_music</mat-icon>
   </button>
 
   <button mat-button [matMenuTriggerFor]="exportMenu" color="accent" class="export-btn">
@@ -64,30 +67,43 @@
 
 <div class="editor" (wheel)="onWheel($event)">
   <div class="tracks">
+    <!-- Header with fixed width columns -->
     <div class="tracks-header">
       <div class="head-spacer">
         <span class="time-display">{{ formatDuration(playhead()) }}</span>
       </div>
-      <div class="ruler" #timeline (mousedown)="rulerMouseDown($event)">
-        <div class="ticks" [style.width.px]="duration() * pxPerSecond()">
-          <ng-container *ngFor="let t of [].constructor(duration()); let i = index">
-            <div class="tick" [style.left.px]="i * pxPerSecond()">
-              <span class="tick-label">{{ i }}s</span>
-            </div>
-          </ng-container>
+      <div class="ruler-container">
+        <div class="ruler" #timeline (mousedown)="rulerMouseDown($event)">
+          <div class="ticks" [style.width.px]="duration() * pxPerSecond()">
+            <ng-container *ngFor="let i of getTimelineMarkers()">
+              <div class="tick" [style.left.px]="i * pxPerSecond()">
+                <span class="tick-label">{{ i }}s</span>
+              </div>
+            </ng-container>
+          </div>
+          <div class="playhead-ruler" [style.left.px]="(playhead() * pxPerSecond())"></div>
         </div>
-        <div class="playhead-ruler" [style.left.px]="(playhead() * pxPerSecond())"></div>
       </div>
     </div>
-    <div class="track" *ngFor="let track of tracks()">
-      <div class="track-head">
+
+    <!-- Track heads column -->
+    <div class="tracks-heads">
+      <div class="track-head" *ngFor="let track of tracks()">
         <div class="track-controls">
           <div class="title">{{ track.name }}</div>
           <div class="track-buttons">
-            <button mat-icon-button class="track-btn" matTooltip="Mute">
-              <mat-icon>volume_off</mat-icon>
+            <button mat-icon-button 
+                    class="track-btn" 
+                    [class.active]="track.mute"
+                    (click)="toggleMute(track)" 
+                    matTooltip="Mute">
+              <mat-icon>{{ track.mute ? 'volume_off' : 'volume_up' }}</mat-icon>
             </button>
-            <button mat-icon-button class="track-btn" matTooltip="Solo">
+            <button mat-icon-button 
+                    class="track-btn" 
+                    [class.active]="track.solo"
+                    (click)="toggleSolo(track)" 
+                    matTooltip="Solo">
               <mat-icon>headset</mat-icon>
             </button>
             <button mat-icon-button class="track-btn delete" (click)="removeTrack(track)" matTooltip="Remove track">
@@ -96,8 +112,17 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="lane" #lane (mousedown)="laneMouseDown($event)" (drop)="onFilesSelected($event.dataTransfer?.files, track)" (dragover)="$event.preventDefault()">
+    <!-- Timeline lanes column -->
+    <div class="tracks-lanes">
+      <div class="lane" *ngFor="let track of tracks()" #lane 
+           (mousedown)="laneMouseDown($event)" 
+           (drop)="onDrop($event, track)" 
+           (dragover)="onDragOver($event)"
+           (dragenter)="onDragEnter($event, track)"
+           (dragleave)="onDragLeave($event)"
+           [class.drag-over]="dragOverTrack?.id === track.id">
         <div class="clips" [style.width.px]="duration() * pxPerSecond()">
           <div class="clip"
                *ngFor="let clip of track.clips"

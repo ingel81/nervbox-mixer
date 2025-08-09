@@ -51,7 +51,11 @@ import { SoundLibraryItem, SoundCategory } from './sound-library';
         <div class="sound-item" 
              *ngFor="let sound of libraryService.filteredSounds()"
              [class.loading]="loadingStates[sound.id]"
-             (click)="addSoundToProject(sound)">
+             [class.dragging]="draggedSound?.id === sound.id"
+             (click)="addSoundToProject(sound)"
+             draggable="true"
+             (dragstart)="onDragStart($event, sound)"
+             (dragend)="onDragEnd($event)">
           
           <div class="sound-info">
             <div class="sound-name">{{ sound.name }}</div>
@@ -106,6 +110,7 @@ export class SoundBrowserComponent {
   // Drag state
   isDragging = false;
   dragOffset = { x: 0, y: 0 };
+  draggedSound?: SoundLibraryItem;
   
   constructor(public libraryService: SoundLibraryService) {}
 
@@ -193,6 +198,49 @@ export class SoundBrowserComponent {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // Drag & Drop for sounds
+  onDragStart(event: DragEvent, sound: SoundLibraryItem) {
+    console.log('Drag start:', sound.name);
+    this.draggedSound = sound;
+    
+    // Set drag data
+    event.dataTransfer!.effectAllowed = 'copy';
+    event.dataTransfer!.setData('text/plain', JSON.stringify({
+      type: 'sound',
+      id: sound.id,
+      name: sound.name,
+      category: sound.category
+    }));
+    
+    // Create drag image
+    const dragImage = document.createElement('div');
+    dragImage.className = 'drag-image';
+    dragImage.textContent = sound.name;
+    dragImage.style.cssText = `
+      position: fixed;
+      top: -1000px;
+      left: -1000px;
+      background: rgba(147, 51, 234, 0.9);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(147, 51, 234, 0.5);
+      z-index: 10000;
+    `;
+    document.body.appendChild(dragImage);
+    event.dataTransfer!.setDragImage(dragImage, 0, 0);
+    
+    // Clean up drag image after a delay
+    setTimeout(() => document.body.removeChild(dragImage), 100);
+  }
+
+  onDragEnd(event: DragEvent) {
+    console.log('Drag end');
+    this.draggedSound = undefined;
   }
 
   onHeaderMouseDown(event: MouseEvent) {

@@ -39,15 +39,27 @@ export class AudioEditorComponent {
   duration = computed(() => {
     const t = this.tracks();
     let max = 0;
+    let maxClip = null;
     for (const tr of t) {
       for (const c of tr.clips) {
-        max = Math.max(max, c.startTime + c.duration);
+        const clipEnd = c.startTime + c.duration;
+        if (clipEnd > max) {
+          max = clipEnd;
+          maxClip = c;
+        }
       }
     }
-    const result = Math.max(10, Math.ceil(max));
-    console.log(`Duration calculated: ${result}s from ${t.length} tracks with total ${t.reduce((sum, tr) => sum + tr.clips.length, 0)} clips`);
+    const result = Math.max(10, Math.ceil(max) + 5); // Add 5s buffer
+    console.log(`Duration calculated: ${result}s from ${t.length} tracks with total ${t.reduce((sum, tr) => sum + tr.clips.length, 0)} clips. Max clip end: ${max}s`, maxClip?.name);
     return result;
   });
+
+  getTimelineMarkers(): number[] {
+    const dur = this.duration();
+    const markers = Array.from({length: dur + 1}, (_, i) => i);
+    console.log(`Generated ${markers.length} timeline markers (0-${dur})`);
+    return markers;
+  }
 
   constructor(
     private audio: AudioEngineService, 
@@ -596,6 +608,71 @@ export class AudioEditorComponent {
     this.tracks.update(list => list.filter(t => t !== track));
   }
 
+  toggleMute(track: Track) {
+    this.tracks.update(list => 
+      list.map(t => t.id === track.id ? { ...t, mute: !t.mute } : t)
+    );
+    
+    // If currently playing, restart playback with new mute states
+    if (this.isPlaying()) {
+      this.restartPlaybackFromCurrentPosition();
+    }
+  }
+
+  toggleSolo(track: Track) {
+    this.tracks.update(list => {
+      const hasSoloTracks = list.some(t => t.solo);
+      const isTrackCurrentlySolo = track.solo;
+      
+      if (!hasSoloTracks) {
+        // No tracks are solo, make this track solo
+        return list.map(t => t.id === track.id ? { ...t, solo: true } : t);
+      } else if (isTrackCurrentlySolo) {
+        // This track is solo, turn off solo
+        return list.map(t => t.id === track.id ? { ...t, solo: false } : t);
+      } else {
+        // Other tracks are solo, add this track to solo
+        return list.map(t => t.id === track.id ? { ...t, solo: true } : t);
+      }
+    });
+    
+    // If currently playing, restart playback with new solo states
+    if (this.isPlaying()) {
+      this.restartPlaybackFromCurrentPosition();
+    }
+  }
+
+  private restartPlaybackFromCurrentPosition() {
+    const currentPlayheadPosition = this.playhead();
+    this.audio.stop();
+    const clips = this.getPlayableClips();
+    this.audio.play(clips, currentPlayheadPosition);
+    this.tickPlayhead();
+  }
+
+  private getPlayableClips() {
+    const tracks = this.tracks();
+    const hasSoloTracks = tracks.some(t => t.solo);
+    
+    return tracks
+      .filter(track => {
+        // If there are solo tracks, only play solo tracks
+        // If no solo tracks, play all non-muted tracks
+        return hasSoloTracks ? track.solo : !track.mute;
+      })
+      .flatMap(track => track.clips.map(clip => ({
+        buffer: clip.buffer,
+        startTime: clip.startTime,
+        duration: clip.duration,
+        offset: clip.offset,
+        gain: track.volume,
+        pan: track.pan,
+        muted: false, // Already filtered out muted tracks above
+        trimStart: clip.trimStart,
+        trimEnd: clip.trimEnd
+      })));
+  }
+
   saveArrangement() {
     const name = prompt('Enter arrangement name:');
     if (name?.trim()) {
@@ -689,18 +766,8 @@ export class AudioEditorComponent {
   }
 
   play() {
-    const all = this.flattenClips();
-    this.audio.play(all.map(c => ({
-      buffer: c.buffer,
-      startTime: c.startTime,
-      duration: c.duration,
-      offset: c.offset,
-      gain: 1,
-      pan: 0,
-      muted: false,
-      trimStart: c.trimStart,
-      trimEnd: c.trimEnd
-    })), this.playhead());
+    const clips = this.getPlayableClips();
+    this.audio.play(clips, this.playhead());
     this.isPlaying.set(true);
     this.tickPlayhead();
   }
@@ -772,6 +839,9 @@ export class AudioEditorComponent {
   // Waveform update throttling
   private waveformUpdateTimeout: number | null = null;
 
+  // Drag & Drop state
+  dragOverTrack: Track | null = null;
+
   clipMouseDown(ev: MouseEvent, clip: Clip) {
     ev.stopPropagation();
     this.selectedClipId.set(clip.id);
@@ -814,7 +884,7 @@ export class AudioEditorComponent {
       const samplesPerSecond = sampleRate;
       
       if (this.trimState.side === 'start') {
-        // Trim from start - adjust start time and duration
+        // Trim from start - keep right edge fixed in timeline, adjust left edge only
         const maxTrimStart = clip.originalDuration - (clip.trimEnd || 0) - 0.001; // Min 1ms
         let newTrimStart = Math.max(0, Math.min(maxTrimStart, 
           this.trimState.originalTrimStart + deltaSeconds));
@@ -823,11 +893,16 @@ export class AudioEditorComponent {
         const trimSamples = Math.floor(newTrimStart * samplesPerSecond);
         newTrimStart = trimSamples / samplesPerSecond;
         
-        // Calculate the change and adjust timeline position
-        const trimDelta = newTrimStart - (clip.trimStart || 0);
+        // FIXED: Keep right edge position constant
+        // Calculate original right edge position
+        const originalRightEdge = this.trimState.originalStartTime + (clip.originalDuration - (this.trimState.originalTrimStart + (this.trimState.originalTrimEnd || 0)));
+        
+        // Set new trim and calculate new start time to maintain right edge position
         clip.trimStart = newTrimStart;
-        clip.startTime = this.trimState.originalStartTime + trimDelta;
         clip.duration = clip.originalDuration - clip.trimStart - (clip.trimEnd || 0);
+        clip.startTime = originalRightEdge - clip.duration; // Right edge stays fixed
+        
+        console.log(`Left trim: trimStart=${newTrimStart.toFixed(3)}, startTime=${clip.startTime.toFixed(3)}, duration=${clip.duration.toFixed(3)}, rightEdge=${originalRightEdge.toFixed(3)}`);
       } else {
         // Trim from end - only adjust duration
         const maxTrimEnd = clip.originalDuration - (clip.trimStart || 0) - 0.001; // Min 1ms
@@ -1132,6 +1207,8 @@ export class AudioEditorComponent {
         trimStart: c.trimStart,
         trimEnd: c.trimEnd
       })), sec);
+      // Restart the playhead ticker from new position
+      this.tickPlayhead();
     }
   }
 
@@ -1569,23 +1646,166 @@ export class AudioEditorComponent {
     });
   }
 
+  // --- Drag & Drop from Sound Library ---
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.dataTransfer!.dropEffect = 'copy';
+  }
+
+  onDragEnter(event: DragEvent, track: Track) {
+    event.preventDefault();
+    
+    // Check if this is a sound being dragged
+    const data = event.dataTransfer?.getData('text/plain');
+    if (data) {
+      try {
+        const dragData = JSON.parse(data);
+        if (dragData.type === 'sound') {
+          this.dragOverTrack = track;
+          console.log(`Drag enter track: ${track.name}`);
+        }
+      } catch (e) {
+        // Not JSON data, might be file drag
+      }
+    }
+  }
+
+  onDragLeave(event: DragEvent) {
+    // Only clear if we're leaving the lane entirely
+    const relatedTarget = event.relatedTarget as HTMLElement;
+    if (!relatedTarget || !relatedTarget.closest('.lane')) {
+      this.dragOverTrack = null;
+    }
+  }
+
+  onDrop(event: DragEvent, track: Track) {
+    event.preventDefault();
+    this.dragOverTrack = null;
+    
+    // Check if it's a sound from the library
+    const textData = event.dataTransfer?.getData('text/plain');
+    if (textData) {
+      try {
+        const dragData = JSON.parse(textData);
+        if (dragData.type === 'sound') {
+          console.log(`Dropped sound ${dragData.name} on track ${track.name}`);
+          this.handleSoundDrop(dragData, track, event);
+          return;
+        }
+      } catch (e) {
+        console.log('Not a sound drop, checking for files...');
+      }
+    }
+    
+    // Handle file drops (existing functionality)
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      this.onFilesSelected(files, track);
+    }
+  }
+
+  private async handleSoundDrop(soundData: any, track: Track, event: DragEvent) {
+    try {
+      // Load the sound
+      const buffer = await this.soundLibrary.loadSound(soundData.id);
+      if (!buffer) {
+        console.error('Failed to load sound for drop');
+        return;
+      }
+      
+      // Calculate drop position based on mouse position
+      const lane = event.currentTarget as HTMLElement;
+      const clipsEl = lane.querySelector('.clips') as HTMLElement;
+      const rect = clipsEl.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const dropTime = Math.max(0, pxToSeconds(x, this.pxPerSecond()));
+      
+      // Create the audio buffer with metadata
+      const audioBuffer = Object.assign(buffer, {
+        name: soundData.name,
+        category: soundData.category,
+        id: soundData.id
+      });
+      
+      // Add to specific track at drop position
+      this.addSoundToTrack(audioBuffer, track, dropTime);
+      
+      console.log(`Added ${soundData.name} to ${track.name} at ${dropTime.toFixed(2)}s`);
+      
+    } catch (error) {
+      console.error('Error handling sound drop:', error);
+    }
+  }
+
+  private addSoundToTrack(buffer: AudioBuffer & { name: string; category: string; id?: string }, track: Track, startTime: number) {
+    const color = this.randomColor();
+    const waveform = this.generateWaveform(buffer);
+    
+    // Check for overlaps and find suitable position
+    let finalStartTime = startTime;
+    const newClipEnd = startTime + buffer.duration;
+    
+    const overlappingClip = track.clips.find(clip => {
+      const clipStart = clip.startTime;
+      const clipEnd = clip.startTime + clip.duration;
+      return !(newClipEnd <= clipStart || startTime >= clipEnd);
+    });
+    
+    if (overlappingClip) {
+      // Find next available position after overlapping clip
+      finalStartTime = overlappingClip.startTime + overlappingClip.duration + 0.1;
+      console.log(`Adjusted position due to overlap: ${finalStartTime.toFixed(2)}s`);
+    }
+    
+    this.tracks.update(list => {
+      const targetTrack = list.find(t => t.id === track.id);
+      if (targetTrack) {
+        const newClip: Clip = {
+          id: crypto.randomUUID(),
+          name: buffer.name,
+          startTime: finalStartTime,
+          duration: buffer.duration,
+          offset: 0,
+          buffer: buffer,
+          color,
+          waveform,
+          trimStart: 0,
+          trimEnd: 0,
+          originalDuration: buffer.duration
+        };
+        
+        targetTrack.clips.push(newClip);
+      }
+      
+      return [...list];
+    });
+  }
+
   // --- Seeking per Maus in Ruler/Lane ---
   private seeking = false;
   rulerMouseDown(ev: MouseEvent) {
+    ev.preventDefault();
+    ev.stopPropagation();
     const rect = (ev.currentTarget as HTMLElement).getBoundingClientRect();
     const x = ev.clientX - rect.left;
-    this.seekTo(pxToSeconds(x, this.pxPerSecond()));
+    const timePosition = pxToSeconds(x, this.pxPerSecond());
+    console.log(`Timeline seek to: ${timePosition.toFixed(3)}s, isPlaying: ${this.isPlaying()}`);
+    this.seekTo(timePosition);
     this.seeking = true;
     (document.body as any).style.userSelect = 'none';
   }
   laneMouseDown(ev: MouseEvent) {
     // Wenn auf einem Clip (oder innerhalb), kein Seeking auslösen
     if ((ev.target as HTMLElement)?.closest('.clip')) return;
+    ev.preventDefault();
+    ev.stopPropagation();
     const lane = ev.currentTarget as HTMLElement;
     const clipsEl = lane.querySelector('.clips') as HTMLElement;
     const rect = clipsEl.getBoundingClientRect();
     const x = ev.clientX - rect.left;
-    this.seekTo(pxToSeconds(x, this.pxPerSecond()));
+    const timePosition = pxToSeconds(x, this.pxPerSecond());
+    console.log(`Lane seek to: ${timePosition.toFixed(3)}s, isPlaying: ${this.isPlaying()}`);
+    this.seekTo(timePosition);
     this.seeking = true;
     (document.body as any).style.userSelect = 'none';
   }
