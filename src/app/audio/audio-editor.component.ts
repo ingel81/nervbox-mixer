@@ -182,7 +182,7 @@ export class AudioEditorComponent {
         buffers.forEach((buf, i) => {
           const name = filesArray[i]?.name.replace(/\.[^.]+$/, '') || `Audio ${i + 1}`;
           const color = this.randomColor();
-          const waveform = this.generateWaveform(buf);
+          const waveform = this.generateWaveform(buf, Math.floor(buf.duration * this.pxPerSecond()), 44, color);
           track.clips.push({ 
             id: crypto.randomUUID(), 
             name, 
@@ -204,7 +204,7 @@ export class AudioEditorComponent {
         buffers.forEach((buf, i) => {
           const name = filesArray[i]?.name.replace(/\.[^.]+$/, '') || `Audio ${i + 1}`;
           const color = this.randomColor();
-          const waveform = this.generateWaveform(buf);
+          const waveform = this.generateWaveform(buf, Math.floor(buf.duration * this.pxPerSecond()), 44, color);
           
           // Try to find a track with space at playhead position
           let placedOnExistingTrack = false;
@@ -359,7 +359,7 @@ export class AudioEditorComponent {
             originalDuration: kickBuffer.duration,
             buffer: kickBuffer,
             color: 'linear-gradient(45deg, #dc2626, #b91c1c)',
-            waveform: undefined,
+            waveform: this.generateWaveform(kickBuffer, Math.floor(kickBuffer.duration * this.pxPerSecond()), 44, 'linear-gradient(45deg, #dc2626, #b91c1c)'),
             soundId: 'kick-1'
           } as any);
           
@@ -376,7 +376,7 @@ export class AudioEditorComponent {
               originalDuration: kickBuffer.duration,
               buffer: kickBuffer,
               color: 'linear-gradient(45deg, #dc2626, #b91c1c)',
-              waveform: undefined,
+              waveform: this.generateWaveform(kickBuffer, Math.floor(kickBuffer.duration * this.pxPerSecond()), 44, 'linear-gradient(45deg, #dc2626, #b91c1c)'),
               soundId: 'kick-1'
             } as any);
           }
@@ -394,7 +394,7 @@ export class AudioEditorComponent {
               originalDuration: kickBuffer.duration,
               buffer: kickBuffer,
               color: 'linear-gradient(45deg, #dc2626, #b91c1c)',
-              waveform: undefined,
+              waveform: this.generateWaveform(kickBuffer, Math.floor(kickBuffer.duration * this.pxPerSecond()), 44, 'linear-gradient(45deg, #dc2626, #b91c1c)'),
               soundId: 'kick-1'
             } as any);
           }
@@ -418,7 +418,7 @@ export class AudioEditorComponent {
             originalDuration: snareBuffer.duration,
             buffer: snareBuffer,
             color: 'linear-gradient(45deg, #f59e0b, #d97706)',
-            waveform: undefined,
+            waveform: this.generateWaveform(snareBuffer, Math.floor(snareBuffer.duration * this.pxPerSecond()), 44, 'linear-gradient(45deg, #f59e0b, #d97706)'),
             soundId: 'snare-2'
           } as any);
           
@@ -434,7 +434,7 @@ export class AudioEditorComponent {
             originalDuration: snareBuffer.duration,
             buffer: snareBuffer,
             color: 'linear-gradient(45deg, #f59e0b, #d97706)',
-            waveform: undefined,
+            waveform: this.generateWaveform(snareBuffer, Math.floor(snareBuffer.duration * this.pxPerSecond()), 44, 'linear-gradient(45deg, #f59e0b, #d97706)'),
             soundId: 'snare-2'
           } as any);
           
@@ -451,7 +451,7 @@ export class AudioEditorComponent {
               originalDuration: snareBuffer.duration,
               buffer: snareBuffer,
               color: 'linear-gradient(45deg, #f59e0b, #d97706)',
-              waveform: undefined,
+              waveform: this.generateWaveform(snareBuffer, Math.floor(snareBuffer.duration * this.pxPerSecond()), 44, 'linear-gradient(45deg, #f59e0b, #d97706)'),
               soundId: 'snare-2'
             } as any);
           }
@@ -479,7 +479,7 @@ export class AudioEditorComponent {
                 originalDuration: hihatClosedBuffer.duration,
                 buffer: hihatClosedBuffer,
                 color: 'linear-gradient(45deg, #06b6d4, #0891b2)',
-                waveform: undefined,
+                waveform: this.generateWaveform(hihatClosedBuffer, Math.floor(hihatClosedBuffer.duration * this.pxPerSecond()), 44, 'linear-gradient(45deg, #06b6d4, #0891b2)'),
                 soundId: 'hi-hat-3'
               } as any);
             }
@@ -505,7 +505,7 @@ export class AudioEditorComponent {
               originalDuration: hihatOpenBuffer.duration,
               buffer: hihatOpenBuffer,
               color: 'linear-gradient(45deg, #0ea5e9, #0284c7)',
-              waveform: undefined,
+              waveform: this.generateWaveform(hihatOpenBuffer, Math.floor(hihatOpenBuffer.duration * this.pxPerSecond()), 44, 'linear-gradient(45deg, #0ea5e9, #0284c7)'),
               soundId: 'hi-hat-10'
             } as any);
           }
@@ -523,7 +523,7 @@ export class AudioEditorComponent {
               originalDuration: hihatOpenBuffer.duration,
               buffer: hihatOpenBuffer,
               color: 'linear-gradient(45deg, #0ea5e9, #0284c7)',
-              waveform: undefined,
+              waveform: this.generateWaveform(hihatOpenBuffer, Math.floor(hihatOpenBuffer.duration * this.pxPerSecond()), 44, 'linear-gradient(45deg, #0ea5e9, #0284c7)'),
               soundId: 'hi-hat-10'
             } as any);
           }
@@ -547,7 +547,7 @@ export class AudioEditorComponent {
             originalDuration: bassBuffer.duration,
             buffer: bassBuffer,
             color: 'linear-gradient(45deg, #7c3aed, #6d28d9)',
-            waveform: undefined,
+            waveform: this.generateWaveform(bassBuffer, Math.floor(bassBuffer.duration * this.pxPerSecond()), 44, 'linear-gradient(45deg, #7c3aed, #6d28d9)'),
             soundId: 'bass-1-g2'
           } as any);
           
@@ -564,7 +564,7 @@ export class AudioEditorComponent {
               originalDuration: bassBuffer.duration,
               buffer: bassBuffer,
               color: 'linear-gradient(45deg, #7c3aed, #6d28d9)',
-              waveform: undefined,
+              waveform: this.generateWaveform(bassBuffer, Math.floor(bassBuffer.duration * this.pxPerSecond()), 44, 'linear-gradient(45deg, #7c3aed, #6d28d9)'),
               soundId: 'bass-1-g2'
             } as any);
           }
@@ -582,7 +582,7 @@ export class AudioEditorComponent {
               originalDuration: bassBuffer.duration,
               buffer: bassBuffer,
               color: 'linear-gradient(45deg, #7c3aed, #6d28d9)',
-              waveform: undefined,
+              waveform: this.generateWaveform(bassBuffer, Math.floor(bassBuffer.duration * this.pxPerSecond()), 44, 'linear-gradient(45deg, #7c3aed, #6d28d9)'),
               soundId: 'bass-1-g2'
             } as any);
           }
@@ -1420,7 +1420,46 @@ export class AudioEditorComponent {
     });
   }
 
-  generateWaveform(buffer: AudioBuffer, width: number = 200, height: number = 44): string {
+  // Helper to convert hex to RGB
+  private hexToRgb(hex: string): {r: number, g: number, b: number} {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : {r: 255, g: 255, b: 255};
+  }
+
+  // Use smart color selection for maximum visibility
+  private getWaveformColor(clipColor: string): string {
+    // For red/pink clips, use pure white for maximum contrast
+    if (clipColor.includes('dc2626') || clipColor.includes('b91c1c') || 
+        clipColor.includes('f093fb') || clipColor.includes('f5576c') || 
+        clipColor.includes('fa709a') || clipColor.includes('ff9a9e') ||
+        clipColor.includes('ff6e7f')) {
+      return '#ffffff'; // Pure white for red/pink clips
+    }
+    
+    // For purple/dark clips, use light gray
+    if (clipColor.includes('7c3aed') || clipColor.includes('6d28d9') ||
+        clipColor.includes('667eea') || clipColor.includes('764ba2') ||
+        clipColor.includes('330867')) { // Purple
+      return '#f3f4f6';
+    }
+    
+    // For bright clips, use darker gray
+    return '#9ca3af'; // Medium gray for bright backgrounds
+  }
+
+  // Check if clip needs outline for visibility
+  private needsOutline(clipColor: string): boolean {
+    return clipColor.includes('dc2626') || clipColor.includes('b91c1c') ||
+           clipColor.includes('f093fb') || clipColor.includes('f5576c') || 
+           clipColor.includes('fa709a') || clipColor.includes('ff9a9e') ||
+           clipColor.includes('ff6e7f');
+  }
+
+  generateWaveform(buffer: AudioBuffer, width: number = 200, height: number = 44, clipColor: string = ''): string {
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
@@ -1435,12 +1474,16 @@ export class AudioEditorComponent {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.fillRect(0, 0, width, height);
     
-    // Create gradient for waveform
+    // Use consistent gray for all waveforms
+    const waveColor = this.getWaveformColor(clipColor);
+    
+    // Create stronger gray gradient for better visibility
     const waveGradient = ctx.createLinearGradient(0, 0, 0, height);
-    waveGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-    waveGradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.7)');
-    waveGradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.7)');
-    waveGradient.addColorStop(1, 'rgba(255, 255, 255, 0.9)');
+    const rgb = this.hexToRgb(waveColor);
+    waveGradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1.0)`);
+    waveGradient.addColorStop(0.3, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`);
+    waveGradient.addColorStop(0.7, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`);
+    waveGradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1.0)`);
     
     // Draw filled waveform
     ctx.beginPath();
@@ -1490,13 +1533,17 @@ export class AudioEditorComponent {
     }
     
     ctx.closePath();
+    
+    // For red clips, add black outline for visibility
+    if (this.needsOutline(clipColor)) {
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    
+    // Fill with color
     ctx.fillStyle = waveGradient;
     ctx.fill();
-    
-    // Add outline for definition
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.lineWidth = 0.5;
-    ctx.stroke();
     
     return canvas.toDataURL();
   }
@@ -1516,7 +1563,7 @@ export class AudioEditorComponent {
 
   async onSoundSelected(buffer: AudioBuffer & { name: string; category: string; id?: string }) {
     const color = this.randomColor();
-    const waveform = this.generateWaveform(buffer);
+    const waveform = this.generateWaveform(buffer, Math.floor(buffer.duration * this.pxPerSecond()), 44, color);
     const playheadPosition = this.playhead();
     
     this.tracks.update(list => {
@@ -1739,7 +1786,7 @@ export class AudioEditorComponent {
 
   private addSoundToTrack(buffer: AudioBuffer & { name: string; category: string; id?: string }, track: Track, startTime: number) {
     const color = this.randomColor();
-    const waveform = this.generateWaveform(buffer);
+    const waveform = this.generateWaveform(buffer, Math.floor(buffer.duration * this.pxPerSecond()), 44, color);
     
     // Check for overlaps and find suitable position
     let finalStartTime = startTime;

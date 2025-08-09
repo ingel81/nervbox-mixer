@@ -12,7 +12,8 @@
       "Bash(npm run build:*)",
       "Bash(npm uninstall:*)",
       "Bash(git remote add:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(gh:*)"
     ],
     "deny": []
   }

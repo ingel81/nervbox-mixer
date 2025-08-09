@@ -437,7 +437,7 @@
   box-shadow: 
     0 2px 10px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
   cursor: grab;
   user-select: none;
   overflow: hidden;
@@ -560,57 +560,66 @@
 
 /* Clip content */
 .clip-content {
-  position: relative;
+  position: absolute;
+  top: 2px;
+  left: 4px;
   z-index: 10;
   pointer-events: none;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 2px;
-  padding: 2px;
+}
+
+.clip-duration-bottom {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .clip-name { 
-  font-size: 12px !important; 
-  font-weight: 900 !important;
+  font-size: 8px !important; 
+  font-weight: 700 !important;
   color: #ffffff !important;
-  text-shadow: 
-    0 0 3px rgba(0, 0, 0, 1),
-    0 1px 0 rgba(0, 0, 0, 1) !important;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 1) !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 2px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   font-family: 'JetBrains Mono', monospace;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 1px 3px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 1px 4px;
   border-radius: 2px;
+  max-width: 80px;
 }
 
 .clip-duration {
-  font-size: 10px;
-  font-weight: 600;
-  color: #ffffff !important;
-  background: rgba(0, 0, 0, 0.8) !important;
-  padding: 2px 4px;
+  font-size: 7px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8) !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  padding: 1px 3px;
   border-radius: 2px;
   display: inline-block;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 1) !important;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 1) !important;
   font-family: 'JetBrains Mono', monospace;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  opacity: 0.9;
 }
 
-/* Real waveform visualization */
+/* Elegant gray waveforms - stronger visibility */
 .clip-waveform-img {
   position: absolute;
   bottom: 0;
   left: 0;
   height: 100%;
-  opacity: 0.9;
+  width: 100%;
+  opacity: 0.85;
   pointer-events: none;
-  mix-blend-mode: screen;
-  filter: contrast(2) brightness(1.8) saturate(1.2);
-  image-rendering: pixelated;
+  image-rendering: auto;
+  z-index: 5;
+  object-fit: fill;
+  mix-blend-mode: overlay;
+  filter: contrast(1.8) brightness(1.4) saturate(0.8);
 }
 
 /* Playhead in lanes */

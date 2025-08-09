@@ -146,6 +146,8 @@
             
             <div class="clip-content">
               <div class="clip-name">{{ clip.name }}</div>
+            </div>
+            <div class="clip-duration-bottom">
               <div class="clip-duration">{{ formatDuration(clip.duration) }}</div>
             </div>
             <img *ngIf="clip.waveform" 
