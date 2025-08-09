@@ -324,6 +324,10 @@ export class AudioEditorComponent {
     return track.id;
   }
 
+  toggleSoundBrowser() {
+    this.editorState.showSoundBrowser.update(show => !show);
+  }
+
   // Track event handlers
   onTrackMuteToggled(event: TrackMuteEvent) {
     this.toggleMute(event.track);
@@ -341,9 +345,7 @@ export class AudioEditorComponent {
     this.onDrop(event.event, event.track);
   }
   
-  onTrackDragOver(event: TrackDragEvent) {
-    this.onDragOver(event.event);
-  }
+  // REMOVED: onTrackDragOver - was causing continuous performance issues
   
   onTrackDragEnter(event: TrackDragEvent) {
     this.onDragEnter(event.event, event.track);
@@ -431,10 +433,18 @@ export class AudioEditorComponent {
   private lastDragUpdate = 0;
   private rafId: number | null = null;
   private seekingRafId: number | null = null;
+  
+  // Drag performance optimization
+  private dragOverThrottleId: number | null = null;
 
 
   @HostListener('window:mousemove', ['$event'])
   onMouseMove(ev: MouseEvent) {
+    // Early exit if nothing is active - massive performance improvement
+    if (!this.seeking && !this.dragState) {
+      return;
+    }
+    
     // Handle seeking (ruler and lane dragging) with throttling
     if (this.seeking) {
       // Cancel previous seeking RAF if exists
@@ -988,17 +998,11 @@ export class AudioEditorComponent {
   }
 
   // --- Drag & Drop from Sound Library ---
-  onDragOver(event: DragEvent) {
-    // Skip processing if sound drag is not active (window dragging)
-    if (!(window as any).soundDragActive) {
-      return;
-    }
-    
-    event.preventDefault();
-    event.dataTransfer!.dropEffect = 'copy';
-  }
+  // REMOVED: Global dragover - still caused performance issues
+  // Now using dynamic per-lane dragover only when needed
 
   onDragEnter(event: DragEvent, track: Track) {
+    console.log(`[DRAG PERF] AudioEditor onDragEnter called for track: ${track.name}`);
     // Skip processing if sound drag is not active (window dragging)
     if (!(window as any).soundDragActive) {
       return;
@@ -1006,10 +1010,10 @@ export class AudioEditorComponent {
     
     event.preventDefault();
     this.dragOverTrack = track;
-    console.log(`Drag enter track: ${track.name}`);
   }
 
   onDragLeave(event: DragEvent) {
+    console.log('[DRAG PERF] AudioEditor onDragLeave called');
     // Skip processing if sound drag is not active (window dragging)
     if (!(window as any).soundDragActive) {
       return;

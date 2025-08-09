@@ -121,18 +121,29 @@ export class ClipComponent {
     
     this.isTrimActive.set(true);
     document.body.style.userSelect = 'none';
+    
+    // Only add mousemove listener during active trimming
+    document.addEventListener('mousemove', this.handleTrimMouseMove);
+    document.addEventListener('mouseup', this.handleTrimMouseUp);
   }
 
-  @HostListener('window:mousemove', ['$event'])
-  onMouseMove(event: MouseEvent) {
-    // Handle trimming
+  // REMOVED: Global mousemove listener - huge performance killer!
+  // Only listen to mousemove during active trimming
+
+  private handleTrimMouseMove = (event: MouseEvent) => {
     const trimState = this.editorState.trimState;
     if (trimState && trimState.id === this.clip.id) {
       this.handleTrimming(event, trimState);
-      return;
     }
+  }
+  
+  private handleTrimMouseUp = () => {
+    this.isTrimActive.set(false);
+    document.body.style.userSelect = '';
     
-    // Dragging is handled by parent component for track switching
+    // Remove trim-specific listeners
+    document.removeEventListener('mousemove', this.handleTrimMouseMove);
+    document.removeEventListener('mouseup', this.handleTrimMouseUp);
   }
 
   @HostListener('window:mouseup')

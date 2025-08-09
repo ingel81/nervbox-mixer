@@ -63,7 +63,6 @@ export interface TrackDragEvent {
     <div class="lane" 
          (mousedown)="onLaneMouseDown($event)" 
          (drop)="onDrop($event)" 
-         (dragover)="onDragOver($event)"
          (dragenter)="onDragEnter($event)"
          (dragleave)="onDragLeave($event)"
          [class.drag-over]="isDragOver">
@@ -88,11 +87,14 @@ export class TrackComponent {
   @Input({ required: true }) playhead!: number;
   @Input() isDragOver = false;
   
+  // Drag performance optimization
+  private dragOverThrottleId: number | null = null;
+  
   @Output() muteToggled = new EventEmitter<TrackMuteEvent>();
   @Output() soloToggled = new EventEmitter<TrackSoloEvent>();
   @Output() trackDeleted = new EventEmitter<TrackDeleteEvent>();
   @Output() trackDrop = new EventEmitter<TrackDropEvent>();
-  @Output() trackDragOver = new EventEmitter<TrackDragEvent>();
+  // REMOVED: trackDragOver - was causing continuous performance issues
   @Output() trackDragEnter = new EventEmitter<TrackDragEvent>();
   @Output() trackDragLeave = new EventEmitter<TrackDragEvent>();
   @Output() laneMouseDown = new EventEmitter<MouseEvent>();
@@ -119,16 +121,30 @@ export class TrackComponent {
     this.trackDrop.emit({ track: this.track, event });
   }
 
-  onDragOver(event: DragEvent) {
+  // Dynamic dragover handler - only active during dragenter/dragleave
+  private handleDragOver = (event: DragEvent) => {
     event.preventDefault();
-    this.trackDragOver.emit({ track: this.track, event });
+    // Minimal processing - just allow drop
   }
 
   onDragEnter(event: DragEvent) {
+    console.log(`[DRAG PERF] TrackComponent ${this.track.name} onDragEnter - LANE HIGHLIGHT ON`);
+    event.preventDefault(); // Allow drop
+    
+    // Dynamically add dragover listener only when needed
+    const lane = event.currentTarget as HTMLElement;
+    lane.addEventListener('dragover', this.handleDragOver);
+    
     this.trackDragEnter.emit({ track: this.track, event });
   }
 
   onDragLeave(event: DragEvent) {
+    console.log(`[DRAG PERF] TrackComponent ${this.track.name} onDragLeave - LANE HIGHLIGHT OFF`);
+    
+    // Remove dragover listener when leaving lane
+    const lane = event.currentTarget as HTMLElement;
+    lane.removeEventListener('dragover', this.handleDragOver);
+    
     this.trackDragLeave.emit({ track: this.track, event });
   }
 
