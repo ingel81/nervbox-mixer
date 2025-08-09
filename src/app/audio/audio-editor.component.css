@@ -5,65 +5,6 @@
   background: #000;
 }
 
-/* Toolbar - Kompakter und techier */
-.toolbar { 
-  position: sticky; 
-  top: 0; 
-  z-index: 100;
-  background: linear-gradient(90deg, #0a0a0a 0%, #1a0f1f 50%, #0a0a0a 100%) !important;
-  box-shadow: 0 2px 20px rgba(147, 51, 234, 0.2);
-  border-bottom: 1px solid rgba(147, 51, 234, 0.3);
-  height: 48px !important;
-  min-height: 48px !important;
-}
-
-.logo { 
-  font-weight: 900; 
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.logo-text {
-  background: linear-gradient(45deg, #9333ea 0%, #ec4899 50%, #f97316 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-size: 18px;
-  font-weight: 900;
-  animation: glow 3s ease-in-out infinite;
-}
-
-@keyframes glow {
-  0%, 100% { filter: brightness(1) drop-shadow(0 0 10px rgba(147, 51, 234, 0.5)); }
-  50% { filter: brightness(1.2) drop-shadow(0 0 20px rgba(236, 72, 153, 0.8)); }
-}
-
-.logo-subtitle {
-  font-size: 16px;
-  font-weight: 400;
-  color: rgba(147, 51, 234, 0.8);
-  text-transform: lowercase;
-  letter-spacing: 3px;
-  opacity: 0.9;
-}
-
-.alpha-badge {
-  font-size: 8px;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.4);
-  padding: 1px 2px;
-  margin-left: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.2px;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.spacer { flex: 1; }
-
 /* Editor - Dark tech aesthetic */
 .editor { 
   background: 

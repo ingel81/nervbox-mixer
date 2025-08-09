@@ -1,30 +1,28 @@
-import { Component, ElementRef, HostListener, ViewChild, ViewChildren, QueryList, computed, effect, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild, ViewChildren, QueryList, Input, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AudioEngineService } from './audio-engine.service';
 import { SoundLibraryService } from './sound-library.service';
-import { ArrangementStorageService } from './arrangement-storage.service';
 import { EditorStateService } from './editor-state.service';
 import { DefaultArrangementService } from './default-arrangement.service';
 import { SoundBrowserComponent } from './sound-browser.component';
 import { Clip, Track } from './models';
 import { secondsToPx, pxToSeconds } from './timeline.util';
 
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSliderModule } from '@angular/material/slider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSliderModule } from '@angular/material/slider';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'audio-editor',
   standalone: true,
-  imports: [CommonModule, MatToolbarModule, MatIconModule, MatButtonModule, MatSliderModule, MatMenuModule, MatDividerModule, MatTooltipModule, SoundBrowserComponent],
+  imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent],
   templateUrl: './audio-editor.component.html',
   styleUrls: ['./audio-editor.component.css']
 })
 export class AudioEditorComponent {
+  @Input() hideToolbar = false;
+  
   @ViewChild('fileInput', { static: false }) fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('timeline') timelineEl!: ElementRef<HTMLDivElement>;
   @ViewChildren('lane') laneEls!: QueryList<ElementRef<HTMLDivElement>>;
@@ -66,7 +64,6 @@ export class AudioEditorComponent {
   constructor(
     private audio: AudioEngineService, 
     private soundLibrary: SoundLibraryService,
-    private arrangementStorage: ArrangementStorageService,
     public editorState: EditorStateService,
     private defaultArrangement: DefaultArrangementService
   ) {
@@ -271,12 +268,7 @@ export class AudioEditorComponent {
     });
   }
 
-  addTrack() {
-    this.tracks.update(list => [
-      ...list,
-      { id: crypto.randomUUID(), name: `Track ${list.length + 1}` , clips: [], mute: false, solo: false, volume: 1, pan: 0 }
-    ]);
-  }
+  // addTrack moved to ContentCreationComponent
 
   async addDefaultHipHopTrack() {
     const defaultTracks = await this.defaultArrangement.createDefaultHipHopTracks();
@@ -352,158 +344,12 @@ export class AudioEditorComponent {
       })));
   }
 
-  saveArrangement() {
-    const name = prompt('Enter arrangement name:');
-    if (name?.trim()) {
-      this.arrangementStorage.saveArrangement(name.trim(), this.tracks());
-      alert(`Arrangement "${name}" saved successfully!`);
-    }
-  }
+  // saveArrangement moved to ProjectManagementComponent
 
-  async loadArrangement() {
-    const arrangements = this.arrangementStorage.savedArrangements();
-    if (arrangements.length === 0) {
-      alert('No saved arrangements found.');
-      return;
-    }
+  // Project management methods moved to ProjectManagementComponent
+  // Transport controls moved to TransportControlsComponent
 
-    // Create selection dialog
-    let message = 'Select arrangement to load:\n\n';
-    arrangements.forEach((arr, index) => {
-      const date = arr.updatedAt.toLocaleDateString();
-      const time = arr.updatedAt.toLocaleTimeString();
-      message += `${index + 1}. ${arr.name} (${date} ${time})\n`;
-    });
-    message += '\nEnter number (1-' + arrangements.length + '):';
-
-    const selection = prompt(message);
-    const index = parseInt(selection || '') - 1;
-    
-    if (index >= 0 && index < arrangements.length) {
-      const selectedArrangement = arrangements[index];
-      
-      try {
-        // Stop playback before loading
-        this.pause();
-        this.editorState.playhead.set(0);
-        
-        // Show loading message
-        console.log(`Loading arrangement "${selectedArrangement.name}"...`);
-        
-        const tracks = await this.arrangementStorage.loadArrangement(selectedArrangement.id);
-        
-        if (tracks) {
-          // Load the arrangement
-          this.tracks.set(tracks);
-          alert(`Arrangement "${selectedArrangement.name}" loaded successfully!`);
-        } else {
-          alert('Error loading arrangement.');
-        }
-      } catch (error) {
-        console.error('Error loading arrangement:', error);
-        alert('Error loading arrangement. Some sounds may be missing.');
-      }
-    }
-  }
-
-  newArrangement() {
-    if (confirm('Create new arrangement? This will clear the current arrangement.')) {
-      this.pause();
-      this.editorState.playhead.set(0);
-      this.tracks.set([]);
-      this.editorState.selectedClipId.set(null);
-      this.addDefaultHipHopTrack();
-    }
-  }
-
-  deleteArrangement() {
-    const arrangements = this.arrangementStorage.savedArrangements();
-    if (arrangements.length === 0) {
-      alert('No saved arrangements found.');
-      return;
-    }
-
-    // Create selection dialog
-    let message = 'Select arrangement to delete:\n\n';
-    arrangements.forEach((arr, index) => {
-      const date = arr.updatedAt.toLocaleDateString();
-      const time = arr.updatedAt.toLocaleTimeString();
-      message += `${index + 1}. ${arr.name} (${date} ${time})\n`;
-    });
-    message += '\nEnter number (1-' + arrangements.length + '):';
-
-    const selection = prompt(message);
-    const index = parseInt(selection || '') - 1;
-    
-    if (index >= 0 && index < arrangements.length) {
-      const selectedArrangement = arrangements[index];
-      if (confirm(`Delete arrangement "${selectedArrangement.name}"? This cannot be undone.`)) {
-        this.arrangementStorage.deleteArrangement(selectedArrangement.id);
-        alert(`Arrangement "${selectedArrangement.name}" deleted.`);
-      }
-    }
-  }
-
-  play() {
-    const clips = this.getPlayableClips();
-    this.audio.play(clips, this.playhead());
-    this.isPlaying.set(true);
-    this.tickPlayhead();
-  }
-
-  pause() {
-    this.audio.pause();
-    this.editorState.pause();
-  }
-
-  stop() {
-    this.audio.stop();
-    this.editorState.stop();
-  }
-
-  async exportMixdown(format: 'wav' | 'mp3' = 'wav') {
-    const clips = this.flattenClips().map(c => {
-      const exportClip = {
-        buffer: c.buffer,
-        startTime: c.startTime,
-        duration: c.duration,
-        offset: c.offset + (c.trimStart || 0), // Include trim offset
-        gain: 1,
-        pan: 0,
-        muted: false,
-      };
-      
-      // Debug log for trimmed clips
-      if (c.trimStart || c.trimEnd) {
-        console.log(`Export clip ${c.name}: offset=${exportClip.offset}, trimStart=${c.trimStart}, trimEnd=${c.trimEnd}, duration=${exportClip.duration}`);
-      }
-      
-      return exportClip;
-    });
-
-    try {
-      let blob: Blob;
-      let actualFormat = format;
-
-      if (format === 'mp3') {
-        blob = await this.audio.renderToMp3({ clips, duration: this.duration() });
-      } else {
-        blob = await this.audio.renderToWav({ clips, duration: this.duration() });
-      }
-      
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `nervbox-export.${actualFormat}`;
-      a.click();
-      URL.revokeObjectURL(url);
-      
-      console.log(`${actualFormat.toUpperCase()} export completed successfully`);
-    } catch (err) {
-      console.error(`Export failed:`, err);
-      alert(`Export failed: ${err}`);
-    }
-  }
+  // exportMixdown moved to ExportControlsComponent
 
   private flattenClips(): Clip[] {
     return this.editorState.flattenedClips();
@@ -869,9 +715,7 @@ export class AudioEditorComponent {
     this.tickRAF = requestAnimationFrame(loop);
   }
 
-  @HostListener('window:keydown', ['$event']) onKey(ev: KeyboardEvent) {
-    if (ev.code === 'Space') { ev.preventDefault(); this.isPlaying() ? this.pause() : this.play(); }
-  }
+  // Spacebar shortcut moved to TransportControlsComponent
 
   seekTo(sec: number) { 
     this.playhead.set(sec);
@@ -1233,17 +1077,7 @@ export class AudioEditorComponent {
   }
 
   // Opens the native file picker reliably
-  openFileDialog() {
-    const el = this.fileInput?.nativeElement;
-    if (el) {
-      (el as any).value = '';
-      el.click();
-    }
-  }
-
-  toggleSoundBrowser() {
-    this.editorState.showSoundBrowser.update(show => !show);
-  }
+  // File import and sound browser methods moved to ContentCreationComponent
 
   async onSoundSelected(buffer: AudioBuffer & { name: string; category: string; id?: string }) {
     const color = this.randomColor();

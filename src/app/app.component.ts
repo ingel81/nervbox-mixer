@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import { AudioEditorComponent } from './audio/audio-editor.component';
+import { ShellComponent } from './shell/shell.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [AudioEditorComponent],
-  template: `<audio-editor></audio-editor>`
+  imports: [ShellComponent],
+  template: `<app-shell></app-shell>`
 })
 export class AppComponent {}
