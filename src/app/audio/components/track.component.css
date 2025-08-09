@@ -66,6 +66,9 @@
   border: 1px solid rgba(147, 51, 234, 0.2) !important;
   border-radius: 2px !important;
   transition: all 0.15s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .track-btn mat-icon {
@@ -74,6 +77,10 @@
   height: 14px !important;
   line-height: 14px !important;
   color: rgba(147, 51, 234, 0.7) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-top: 1px !important;
 }
 
 .track-btn:hover {
