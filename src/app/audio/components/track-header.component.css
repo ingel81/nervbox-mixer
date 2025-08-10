@@ -200,7 +200,13 @@
     width: 20px !important;
     height: 20px !important;
     min-width: 20px !important;
+    max-width: 20px !important;
+    min-height: 20px !important;
+    max-height: 20px !important;
     padding: 0 !important;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    flex-shrink: 0 !important;
   }
 
   .track-btn mat-icon {
@@ -240,6 +246,12 @@
     width: 18px !important;
     height: 18px !important;
     min-width: 18px !important;
+    max-width: 18px !important;
+    min-height: 18px !important;
+    max-height: 18px !important;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    flex-shrink: 0 !important;
   }
 
   .track-btn mat-icon {

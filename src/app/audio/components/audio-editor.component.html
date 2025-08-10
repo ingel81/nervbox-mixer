@@ -56,9 +56,11 @@
                       (trackDragEnter)="onTrackDragEnter($event)"
                       (trackDragLeave)="onTrackDragLeave($event)"
                       (laneMouseDown)="laneMouseDown($event)"
+                      (laneTouchStart)="laneTouchStart($event)"
                       (clipSelected)="onClipSelected($event)"
                       (clipDragStarted)="onClipDragStarted($event)"
-                      (clipTrimStarted)="onClipTrimStarted($event)">
+                      (clipTrimStarted)="onClipTrimStarted($event)"
+                      (clipDeleted)="onClipDeleted($event)">
           </track-lane>
         </ng-container>
         
@@ -74,6 +76,15 @@
                  (soundSelected)="onSoundSelected($event)"
                  (browserToggled)="toggleSoundBrowser()">
   </sound-browser>
+
+  <!-- Mobile Clip Delete Button -->
+  <button class="mobile-clip-delete-btn" 
+          (click)="deleteSelectedClip()"
+          [style.top.px]="getSelectedClipPosition()?.top"
+          [style.right.px]="getSelectedClipPosition()?.right"
+          *ngIf="selectedClipId() && isTouchDevice() && getSelectedClipPosition()">
+    <mat-icon>delete_outline</mat-icon>
+  </button>
 
   <!-- Sound Library Call to Action -->
   <div class="sound-cta" *ngIf="!showSoundBrowser()">

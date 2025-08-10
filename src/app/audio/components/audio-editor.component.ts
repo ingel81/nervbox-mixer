@@ -6,7 +6,7 @@ import { EditorStateService } from '../services/editor-state.service';
 import { DefaultArrangementService } from '../services/default-arrangement.service';
 import { WaveformService } from '../services/waveform.service';
 import { SoundBrowserComponent } from './sound-browser.component';
-import { ClipDragEvent, ClipTrimEvent, ClipSelectEvent } from './clip.component';
+import { ClipDragEvent, ClipTrimEvent, ClipSelectEvent, ClipDeleteEvent } from './clip.component';
 import { TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackRenameEvent, TrackDropEvent, TrackDragEvent } from './track.component';
 import { TrackHeaderComponent } from './track-header.component';
 import { TrackLaneComponent } from './track-lane.component';
@@ -458,6 +458,46 @@ export class AudioEditorComponent {
       originalDuration: event.originalDuration,
       originalStartTime: event.originalStartTime,
       clipRef: event.clip
+    };
+  }
+
+  onClipDeleted(event: ClipDeleteEvent) {
+    this.editorState.removeClip(event.clip.id);
+  }
+
+  deleteSelectedClip() {
+    const selectedId = this.selectedClipId();
+    if (selectedId) {
+      this.editorState.removeClip(selectedId);
+    }
+  }
+
+  laneTouchStart(ev: TouchEvent) {
+    // Similar to laneMouseDown but for touch
+    if ((ev.target as HTMLElement)?.closest('.clip')) return;
+    
+    // Deselect current clip when touching empty lane area
+    this.editorState.selectedClipId.set(null);
+    
+    ev.preventDefault();
+    ev.stopPropagation();
+  }
+
+  isTouchDevice(): boolean {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  }
+
+  getSelectedClipPosition(): { top: number, right: number } | null {
+    const selectedId = this.selectedClipId();
+    if (!selectedId) return null;
+
+    const clipElement = document.querySelector(`[data-clip-id="${selectedId}"]`) as HTMLElement;
+    if (!clipElement) return null;
+
+    const rect = clipElement.getBoundingClientRect();
+    return {
+      top: rect.bottom + 5, // 5px below clip
+      right: window.innerWidth - rect.right + 2 // 2px to the left of clip right edge
     };
   }
 
@@ -1253,6 +1293,10 @@ export class AudioEditorComponent {
   laneMouseDown(ev: MouseEvent) {
     // Wenn auf einem Clip (oder innerhalb), kein Seeking auslösen
     if ((ev.target as HTMLElement)?.closest('.clip')) return;
+    
+    // Deselect current clip when clicking on empty lane area
+    this.editorState.selectedClipId.set(null);
+    
     ev.preventDefault();
     ev.stopPropagation();
     const lane = ev.currentTarget as HTMLElement;

@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent } from './clip.component';
+import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent, ClipDeleteEvent } from './clip.component';
 import { Track } from '../models/models';
 
 export interface TrackDropEvent {
@@ -19,6 +19,7 @@ export interface TrackDragEvent {
     template: `
     <div class="lane" 
          (mousedown)="onLaneMouseDown($event)" 
+         (touchstart)="onLaneTouchStart($event)"
          (drop)="onDrop($event)" 
          (dragover)="onDragOver($event)"
          (dragenter)="onDragEnter($event)"
@@ -30,7 +31,8 @@ export interface TrackDragEvent {
                     [pxPerSecond]="pxPerSecond"
                     (clipSelected)="onClipSelected($event)"
                     (dragStarted)="onClipDragStarted($event)"
-                    (trimStarted)="onClipTrimStarted($event)">
+                    (trimStarted)="onClipTrimStarted($event)"
+                    (clipDeleted)="onClipDeleted($event)">
         </audio-clip>
       </div>
       <div class="playhead" [style.left.px]="(playhead * pxPerSecond)"></div>
@@ -49,9 +51,11 @@ export class TrackLaneComponent {
   @Output() trackDragEnter = new EventEmitter<TrackDragEvent>();
   @Output() trackDragLeave = new EventEmitter<TrackDragEvent>();
   @Output() laneMouseDown = new EventEmitter<MouseEvent>();
+  @Output() laneTouchStart = new EventEmitter<TouchEvent>();
   @Output() clipSelected = new EventEmitter<ClipSelectEvent>();
   @Output() clipDragStarted = new EventEmitter<ClipDragEvent>();
   @Output() clipTrimStarted = new EventEmitter<ClipTrimEvent>();
+  @Output() clipDeleted = new EventEmitter<ClipDeleteEvent>();
 
   onDrop(event: DragEvent) {
     this.trackDrop.emit({ track: this.track, event });
@@ -73,6 +77,10 @@ export class TrackLaneComponent {
     this.laneMouseDown.emit(event);
   }
 
+  onLaneTouchStart(event: TouchEvent) {
+    this.laneTouchStart.emit(event);
+  }
+
   onClipSelected(event: ClipSelectEvent) {
     this.clipSelected.emit(event);
   }
@@ -83,5 +91,9 @@ export class TrackLaneComponent {
 
   onClipTrimStarted(event: ClipTrimEvent) {
     this.clipTrimStarted.emit(event);
+  }
+
+  onClipDeleted(event: ClipDeleteEvent) {
+    this.clipDeleted.emit(event);
   }
 }

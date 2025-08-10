@@ -26,11 +26,16 @@ export interface ClipSelectEvent {
   clip: Clip;
 }
 
+export interface ClipDeleteEvent {
+  clip: Clip;
+}
+
 @Component({
     selector: 'audio-clip',
     imports: [CommonModule, MatIconModule],
     template: `
     <div class="clip"
+         [attr.data-clip-id]="clip.id"
          [class.selected]="isSelected()"
          [class.dragging]="isDragging()"
          [class.trimming]="isTrimming()"
@@ -58,6 +63,7 @@ export interface ClipSelectEvent {
       <div class="clip-duration-bottom">
         <div class="clip-duration">{{ formatDuration(clip.duration) }}</div>
       </div>
+      
       <img *ngIf="clip.waveform" 
            [src]="clip.waveform" 
            class="clip-waveform-img"
@@ -75,6 +81,7 @@ export class ClipComponent {
   @Output() clipSelected = new EventEmitter<ClipSelectEvent>();
   @Output() dragStarted = new EventEmitter<ClipDragEvent>();
   @Output() trimStarted = new EventEmitter<ClipTrimEvent>();
+  @Output() clipDeleted = new EventEmitter<ClipDeleteEvent>();
 
   private isDragActive = signal(false);
   private isTrimActive = signal(false);
@@ -335,6 +342,12 @@ export class ClipComponent {
     this.clip.waveform = this.waveformService.generateFromData(trimmedData, this.clip.duration, {
       pxPerSecond: this.pxPerSecond
     });
+  }
+
+  onDeleteClip(event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.clipDeleted.emit({ clip: this.clip });
   }
 
   formatDuration(seconds: number): string {
