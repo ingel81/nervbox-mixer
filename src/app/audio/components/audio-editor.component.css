@@ -10,8 +10,8 @@
   background: 
     radial-gradient(ellipse at top, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
     linear-gradient(180deg, #0a0a0a 0%, #000 100%);
-  height: calc(100vh - 48px); 
-  overflow: hidden;
+  min-height: calc(100vh - 48px); 
+  overflow: visible;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -197,7 +197,8 @@
   z-index: 2;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
+  max-height: calc(100vh - 48px - 36px);
 }
 
 /* Tracks header - Fixed at top */
@@ -349,9 +350,11 @@
 
 /* Tracks body with separate columns */
 .tracks-body {
-  flex: 1;
   display: flex;
-  overflow: hidden;
+  overflow: visible;
+  flex-shrink: 0;
+  height: fit-content;
+  max-height: calc(100vh - 48px - 36px);
 }
 
 .track-headers {
@@ -365,6 +368,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: auto;
+  max-height: 100%;
 }
 
 /* Synchronized scrolling */
@@ -393,36 +397,32 @@
   box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
 }
 
-/* Empty lane for alignment */
-.empty-lane {
-  background: transparent !important;
-  border: none !important;
-  height: 44px;
-  min-height: 44px;
-}
 
 /* Add Track Button */
 .add-track-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 8px;
+  padding: 12px;
   border-top: 1px solid rgba(147, 51, 234, 0.2);
-  margin-top: 0;
-  grid-column: 1;
+  margin-top: 8px;
   background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(10px);
 }
 
 .add-track-btn {
   color: rgba(255, 255, 255, 0.4) !important;
   border-color: rgba(147, 51, 234, 0.15) !important;
-  font-size: 11px !important;
-  padding: 4px 8px !important;
-  height: 28px;
-  width: 100%;
+  font-size: 12px !important;
+  padding: 6px 16px !important;
+  height: 32px;
+  min-width: 120px;
   transition: all 0.2s ease !important;
   background: rgba(0, 0, 0, 0.1) !important;
   backdrop-filter: blur(2px);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .add-track-btn:hover {
@@ -433,8 +433,10 @@
 }
 
 .add-track-btn mat-icon {
-  margin-right: 3px;
-  font-size: 14px;
+  margin-right: 6px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
 }
 
 /* Animations */

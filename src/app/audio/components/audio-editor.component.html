@@ -32,16 +32,6 @@
                         (trackRenamed)="onTrackRenamed($event)">
           </track-header>
         </ng-container>
-        
-        <!-- Add Track Button -->
-        <div class="add-track-container">
-          <button class="add-track-btn" 
-                  (click)="addTrack()" 
-                  mat-stroked-button>
-            <mat-icon>add</mat-icon>
-            Add Track
-          </button>
-        </div>
       </div>
 
       <!-- Track lanes (right column) -->
@@ -63,10 +53,17 @@
                       (clipDeleted)="onClipDeleted($event)">
           </track-lane>
         </ng-container>
-        
-        <!-- Empty lane for add track button alignment -->
-        <div class="lane empty-lane"></div>
       </div>
+    </div>
+
+    <!-- Add Track Button -->
+    <div class="add-track-container">
+      <button class="add-track-btn" 
+              (click)="addTrack()" 
+              mat-stroked-button>
+        <mat-icon>add</mat-icon>
+        Add Track
+      </button>
     </div>
   </div>
 
