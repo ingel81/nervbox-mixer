@@ -729,7 +729,7 @@ export class AudioEditorComponent {
     this.dragState = null;
     this.trimState = null;
     this.seeking = false;
-    (document.body as any).style.userSelect = '';
+    (document.body as HTMLElement).style.userSelect = '';
   }
 
   @HostListener('window:touchend')
@@ -1031,7 +1031,7 @@ export class AudioEditorComponent {
           trimEnd: 0,
           originalDuration: buffer.duration,
           soundId: buffer.id || crypto.randomUUID()
-        } as any;
+        } as Clip;
         targetTrack.clips.push(newClip);
         console.log(`Added ${buffer.name} ${placementStrategy} at ${targetStartTime.toFixed(2)}s`);
         console.log(`Track "${targetTrack.name}" now has ${targetTrack.clips.length} clips:`, 
@@ -1054,7 +1054,7 @@ export class AudioEditorComponent {
             trimEnd: 0,
             originalDuration: buffer.duration,
             soundId: buffer.id || crypto.randomUUID()
-          } as any],
+          } as Clip],
           mute: false,
           solo: false,
           volume: 1,
@@ -1079,7 +1079,7 @@ export class AudioEditorComponent {
   onDragEnter(event: DragEvent, track: Track) {
     console.log(`[DRAG PERF] AudioEditor onDragEnter called for track: ${track.name}`);
     // Skip processing if sound drag is not active (window dragging)
-    if (!(window as any).soundDragActive) {
+    if (!(window as Window & { soundDragActive?: boolean }).soundDragActive) {
       return;
     }
     
@@ -1090,7 +1090,7 @@ export class AudioEditorComponent {
   onDragLeave(event: DragEvent) {
     console.log('[DRAG PERF] AudioEditor onDragLeave called');
     // Skip processing if sound drag is not active (window dragging)
-    if (!(window as any).soundDragActive) {
+    if (!(window as Window & { soundDragActive?: boolean }).soundDragActive) {
       return;
     }
     
@@ -1115,7 +1115,7 @@ export class AudioEditorComponent {
           this.handleSoundDrop(dragData, track, event);
           return;
         }
-      } catch (e) {
+      } catch {
         console.log('Not a sound drop, checking for files...');
       }
     }
@@ -1127,7 +1127,7 @@ export class AudioEditorComponent {
     }
   }
 
-  private async handleSoundDrop(soundData: any, track: Track, event: DragEvent) {
+  private async handleSoundDrop(soundData: { id: string; name: string; category: string }, track: Track, event: DragEvent) {
     try {
       // Load the sound
       const buffer = await this.soundLibrary.loadSound(soundData.id);
@@ -1227,7 +1227,7 @@ export class AudioEditorComponent {
           trimEnd: 0,
           originalDuration: buffer.duration,
           soundId: buffer.id || crypto.randomUUID()
-        } as any;
+        } as Clip;
         
         targetTrack.clips.push(newClip);
       }
@@ -1247,7 +1247,7 @@ export class AudioEditorComponent {
     console.log(`Timeline seek to: ${timePosition.toFixed(3)}s, isPlaying: ${this.isPlaying()}`);
     this.seekTo(timePosition);
     this.seeking = true;
-    (document.body as any).style.userSelect = 'none';
+    (document.body as HTMLElement).style.userSelect = 'none';
   }
   laneMouseDown(ev: MouseEvent) {
     // Wenn auf einem Clip (oder innerhalb), kein Seeking auslösen
@@ -1263,7 +1263,7 @@ export class AudioEditorComponent {
     console.log(`Lane seek to: ${timePosition.toFixed(3)}s, isPlaying: ${this.isPlaying()}`);
     this.seekTo(timePosition);
     this.seeking = true;
-    (document.body as any).style.userSelect = 'none';
+    (document.body as HTMLElement).style.userSelect = 'none';
   }
 
 }

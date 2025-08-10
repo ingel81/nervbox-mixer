@@ -3,10 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatListModule } from '@angular/material/list';
 import { ArrangementStorageService, SavedArrangement } from '../../services/arrangement-storage.service';
 
 export interface SaveArrangementDialogData {
@@ -30,8 +27,9 @@ export interface SaveArrangementDialogData {
     
     <mat-dialog-content>
       <div class="custom-input-container">
-        <label class="input-label">Arrangement Name</label>
+        <label class="input-label" for="arrangement-name-input">Arrangement Name</label>
         <input class="custom-input" 
+               id="arrangement-name-input" 
                [(ngModel)]="arrangementName" 
                (input)="checkExisting()"
                placeholder="Enter a name for your arrangement"

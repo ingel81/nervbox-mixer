@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, signal } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -105,7 +105,7 @@ export class SoundBrowserComponent {
   @Output() soundSelected = new EventEmitter<AudioBuffer & { name: string; category: string; id: string }>();
   @Output() browserToggled = new EventEmitter<void>();
 
-  loadingStates: { [key: string]: boolean } = {};
+  loadingStates: Record<string, boolean> = {};
   
   // Drag state
   isDragging = false;
@@ -174,7 +174,9 @@ export class SoundBrowserComponent {
     if (this.currentPreview) {
       try {
         this.currentPreview.stop();
-      } catch {}
+      } catch {
+        // Preview already stopped or invalid
+      }
       this.currentPreview = undefined;
       this.currentPreviewSound = undefined;
     }
@@ -215,7 +217,7 @@ export class SoundBrowserComponent {
     this.draggedSound = sound;
     
     // Signal that a sound is being dragged (not the window)
-    (window as any).soundDragActive = true;
+    (window as Window & { soundDragActive?: boolean }).soundDragActive = true;
     
     // Set drag data
     event.dataTransfer!.effectAllowed = 'copy';
@@ -250,12 +252,12 @@ export class SoundBrowserComponent {
     setTimeout(() => document.body.removeChild(dragImage), 100);
   }
 
-  onDragEnd(event: DragEvent) {
+  onDragEnd(_event: DragEvent) {
     console.log('Drag end');
     this.draggedSound = undefined;
     
     // Clear sound drag flag
-    (window as any).soundDragActive = false;
+    (window as Window & { soundDragActive?: boolean }).soundDragActive = false;
   }
 
   onHeaderMouseDown(event: MouseEvent) {

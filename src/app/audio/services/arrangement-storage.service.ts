@@ -70,7 +70,7 @@ export class ArrangementStorageService {
     }
   }
 
-  saveArrangement(name: string, tracks: Track[], bpm: number = 120): string {
+  saveArrangement(name: string, tracks: Track[], bpm = 120): string {
     const now = new Date().toISOString();
     const existingIndex = this.savedArrangements().findIndex(arr => arr.arrangement.name === name);
     

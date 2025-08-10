@@ -104,7 +104,7 @@ export class ClipComponent {
     });
     
     this.isDragActive.set(true);
-    (document.body as any).style.userSelect = 'none';
+    (document.body as HTMLElement).style.userSelect = 'none';
   }
 
   onClipTouchStart(event: TouchEvent) {
@@ -124,7 +124,7 @@ export class ClipComponent {
     });
     
     this.isDragActive.set(true);
-    (document.body as any).style.userSelect = 'none';
+    (document.body as HTMLElement).style.userSelect = 'none';
     
     // Add touch event listeners
     document.addEventListener('touchmove', this.handleTouchMove, { passive: false });
@@ -145,7 +145,7 @@ export class ClipComponent {
 
   private handleTouchEnd = () => {
     this.isDragActive.set(false);
-    (document.body as any).style.userSelect = '';
+    (document.body as HTMLElement).style.userSelect = '';
     document.removeEventListener('touchmove', this.handleTouchMove);
     document.removeEventListener('touchend', this.handleTouchEnd);
     // Dispatch synthetic mouseup
@@ -238,10 +238,10 @@ export class ClipComponent {
   onMouseUp() {
     this.isDragActive.set(false);
     this.isTrimActive.set(false);
-    (document.body as any).style.userSelect = '';
+    (document.body as HTMLElement).style.userSelect = '';
   }
 
-  private handleTrimming(event: MouseEvent, trimState: any) {
+  private handleTrimming(event: MouseEvent, trimState: { id: string; side: 'start' | 'end'; startX: number; originalTrimStart: number; originalTrimEnd: number; originalDuration: number; originalStartTime: number; clipRef: Clip }) {
     const dx = event.clientX - trimState.startX;
     const deltaSeconds = pxToSeconds(dx, this.pxPerSecond);
     

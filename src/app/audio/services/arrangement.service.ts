@@ -75,7 +75,7 @@ export class ArrangementService {
         buffer,
         color,
         soundId: clipDef.soundId
-      } as any;
+      } as Clip;
       
       // Generate waveform after model is applied from JSON
       const pxPerSecond = 120; // Default px per second
@@ -101,7 +101,7 @@ export class ArrangementService {
    * Converts existing tracks to arrangement definition format
    * Useful for saving arrangements in JSON format
    */
-  tracksToDefinition(tracks: Track[], name: string, bpm: number = 120): ArrangementDefinition {
+  tracksToDefinition(tracks: Track[], name: string, bpm = 120): ArrangementDefinition {
     const duration = this.calculateArrangementDuration(tracks);
     
     const trackDefinitions: TrackDefinition[] = tracks.map(track => ({
@@ -111,7 +111,7 @@ export class ArrangementService {
       mute: track.mute,
       solo: track.solo,
       clips: track.clips.map(clip => ({
-        soundId: (clip as any).soundId || crypto.randomUUID(),
+        soundId: clip.soundId || crypto.randomUUID(),
         startTime: clip.startTime,
         duration: clip.duration !== clip.originalDuration ? clip.duration : undefined,
         trimStart: clip.trimStart > 0 ? clip.trimStart : undefined,

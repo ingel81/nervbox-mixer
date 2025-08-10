@@ -6,6 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { EditorStateService } from '../audio/services/editor-state.service';
 import { AudioEngineService } from '../audio/services/audio-engine.service';
+import { Clip } from '../audio/models/models';
 
 @Component({
     selector: 'content-creation',
@@ -208,7 +209,7 @@ export class ContentCreationComponent {
             trimStart: 0,
             trimEnd: 0,
             originalDuration: buf.duration
-          } as any);
+          } as Clip);
           placedOnExistingTrack = true;
           console.log(`Added ${name} to existing ${track.name} at playhead`);
           break;
@@ -230,7 +231,7 @@ export class ContentCreationComponent {
           trimStart: 0,
           trimEnd: 0,
           originalDuration: buf.duration
-        } as any);
+        } as Clip);
         console.log(`Added ${name} to new ${newTrack.name} at playhead`);
       }
     });

@@ -3,14 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatListModule } from '@angular/material/list';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ArrangementStorageService, SavedArrangement } from '../../services/arrangement-storage.service';
 import { ConfirmDialogComponent } from './confirm-dialog.component';
+import { Track } from '../../models/models';
 
 @Component({
     selector: 'load-arrangement-dialog',
@@ -332,7 +329,7 @@ export class LoadArrangementDialogComponent {
     this.selectedArrangement = [arrangement];
   }
 
-  getTrackNames(tracks: any[]): string {
+  getTrackNames(tracks: Track[]): string {
     if (tracks.length === 0) return '';
     const names = tracks.slice(0, 3).map(t => t.name).join(', ');
     if (tracks.length > 3) {

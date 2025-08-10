@@ -212,7 +212,7 @@ export class WaveformService {
     buffer: AudioBuffer, 
     duration: number, 
     pxPerSecond: number, 
-    clipColor: string = ''
+    clipColor = ''
   ): string {
     const width = Math.floor(duration * pxPerSecond);
     return this.generateFromBuffer(buffer, {

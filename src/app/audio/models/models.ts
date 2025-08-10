@@ -15,6 +15,7 @@ export interface Clip {
   trimStart: number; // seconds trimmed from start
   trimEnd: number;   // seconds trimmed from end
   originalDuration: number; // original duration before trimming
+  soundId?: string; // ID for identifying sound samples
 }
 
 export interface Track {

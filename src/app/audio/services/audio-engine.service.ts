@@ -9,7 +9,7 @@ export class AudioEngineService {
   private playing = false;
   private startContextTime = 0; // when the context started playing
   private startTimelineTime = 0; // seconds on timeline when playback started
-  private scheduledNodes: Array<{src: AudioBufferSourceNode; gain: GainNode; pan: StereoPannerNode}> = [];
+  private scheduledNodes: {src: AudioBufferSourceNode; gain: GainNode; pan: StereoPannerNode}[] = [];
 
 
   get audioContext(): AudioContext {
@@ -144,10 +144,10 @@ export class AudioEngineService {
 
   stop(): void {
     for (const n of this.scheduledNodes) {
-      try { n.src.stop(); } catch {}
-      try { n.src.disconnect(); } catch {}
-      try { n.gain.disconnect(); } catch {}
-      try { n.pan.disconnect(); } catch {}
+      try { n.src.stop(); } catch { /* Node already stopped */ }
+      try { n.src.disconnect(); } catch { /* Node already disconnected */ }
+      try { n.gain.disconnect(); } catch { /* Gain node already disconnected */ }
+      try { n.pan.disconnect(); } catch { /* Pan node already disconnected */ }
     }
     this.scheduledNodes = [];
     this.playing = false;
@@ -299,11 +299,11 @@ export class AudioEngineService {
     view.setUint32(40, buffer.length * numChannels * 2, true);
 
     const channels: Float32Array[] = [];
-    for (let ch = 0; ch < numChannels; ch++) (channels as any).push(buffer.getChannelData(ch));
+    for (let ch = 0; ch < numChannels; ch++) channels.push(buffer.getChannelData(ch));
     let offset = 44;
     for (let i = 0; i < buffer.length; i++) {
       for (let ch = 0; ch < numChannels; ch++) {
-        let sample = Math.max(-1, Math.min(1, (channels as any)[ch][i]));
+        let sample = Math.max(-1, Math.min(1, channels[ch][i]));
         sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
         view.setInt16(offset, sample, true);
         offset += 2;
