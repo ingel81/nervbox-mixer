@@ -157,11 +157,10 @@ export class ProjectManagementComponent {
     }
     
     this.editorState.clearArrangement();
-    this.editorState.setArrangementName('Default Hip Hop');
+    this.editorState.setArrangementName('Untitled');
     
-    // Add default hip hop track
-    const defaultTracks = await this.defaultArrangement.createDefaultHipHopTracks();
-    this.editorState.tracks.set(defaultTracks);
+    // Add a single empty track
+    this.editorState.addTrack();
     
     this.snackBar.open('New arrangement created', 'Close', {
       duration: 2000,
