@@ -15,11 +15,11 @@
           <button mat-icon-button 
                   (click)="stop()" 
                   matTooltip="Stop"
-                  class="transport-btn">
+                  class="transport-btn stop-btn">
             <mat-icon>stop</mat-icon>
           </button>
         </div>
-        <span class="time-display">{{ formatDuration(playhead()) }}</span>
+        <span class="time-display" (click)="stop()" matTooltip="Click to stop">{{ formatDuration(playhead()) }}</span>
       </div>
       <div class="ruler-container">
         <div class="ruler" #timeline (mousedown)="rulerMouseDown($event)">

@@ -291,6 +291,15 @@
   z-index: 2;
   position: relative;
   letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.time-display:hover {
+  color: #fbbf24;
+  text-shadow: 0 0 15px rgba(147, 51, 234, 1);
+  transform: scale(1.05);
 }
 
 /* Ruler - Tech style */
@@ -597,15 +606,30 @@
 
   /* Smaller track headers on mobile */
   .tracks-header {
-    grid-template-columns: 120px 1fr;
+    grid-template-columns: 130px 1fr;
   }
 
   .track-headers {
-    width: 120px;
+    width: 130px;
   }
 
-  /* Larger touch targets for mobile */
-  .mat-mdc-icon-button {
+  /* Hide stop button on mobile for better UX */
+  .stop-btn {
+    display: none !important;
+  }
+
+  /* Smaller play button on mobile to fit time display */
+  .transport-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    border-radius: 50% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Larger touch targets for other mobile buttons */
+  .mat-mdc-icon-button:not(.transport-btn) {
     width: 44px !important;
     height: 44px !important;
     touch-action: manipulation;
@@ -623,7 +647,10 @@
   }
 
   .time-display {
-    font-size: 12px;
+    font-size: 11px;
+    min-width: 50px;
+    text-align: center;
+    margin-left: -6px;
   }
 
   /* Simplify visual effects for performance */
