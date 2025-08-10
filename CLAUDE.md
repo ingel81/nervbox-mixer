@@ -34,7 +34,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-### Standalone Angular 19 Application
+### Standalone Angular 20 Application
 - **No NgModules** - Components use standalone: true and import dependencies directly
 - **Angular Signals** - All state management uses signals instead of RxJS subjects
 - **Computed signals** - For derived state calculations
@@ -117,13 +117,14 @@ scripts/
 - Audio service manages Web Audio API directly
 
 ### Dependencies
-- **@angular/core**: v19.2.14 - Standalone components with signals
-- **@angular/material**: v19.2.19 - UI components
+- **@angular/core**: v20.1.6 - Standalone components with signals
+- **@angular/material**: v20.1.5 - UI components
 - **@breezystack/lamejs**: v1.2.7 - MP3 encoding
 - **angular-eslint**: v20.1.1 - Angular-specific ESLint rules
 - **eslint**: v9.29.0 - JavaScript/TypeScript linting
 - **prettier**: v3.6.2 - Code formatting
-- **typescript-eslint**: v8.34.1 - TypeScript ESLint integration
+- **typescript-eslint**: v8.34.1 - TypeScript ESLint integration  
+- **typescript**: v5.8.3 - Latest TypeScript with enhanced type checking
 - **Web Audio API**: Native browser API
 - **HTML5 Canvas**: Waveform visualization
 
