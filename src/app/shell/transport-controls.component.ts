@@ -21,7 +21,7 @@ import { AudioEngineService } from '../audio/services/audio-engine.service';
     <button mat-icon-button 
             (click)="stop()" 
             matTooltip="Stop"
-            class="transport-btn">
+            class="transport-btn stop-btn">
       <mat-icon>stop</mat-icon>
     </button>
   `,
@@ -54,6 +54,10 @@ import { AudioEngineService } from '../audio/services/audio-engine.service';
         display: flex;
         align-items: center;
         justify-content: flex-start;
+      }
+      
+      .stop-btn {
+        display: none !important;
       }
       
       .transport-btn {
