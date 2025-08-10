@@ -6,6 +6,7 @@
     "ng": "ng",
     "start": "ng serve -o",
     "build": "ng build",
+    "build:prod": "ng build --configuration production --output-hashing=all --source-map=false --optimization=true",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "scan-sounds": "node scripts/scan-sounds.js"
