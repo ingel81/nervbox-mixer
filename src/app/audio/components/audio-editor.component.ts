@@ -394,6 +394,31 @@ export class AudioEditorComponent {
     this.tickPlayhead();
   }
 
+  togglePlayback(): void {
+    if (this.isPlaying()) {
+      this.pause();
+    } else {
+      this.play();
+    }
+  }
+  
+  play(): void {
+    const clips = this.getPlayableClips();
+    this.audio.play(clips, this.playhead());
+    this.editorState.play();
+    this.tickPlayhead();
+  }
+  
+  pause(): void {
+    this.audio.pause();
+    this.editorState.pause();
+  }
+  
+  stop(): void {
+    this.audio.stop();
+    this.editorState.stop();
+  }
+
   private getPlayableClips() {
     const tracks = this.tracks();
     const hasSoloTracks = tracks.some(t => t.solo);
@@ -749,6 +774,13 @@ export class AudioEditorComponent {
       event.preventDefault();
       console.log('Deleting clip:', selectedClip.name);
       this.deleteClip(selectedClip);
+      return;
+    }
+
+    // Spacebar for play/pause
+    if (event.code === 'Space') {
+      event.preventDefault();
+      this.togglePlayback();
       return;
     }
   }

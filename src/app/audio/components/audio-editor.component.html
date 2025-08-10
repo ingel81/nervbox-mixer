@@ -4,6 +4,21 @@
     <!-- Header with fixed width columns -->
     <div class="tracks-header">
       <div class="head-spacer">
+        <div class="transport-controls">
+          <button mat-icon-button 
+                  (click)="togglePlayback()" 
+                  matTooltip="Play/Pause"
+                  class="transport-btn">
+            <mat-icon>{{ isPlaying() ? 'pause' : 'play_arrow' }}</mat-icon>
+          </button>
+          
+          <button mat-icon-button 
+                  (click)="stop()" 
+                  matTooltip="Stop"
+                  class="transport-btn">
+            <mat-icon>stop</mat-icon>
+          </button>
+        </div>
         <span class="time-display">{{ formatDuration(playhead()) }}</span>
       </div>
       <div class="ruler-container">
