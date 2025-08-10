@@ -733,6 +733,51 @@ export class AudioEditorComponent {
     (document.body as any).style.userSelect = '';
   }
 
+  @HostListener('window:touchend')
+  onTouchEnd() {
+    // Same cleanup as mouseup for touch events
+    this.onMouseUp();
+  }
+
+  // Pinch-to-zoom support for mobile
+  private lastTouchDistance = 0;
+  
+  @HostListener('touchstart', ['$event'])
+  onTouchStart(event: TouchEvent) {
+    if (event.touches.length === 2) {
+      // Initialize pinch-to-zoom
+      const touch1 = event.touches[0];
+      const touch2 = event.touches[1];
+      this.lastTouchDistance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+    }
+  }
+
+  @HostListener('touchmove', ['$event'])
+  onTouchMove(event: TouchEvent) {
+    if (event.touches.length === 2) {
+      event.preventDefault();
+      
+      const touch1 = event.touches[0];
+      const touch2 = event.touches[1];
+      const currentDistance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      
+      if (this.lastTouchDistance > 0) {
+        const scale = currentDistance / this.lastTouchDistance;
+        const currentPx = this.pxPerSecond();
+        const newPx = Math.min(600, Math.max(40, Math.round(currentPx * scale)));
+        this.pxPerSecond.set(newPx);
+      }
+      
+      this.lastTouchDistance = currentDistance;
+    }
+  }
+
   private getTrackIndexAtClientY(clientY: number): number | null {
     // Get all lane elements from TrackLaneComponents
     const trackElements = document.querySelectorAll('track-lane .lane');

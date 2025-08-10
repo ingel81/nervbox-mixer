@@ -30,8 +30,10 @@ import { AudioEngineService } from '../audio/services/audio-engine.service';
     :host {
       display: flex;
       align-items: center;
+      justify-content: flex-start;
       gap: 8px;
       margin-right: 16px;
+      height: 48px;
     }
     
     .transport-btn {
@@ -42,6 +44,52 @@ import { AudioEngineService } from '../audio/services/audio-engine.service';
     .transport-btn:hover {
       color: #9333ea;
       background: rgba(147, 51, 234, 0.1);
+    }
+    
+    /* Mobile styles */
+    @media (max-width: 768px) {
+      :host {
+        gap: 0px;
+        margin-right: 0px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+      }
+      
+      .transport-btn {
+        width: 40px !important;
+        height: 40px !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+      
+      .transport-btn:hover {
+        background: rgba(147, 51, 234, 0.1) !important;
+        box-shadow: none !important;
+      }
+      
+      .transport-btn mat-icon {
+        font-size: 20px !important;
+        width: 20px !important;
+        height: 20px !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .transport-btn {
+        width: 36px !important;
+        height: 36px !important;
+      }
+      
+      .transport-btn mat-icon {
+        font-size: 18px !important;
+        width: 18px !important;
+        height: 18px !important;
+      }
     }
   `]
 })

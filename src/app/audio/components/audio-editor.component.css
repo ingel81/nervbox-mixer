@@ -446,3 +446,140 @@
 .delete-menu-item:hover {
   background: rgba(239, 68, 68, 0.1) !important;
 }
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  /* Adjust editor height for mobile viewport */
+  .editor {
+    height: calc(100vh - 48px);
+    height: calc(100dvh - 48px); /* Dynamic viewport height for mobile */
+  }
+
+  /* Smaller track headers on mobile */
+  .tracks-header {
+    grid-template-columns: 120px 1fr;
+  }
+
+  .track-headers {
+    width: 120px;
+  }
+
+  /* Larger touch targets for mobile */
+  .mat-mdc-icon-button {
+    width: 44px !important;
+    height: 44px !important;
+    touch-action: manipulation;
+  }
+
+  /* Bigger resize handles for touch */
+  .resize-handle {
+    width: 20px !important;
+    min-width: 20px !important;
+  }
+
+  /* Adjust font sizes for mobile readability */
+  .tick-label {
+    font-size: 10px;
+  }
+
+  .time-display {
+    font-size: 12px;
+  }
+
+  /* Simplify visual effects for performance */
+  .editor::before {
+    display: none; /* Remove grid overlay on mobile */
+  }
+
+  @keyframes scan {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
+  /* Adjust button sizes for touch */
+  .export-btn,
+  .arrangement-btn {
+    height: 40px !important;
+    padding: 0 16px !important;
+    font-size: 12px !important;
+  }
+
+  /* Improve scrollbar visibility on mobile */
+  .tracks-lanes::-webkit-scrollbar,
+  .track-lanes::-webkit-scrollbar {
+    height: 10px;
+  }
+
+  /* Version info adjustment */
+  .version-info {
+    font-size: 9px;
+    bottom: 4px;
+    right: 8px;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  /* Even smaller track headers */
+  .tracks-header {
+    grid-template-columns: 100px 1fr;
+  }
+
+  .track-headers {
+    width: 100px;
+  }
+
+  /* Hide less important UI elements */
+  .head-spacer::before {
+    display: none; /* Remove scan animation */
+  }
+
+  /* Simplified ruler */
+  .ruler {
+    height: 32px;
+  }
+
+  /* Larger clip touch targets */
+  .clip {
+    min-height: 36px !important;
+  }
+
+  /* Hide version info on very small screens */
+  .version-info {
+    display: none;
+  }
+}
+
+/* Touch-specific adjustments */
+@media (pointer: coarse) {
+  /* Ensure all interactive elements are touch-friendly */
+  button,
+  .clip,
+  .resize-handle,
+  .playhead {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  /* Disable hover effects on touch devices */
+  .mat-mdc-button:hover,
+  .mat-mdc-icon-button:hover {
+    background: transparent !important;
+  }
+
+  /* Larger drop zones for touch drag */
+  .lane {
+    min-height: 48px;
+  }
+
+  /* Better touch feedback */
+  .clip:active {
+    opacity: 0.8;
+  }
+
+  /* Prevent text selection during drag */
+  * {
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+}

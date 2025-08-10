@@ -15,10 +15,11 @@ import { AudioEngineService } from '../audio/services/audio-engine.service';
     <button mat-button 
             [matMenuTriggerFor]="exportMenu" 
             color="accent" 
-            class="export-btn">
+            class="export-btn"
+            [class.mobile]="isMobile">
       <mat-icon>download</mat-icon>
-      Export
-      <mat-icon>arrow_drop_down</mat-icon>
+      <span class="btn-text">Export</span>
+      <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
     </button>
     
     <mat-menu #exportMenu="matMenu">
@@ -33,6 +34,13 @@ import { AudioEngineService } from '../audio/services/audio-engine.service';
     </mat-menu>
   `,
   styles: [`
+    :host {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      height: 48px;
+    }
+    
     .export-btn {
       background: linear-gradient(45deg, #9333ea 0%, #ec4899 100%) !important;
       color: white !important;
@@ -61,9 +69,59 @@ import { AudioEngineService } from '../audio/services/audio-engine.service';
     .export-btn mat-icon {
       margin-right: 4px !important;
     }
+    
+    .dropdown-icon {
+      margin-left: 2px !important;
+      margin-right: 0 !important;
+    }
+    
+    /* Mobile styles */
+    @media (max-width: 768px) {
+      :host {
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+      }
+      
+      .btn-text {
+        display: none;
+      }
+      
+      .dropdown-icon {
+        display: none;
+      }
+      
+      .export-btn {
+        min-width: auto !important;
+        width: 40px !important;
+        height: 40px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+      
+      .export-btn:hover {
+        background: rgba(147, 51, 234, 0.1) !important;
+        transform: none;
+        box-shadow: none !important;
+      }
+      
+      .export-btn mat-icon {
+        margin: 0 !important;
+        font-size: 20px !important;
+        width: 20px !important;
+        height: 20px !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+      }
+    }
   `]
 })
 export class ExportControlsComponent {
+  isMobile = window.innerWidth <= 768;
   
   // Computed duration based on all clips
   duration = computed(() => {

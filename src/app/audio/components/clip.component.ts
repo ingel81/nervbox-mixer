@@ -38,15 +38,18 @@ export interface ClipSelectEvent {
          [style.left.px]="clip.startTime * pxPerSecond"
          [style.width.px]="clip.duration * pxPerSecond"
          [style.background]="clip.color"
-         (mousedown)="onClipMouseDown($event)">
+         (mousedown)="onClipMouseDown($event)"
+         (touchstart)="onClipTouchStart($event)">
       
       <!-- Trim handles -->
       <div class="resize-handle left" 
            (mousedown)="onStartTrimming($event, 'start')"
+           (touchstart)="onStartTrimmingTouch($event, 'start')"
            *ngIf="isSelected()">
       </div>
       <div class="resize-handle right" 
            (mousedown)="onStartTrimming($event, 'end')"
+           (touchstart)="onStartTrimmingTouch($event, 'end')"
            *ngIf="isSelected()">
       </div>
       
@@ -105,6 +108,52 @@ export class ClipComponent {
     (document.body as any).style.userSelect = 'none';
   }
 
+  onClipTouchStart(event: TouchEvent) {
+    event.stopPropagation();
+    event.preventDefault();
+    
+    // Select this clip
+    this.clipSelected.emit({ clip: this.clip });
+    
+    // Start drag operation
+    const touch = event.touches[0];
+    const startX = touch.clientX;
+    this.dragStarted.emit({
+      clip: this.clip,
+      startX,
+      origStartTime: this.clip.startTime
+    });
+    
+    this.isDragActive.set(true);
+    (document.body as any).style.userSelect = 'none';
+    
+    // Add touch event listeners
+    document.addEventListener('touchmove', this.handleTouchMove, { passive: false });
+    document.addEventListener('touchend', this.handleTouchEnd);
+  }
+
+  private handleTouchMove = (event: TouchEvent) => {
+    event.preventDefault();
+    const touch = event.touches[0];
+    // Dispatch synthetic mouse event for drag handling
+    const mouseEvent = new MouseEvent('mousemove', {
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      bubbles: true
+    });
+    document.dispatchEvent(mouseEvent);
+  }
+
+  private handleTouchEnd = () => {
+    this.isDragActive.set(false);
+    (document.body as any).style.userSelect = '';
+    document.removeEventListener('touchmove', this.handleTouchMove);
+    document.removeEventListener('touchend', this.handleTouchEnd);
+    // Dispatch synthetic mouseup
+    const mouseEvent = new MouseEvent('mouseup', { bubbles: true });
+    window.dispatchEvent(mouseEvent);
+  }
+
   onStartTrimming(event: MouseEvent, side: 'start' | 'end') {
     event.stopPropagation();
     event.preventDefault();
@@ -125,6 +174,46 @@ export class ClipComponent {
     // Only add mousemove listener during active trimming
     document.addEventListener('mousemove', this.handleTrimMouseMove);
     document.addEventListener('mouseup', this.handleTrimMouseUp);
+  }
+
+  onStartTrimmingTouch(event: TouchEvent, side: 'start' | 'end') {
+    event.stopPropagation();
+    event.preventDefault();
+    
+    const touch = event.touches[0];
+    this.trimStarted.emit({
+      clip: this.clip,
+      side,
+      startX: touch.clientX,
+      originalTrimStart: this.clip.trimStart || 0,
+      originalTrimEnd: this.clip.trimEnd || 0,
+      originalDuration: this.clip.originalDuration,
+      originalStartTime: this.clip.startTime
+    });
+    
+    this.isTrimActive.set(true);
+    document.body.style.userSelect = 'none';
+    
+    // Add touch event listeners for trimming
+    document.addEventListener('touchmove', this.handleTrimTouchMove, { passive: false });
+    document.addEventListener('touchend', this.handleTrimTouchEnd);
+  }
+
+  private handleTrimTouchMove = (event: TouchEvent) => {
+    event.preventDefault();
+    const touch = event.touches[0];
+    // Convert to mouse event for existing trim logic
+    const mouseEvent = new MouseEvent('mousemove', {
+      clientX: touch.clientX,
+      clientY: touch.clientY
+    });
+    this.handleTrimMouseMove(mouseEvent);
+  }
+
+  private handleTrimTouchEnd = () => {
+    this.handleTrimMouseUp();
+    document.removeEventListener('touchmove', this.handleTrimTouchMove);
+    document.removeEventListener('touchend', this.handleTrimTouchEnd);
   }
 
   // REMOVED: Global mousemove listener - huge performance killer!

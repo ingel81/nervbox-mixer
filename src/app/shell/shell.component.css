@@ -15,7 +15,9 @@
   font-size: 16px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  height: 48px;
   color: rgba(255, 255, 255, 0.9);
   text-shadow: 0 2px 10px rgba(147, 51, 234, 0.5);
 }
@@ -50,5 +52,88 @@
 
 
 .spacer { 
-  flex: 1; 
+  flex: 1;
+  height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .toolbar {
+    padding: 0 8px !important;
+    gap: 2px;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .logo {
+    gap: 4px;
+    flex-shrink: 0;
+    margin-right: 8px;
+  }
+
+  .logo-text {
+    font-size: 14px;
+  }
+
+  .logo-subtitle {
+    display: block;
+    font-size: 10px;
+  }
+
+  .alpha-badge {
+    display: block;
+    font-size: 7px;
+  }
+
+  .spacer {
+    flex: 1;
+    min-width: 4px;
+  }
+
+  /* Component containers - uniform spacing */
+  transport-controls,
+  content-creation,
+  project-management,
+  export-controls {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbar {
+    padding: 0 4px !important;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .logo-text {
+    font-size: 12px;
+  }
+
+  .logo-subtitle {
+    font-size: 8px;
+  }
+
+  .alpha-badge {
+    font-size: 6px;
+  }
+
+  .spacer {
+    min-width: 4px;
+  }
 }
