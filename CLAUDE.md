@@ -15,7 +15,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **niemals starten ...nur bauen** - Never run `npm start`, only build
 - **niemals issues schließen oder commiten ohne befehl dazu** - Never close issues or commit without explicit command
 - Sound files (900+ .wav/.mp3 files) excluded from Git
-- No ESLint/TSLint configuration available
+- **Full ESLint + Prettier setup** - Strict TypeScript linting with auto-fix capabilities
+- **Strict Angular Templates** - strictTemplates enabled for maximum type safety
 - Directory restructuring completed (audio/ folder organized into components/, services/, utils/, models/)
 
 ## Commands
@@ -25,11 +26,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run build:prod` - Production build with optimizations
 - `npm run watch` - Build in watch mode for development
 - `npm run scan-sounds` - Regenerate sound library catalog from src/assets/sounds/
+- `npm run lint` - Run ESLint to check for code quality issues
+- `npm run lint:fix` - Run ESLint with auto-fix to resolve fixable issues
+- `npm run format` - Format code with Prettier
+- `npm run format:check` - Check code formatting without making changes
 - `npm test` - Run unit tests (no tests implemented)
 
 ## Architecture
 
-### Standalone Angular 18 Application
+### Standalone Angular 19 Application
 - **No NgModules** - Components use standalone: true and import dependencies directly
 - **Angular Signals** - All state management uses signals instead of RxJS subjects
 - **Computed signals** - For derived state calculations
@@ -112,9 +117,13 @@ scripts/
 - Audio service manages Web Audio API directly
 
 ### Dependencies
-- **@angular/core**: v18.2.0 - Standalone components with signals
-- **@angular/material**: v18.2.0 - UI components
+- **@angular/core**: v19.2.14 - Standalone components with signals
+- **@angular/material**: v19.2.19 - UI components
 - **@breezystack/lamejs**: v1.2.7 - MP3 encoding
+- **angular-eslint**: v20.1.1 - Angular-specific ESLint rules
+- **eslint**: v9.29.0 - JavaScript/TypeScript linting
+- **prettier**: v3.6.2 - Code formatting
+- **typescript-eslint**: v8.34.1 - TypeScript ESLint integration
 - **Web Audio API**: Native browser API
 - **HTML5 Canvas**: Waveform visualization
 
@@ -131,6 +140,37 @@ Use conventional prefixes with single-line messages:
 - `test:` - Tests
 
 **Kein Claude Footer** - No automatic Claude signatures in commits
+
+## Code Quality & Development Workflow
+
+### TypeScript & Angular Strict Mode
+- **TypeScript strict mode** enabled in `tsconfig.json`
+- **Angular strictTemplates** enabled in `tsconfig.app.json` for maximum type safety
+- **strictInjectionParameters** and **strictInputAccessModifiers** enforced
+- All code is fully type-safe with zero `any` types
+
+### ESLint Configuration
+- **ESLint 9.x** with TypeScript support via `@typescript-eslint`
+- **Angular ESLint** rules for component and template best practices
+- **Prettier integration** for consistent code formatting
+- **Auto-fix capabilities** for most common issues
+
+### Development Best Practices
+- **Always run linting** before commits: `npm run lint`
+- **Use auto-fix** to resolve fixable issues: `npm run lint:fix`
+- **Format code** consistently: `npm run format`
+- **Build verification** required: `npm run build`
+- **No `any` types** - All code must be properly typed
+- **Template type checking** enforced via strictTemplates
+
+### Quality Gates
+```bash
+# Before committing changes, run these commands:
+npm run lint          # Check for linting errors
+npm run lint:fix      # Auto-fix what's possible
+npm run format        # Format code consistently
+npm run build         # Verify build succeeds
+```
 
 ### Important Git Commands
 ```bash
@@ -206,6 +246,13 @@ gh pr create --title "Fix #<number>: ..."
 - Waveform generation cached per clip
 - Batch audio decoding with error handling
 - File import supports drag-and-drop or file input
+
+## Development Workflow
+- **Type Safety First**: All code must be properly typed, no `any` types allowed
+- **Lint Before Commit**: Always run `npm run lint` before committing
+- **Build Verification**: Ensure `npm run build` succeeds before committing
+- **Template Safety**: strictTemplates catches template errors at compile time
+- **Consistent Formatting**: Use `npm run format` to maintain code style
 
 ## Testing Approach
 Currently no tests implemented. When adding tests:
