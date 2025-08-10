@@ -5,10 +5,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { EditorStateService } from '../audio/services/editor-state.service';
 import { ArrangementStorageService } from '../audio/services/arrangement-storage.service';
 import { DefaultArrangementService } from '../audio/services/default-arrangement.service';
+import { SaveArrangementDialogComponent } from '../audio/components/dialogs/save-arrangement-dialog.component';
+import { LoadArrangementDialogComponent } from '../audio/components/dialogs/load-arrangement-dialog.component';
+import { ConfirmDialogComponent } from '../audio/components/dialogs/confirm-dialog.component';
 
 @Component({
   selector: 'project-management',
@@ -19,7 +24,8 @@ import { DefaultArrangementService } from '../audio/services/default-arrangement
     MatIconModule, 
     MatMenuModule, 
     MatDividerModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatSnackBarModule
   ],
   template: `
     <button mat-button 
@@ -43,11 +49,6 @@ import { DefaultArrangementService } from '../audio/services/default-arrangement
       <button mat-menu-item (click)="loadArrangement()">
         <mat-icon>folder_open</mat-icon>
         <span>Load Arrangement</span>
-      </button>
-      <mat-divider></mat-divider>
-      <button mat-menu-item (click)="deleteArrangement()" class="delete-menu-item">
-        <mat-icon>delete</mat-icon>
-        <span>Delete Arrangement</span>
       </button>
     </mat-menu>
   `,
@@ -77,18 +78,6 @@ import { DefaultArrangementService } from '../audio/services/default-arrangement
     .arrangement-btn mat-icon {
       margin-right: 4px !important;
     }
-    
-    .delete-menu-item {
-      color: #ef4444 !important;
-    }
-    
-    .delete-menu-item mat-icon {
-      color: #ef4444 !important;
-    }
-    
-    .delete-menu-item:hover {
-      background: rgba(239, 68, 68, 0.1) !important;
-    }
   `]
 })
 export class ProjectManagementComponent {
@@ -96,57 +85,75 @@ export class ProjectManagementComponent {
   constructor(
     private editorState: EditorStateService,
     private arrangementStorage: ArrangementStorageService,
-    private defaultArrangement: DefaultArrangementService
+    private defaultArrangement: DefaultArrangementService,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
   ) {}
   
   saveArrangement(): void {
     const currentName = this.editorState.currentArrangementName();
-    const name = prompt('Enter arrangement name:', currentName === 'Untitled' ? '' : currentName);
-    if (!name) return;
     
-    this.arrangementStorage.saveArrangement(name, this.editorState.tracks());
-    this.editorState.setArrangementName(name);
-    alert(`Arrangement "${name}" saved successfully.`);
+    const dialogRef = this.dialog.open(SaveArrangementDialogComponent, {
+      width: '500px',
+      data: { currentName: currentName === 'Untitled' ? '' : currentName }
+    });
+
+    dialogRef.afterClosed().subscribe(name => {
+      if (name) {
+        this.arrangementStorage.saveArrangement(name, this.editorState.tracks());
+        this.editorState.setArrangementName(name);
+        this.snackBar.open(`Arrangement "${name}" saved successfully`, 'Close', {
+          duration: 3000,
+          horizontalPosition: 'center',
+          verticalPosition: 'bottom'
+        });
+      }
+    });
   }
   
   loadArrangement(): void {
-    const arrangements = this.arrangementStorage.savedArrangements();
-    if (arrangements.length === 0) {
-      alert('No saved arrangements found.');
-      return;
-    }
-    
-    // Create selection dialog
-    let message = 'Select arrangement to load:\n\n';
-    arrangements.forEach((arr, index) => {
-      const date = new Date(arr.updatedAt).toLocaleDateString();
-      const time = new Date(arr.updatedAt).toLocaleTimeString();
-      message += `${index + 1}. ${arr.arrangement.name} (${date} ${time})\n`;
+    const dialogRef = this.dialog.open(LoadArrangementDialogComponent, {
+      width: '600px',
+      maxHeight: '80vh'
     });
-    message += '\nEnter number (1-' + arrangements.length + '):';
-    
-    const selection = prompt(message);
-    const index = parseInt(selection || '') - 1;
-    
-    if (index >= 0 && index < arrangements.length) {
-      const selectedArrangement = arrangements[index];
-      this.arrangementStorage.loadArrangement(selectedArrangement.id).then(tracks => {
+
+    dialogRef.afterClosed().subscribe(async (selectedArrangement) => {
+      if (selectedArrangement) {
+        const tracks = await this.arrangementStorage.loadArrangement(selectedArrangement.id);
         if (tracks) {
           this.editorState.tracks.set(tracks);
           this.editorState.setArrangementName(selectedArrangement.arrangement.name);
           this.editorState.stop();
-          alert(`Arrangement "${selectedArrangement.arrangement.name}" loaded.`);
+          this.snackBar.open(`Arrangement "${selectedArrangement.arrangement.name}" loaded`, 'Close', {
+            duration: 3000,
+            horizontalPosition: 'center',
+            verticalPosition: 'bottom'
+          });
         } else {
-          alert('Failed to load arrangement.');
+          this.snackBar.open('Failed to load arrangement', 'Close', {
+            duration: 3000,
+            horizontalPosition: 'center',
+            verticalPosition: 'bottom'
+          });
         }
-      });
-    }
+      }
+    });
   }
   
   async newArrangement(): Promise<void> {
     if (this.editorState.tracks().length > 0) {
-      const shouldContinue = confirm('This will clear the current arrangement. Continue?');
-      if (!shouldContinue) return;
+      const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+        data: {
+          title: 'New Arrangement',
+          message: 'This will clear the current arrangement. Any unsaved changes will be lost. Continue?',
+          confirmText: 'Create New',
+          cancelText: 'Cancel',
+          icon: 'warning'
+        }
+      });
+
+      const confirmed = await dialogRef.afterClosed().toPromise();
+      if (!confirmed) return;
     }
     
     this.editorState.clearArrangement();
@@ -155,33 +162,11 @@ export class ProjectManagementComponent {
     // Add default hip hop track
     const defaultTracks = await this.defaultArrangement.createDefaultHipHopTracks();
     this.editorState.tracks.set(defaultTracks);
-  }
-  
-  deleteArrangement(): void {
-    const arrangements = this.arrangementStorage.savedArrangements();
-    if (arrangements.length === 0) {
-      alert('No saved arrangements found.');
-      return;
-    }
     
-    // Create selection dialog
-    let message = 'Select arrangement to delete:\n\n';
-    arrangements.forEach((arr, index) => {
-      const date = new Date(arr.updatedAt).toLocaleDateString();
-      const time = new Date(arr.updatedAt).toLocaleTimeString();
-      message += `${index + 1}. ${arr.arrangement.name} (${date} ${time})\n`;
+    this.snackBar.open('New arrangement created', 'Close', {
+      duration: 2000,
+      horizontalPosition: 'center',
+      verticalPosition: 'bottom'
     });
-    message += '\nEnter number (1-' + arrangements.length + '):';
-    
-    const selection = prompt(message);
-    const index = parseInt(selection || '') - 1;
-    
-    if (index >= 0 && index < arrangements.length) {
-      const selectedArrangement = arrangements[index];
-      if (confirm(`Delete arrangement "${selectedArrangement.arrangement.name}"? This cannot be undone.`)) {
-        this.arrangementStorage.deleteArrangement(selectedArrangement.id);
-        alert(`Arrangement "${selectedArrangement.arrangement.name}" deleted.`);
-      }
-    }
   }
 }
