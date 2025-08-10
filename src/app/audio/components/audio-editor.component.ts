@@ -15,6 +15,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'audio-editor',
@@ -33,6 +34,11 @@ export class AudioEditorComponent {
   get tracks() { return this.editorState.tracks; }
   get selectedClipId() { return this.editorState.selectedClipId; }
   get showSoundBrowser() { return this.editorState.showSoundBrowser; }
+  
+  // Environment info
+  version = environment.version;
+  author = environment.author;
+  repository = environment.repository;
   
   scrollX = signal(0);
 
