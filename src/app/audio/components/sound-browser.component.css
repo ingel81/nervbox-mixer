@@ -1,6 +1,7 @@
 .sound-browser {
-  width: 360px;
-  height: 500px;
+  width: min(360px, 100vw - 20px);
+  height: min(500px, 100vh - 80px);
+  max-width: 360px;
   background: linear-gradient(180deg, #1a1f3a 0%, #0a0e27 100%);
   border: 1px solid rgba(147, 51, 234, 0.3);
   border-radius: 8px;
@@ -12,8 +13,8 @@
   font-family: 'JetBrains Mono', monospace;
   color: white;
   position: fixed;
-  top: 80px;
-  right: 20px;
+  top: min(80px, 5vh);
+  right: min(20px, 2vw);
   z-index: 200;
   backdrop-filter: blur(10px);
   overflow: hidden;
@@ -21,43 +22,43 @@
 
 
 .browser-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 8px;
-  border-bottom: 1px solid rgba(147, 51, 234, 0.2);
-  background: linear-gradient(90deg, rgba(147, 51, 234, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
-  cursor: move;
-  user-select: none;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 2px 6px !important;
+  border-bottom: 1px solid rgba(147, 51, 234, 0.2) !important;
+  background: linear-gradient(90deg, rgba(147, 51, 234, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%) !important;
+  cursor: move !important;
+  user-select: none !important;
 }
 
 .browser-header h3 {
-  margin: 0;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin: 0 !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
 }
 
 .close-btn {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.8);
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  z-index: 10;
-  position: relative;
+  background: none !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  width: 16px !important;
+  height: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  font-size: 16px !important;
+  font-weight: bold !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  z-index: 10 !important;
+  position: relative !important;
 }
 
 .close-btn:hover {
@@ -100,8 +101,9 @@
 .categories {
   padding: 2px 4px;
   border-bottom: 1px solid rgba(147, 51, 234, 0.1);
-  max-height: 24px;
-  overflow: hidden;
+  min-height: 24px;
+  max-height: fit-content;
+  overflow: visible;
 }
 
 .category-chips {
@@ -272,10 +274,16 @@
   padding: 0 !important;
   min-width: 24px !important;
   max-width: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
   border-radius: 50% !important;
+  flex-shrink: 0 !important;
+  aspect-ratio: 1 / 1 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
 }
 
 .play-btn {
@@ -332,4 +340,13 @@
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+@media (max-width: 480px) {
+  .sound-browser {
+    left: 10px;
+    right: 10px;
+    width: calc(100vw - 20px);
+    top: 20px;
+  }
 }

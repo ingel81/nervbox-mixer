@@ -240,8 +240,8 @@ body { margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto
 
 /* Touch-specific global styles */
 @media (pointer: coarse) {
-  /* Increase all tap targets */
-  button, a, [role="button"] {
+  /* Increase all tap targets - except sound browser */
+  button:not(.sound-browser button), a:not(.sound-browser a), [role="button"]:not(.sound-browser [role="button"]) {
     min-height: 44px;
     min-width: 44px;
   }
