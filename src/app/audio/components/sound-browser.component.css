@@ -1,6 +1,6 @@
 .sound-browser {
-  width: 480px;
-  height: 600px;
+  width: 360px;
+  height: 500px;
   background: linear-gradient(180deg, #1a1f3a 0%, #0a0e27 100%);
   border: 1px solid rgba(147, 51, 234, 0.3);
   border-radius: 8px;
@@ -19,11 +19,85 @@
   overflow: hidden;
 }
 
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .sound-browser {
+    width: calc(100vw - 20px);
+    height: calc(100vh - 120px);
+    top: 60px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .sound-browser {
+    width: calc(100vw - 10px);
+    height: calc(100vh - 80px);
+    top: 40px;
+    right: 5px;
+    left: 5px;
+    border-radius: 6px;
+  }
+  
+  .browser-header {
+    padding: 6px 10px;
+  }
+  
+  .browser-header h3 {
+    font-size: 12px;
+  }
+  
+  .search-section {
+    padding: 4px 10px;
+  }
+  
+  .categories {
+    padding: 4px 6px;
+  }
+  
+  .category-chips {
+    gap: 4px;
+  }
+  
+  .category-chips ::ng-deep mat-chip-option {
+    font-size: 8px !important;
+    padding: 2px 4px !important;
+    min-height: 18px !important;
+  }
+  
+  .sound-list {
+    padding: 2px 6px;
+  }
+  
+  .sound-item {
+    padding: 4px;
+    margin: 1px 0;
+  }
+  
+  .sound-name {
+    font-size: 10px;
+  }
+  
+  .play-btn, .add-btn {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+  }
+  
+  .play-btn mat-icon, .add-btn mat-icon {
+    font-size: 14px !important;
+    width: 14px !important;
+    height: 14px !important;
+  }
+}
+
 .browser-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 4px 8px;
   border-bottom: 1px solid rgba(147, 51, 234, 0.2);
   background: linear-gradient(90deg, rgba(147, 51, 234, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
   cursor: move;
@@ -32,7 +106,7 @@
 
 .browser-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -44,8 +118,8 @@
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.8);
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -65,13 +139,14 @@
 }
 
 .search-section {
-  padding: 4px 16px;
+  padding: 6px 12px 6px 12px;
   border-bottom: 1px solid rgba(147, 51, 234, 0.1);
   background: rgba(0, 0, 0, 0.2);
 }
 
 .search-input {
   width: 100%;
+  box-sizing: border-box;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(147, 51, 234, 0.4);
   border-radius: 3px;
@@ -96,32 +171,36 @@
 }
 
 .categories {
-  padding: 8px;
+  padding: 2px 4px;
   border-bottom: 1px solid rgba(147, 51, 234, 0.1);
-  max-height: 60px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  max-height: 24px;
+  overflow: hidden;
 }
 
 .category-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 1px;
   justify-content: flex-start;
 }
 
 .category-chips ::ng-deep mat-chip-option {
-  font-size: 11px !important;
+  font-size: 5px !important;
   font-family: 'JetBrains Mono', monospace !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.5px !important;
-  font-weight: 700 !important;
+  letter-spacing: 0px !important;
+  font-weight: 400 !important;
   background: rgba(255, 255, 255, 0.1) !important;
   color: rgba(255, 255, 255, 0.95) !important;
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  padding: 4px 8px !important;
+  padding: 0px 1px !important;
   height: auto !important;
-  min-height: 24px !important;
+  min-height: 16px !important;
+  max-height: 16px !important;
+  line-height: 16px !important;
+  min-width: auto !important;
+  max-width: fit-content !important;
+  white-space: nowrap !important;
   border-radius: 4px !important;
   transition: all 0.2s ease !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
@@ -150,7 +229,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px;
+  padding: 4px 8px;
 }
 
 .sound-list::-webkit-scrollbar {
@@ -170,8 +249,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px;
-  margin: 3px 0;
+  padding: 6px;
+  margin: 2px 0;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
   border: 1px solid rgba(147, 51, 234, 0.15);
   border-radius: 6px;
@@ -198,10 +277,10 @@
 }
 
 .sound-name {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: rgba(255, 255, 255, 1);
-  margin-bottom: 2px;
+  margin-bottom: 1px;
   text-transform: none;
   letter-spacing: 0.3px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
@@ -261,10 +340,12 @@
 }
 
 .play-btn, .add-btn {
-  width: 32px !important;
-  height: 32px !important;
+  width: 24px !important;
+  height: 24px !important;
   padding: 0 !important;
-  min-width: 32px !important;
+  min-width: 24px !important;
+  max-width: 24px !important;
+  border-radius: 50% !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -277,10 +358,10 @@
 }
 
 .play-btn mat-icon, .add-btn mat-icon {
-  font-size: 18px !important;
-  width: 18px !important;
-  height: 18px !important;
-  line-height: 18px !important;
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  line-height: 16px !important;
 }
 
 .play-btn:hover:not(:disabled) {
