@@ -10,19 +10,18 @@ import { ExportControlsComponent } from './export-controls.component';
 import { AudioEditorComponent } from '../audio/components/audio-editor.component';
 
 @Component({
-  selector: 'app-shell',
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatToolbarModule,
-    MatIconModule,
-    TransportControlsComponent,
-    ProjectManagementComponent,
-    ContentCreationComponent,
-    ExportControlsComponent,
-    AudioEditorComponent
-  ],
-  template: `
+    selector: 'app-shell',
+    imports: [
+        CommonModule,
+        MatToolbarModule,
+        MatIconModule,
+        TransportControlsComponent,
+        ProjectManagementComponent,
+        ContentCreationComponent,
+        ExportControlsComponent,
+        AudioEditorComponent
+    ],
+    template: `
     <mat-toolbar color="primary" class="toolbar">
       <!-- Logo/Branding -->
       <span class="logo">
@@ -48,6 +47,6 @@ import { AudioEditorComponent } from '../audio/components/audio-editor.component
     <!-- Main Editor -->
     <audio-editor></audio-editor>
   `,
-  styleUrls: ['./shell.component.css']
+    styleUrls: ['./shell.component.css']
 })
 export class ShellComponent {}

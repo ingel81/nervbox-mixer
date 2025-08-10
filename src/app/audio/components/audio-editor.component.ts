@@ -20,11 +20,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { environment } from '../../../environments/environment';
 
 @Component({
-  selector: 'audio-editor',
-  standalone: true,
-  imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent, ClipComponent, TrackHeaderComponent, TrackLaneComponent],
-  templateUrl: './audio-editor.component.html',
-  styleUrls: ['./audio-editor.component.css']
+    selector: 'audio-editor',
+    imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent, ClipComponent, TrackHeaderComponent, TrackLaneComponent],
+    templateUrl: './audio-editor.component.html',
+    styleUrls: ['./audio-editor.component.css']
 })
 export class AudioEditorComponent {
   @ViewChild('timeline') timelineEl!: ElementRef<HTMLDivElement>;

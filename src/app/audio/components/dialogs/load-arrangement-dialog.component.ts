@@ -13,17 +13,16 @@ import { ArrangementStorageService, SavedArrangement } from '../../services/arra
 import { ConfirmDialogComponent } from './confirm-dialog.component';
 
 @Component({
-  selector: 'load-arrangement-dialog',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatDialogModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTooltipModule
-  ],
-  template: `
+    selector: 'load-arrangement-dialog',
+    imports: [
+        CommonModule,
+        FormsModule,
+        MatDialogModule,
+        MatButtonModule,
+        MatIconModule,
+        MatTooltipModule
+    ],
+    template: `
     <h2 mat-dialog-title>
       <mat-icon class="dialog-icon">folder_open</mat-icon>
       Load Arrangement
@@ -88,7 +87,7 @@ import { ConfirmDialogComponent } from './confirm-dialog.component';
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
+    styles: [`
     .dialog-icon {
       vertical-align: middle;
       margin-right: 8px;

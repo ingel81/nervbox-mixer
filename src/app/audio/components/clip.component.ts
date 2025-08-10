@@ -27,10 +27,9 @@ export interface ClipSelectEvent {
 }
 
 @Component({
-  selector: 'audio-clip',
-  standalone: true,
-  imports: [CommonModule, MatIconModule],
-  template: `
+    selector: 'audio-clip',
+    imports: [CommonModule, MatIconModule],
+    template: `
     <div class="clip"
          [class.selected]="isSelected()"
          [class.dragging]="isDragging()"
@@ -67,7 +66,7 @@ export interface ClipSelectEvent {
            alt="Waveform">
     </div>
   `,
-  styleUrls: ['./clip.component.css']
+    styleUrls: ['./clip.component.css']
 })
 export class ClipComponent {
   @Input({ required: true }) clip!: Clip;

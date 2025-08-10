@@ -16,18 +16,17 @@ import { LoadArrangementDialogComponent } from '../audio/components/dialogs/load
 import { ConfirmDialogComponent } from '../audio/components/dialogs/confirm-dialog.component';
 
 @Component({
-  selector: 'project-management',
-  standalone: true,
-  imports: [
-    CommonModule, 
-    MatButtonModule, 
-    MatIconModule, 
-    MatMenuModule, 
-    MatDividerModule,
-    MatTooltipModule,
-    MatSnackBarModule
-  ],
-  template: `
+    selector: 'project-management',
+    imports: [
+        CommonModule,
+        MatButtonModule,
+        MatIconModule,
+        MatMenuModule,
+        MatDividerModule,
+        MatTooltipModule,
+        MatSnackBarModule
+    ],
+    template: `
     <button mat-button 
             [matMenuTriggerFor]="arrangementMenu" 
             class="arrangement-btn" 
@@ -52,7 +51,7 @@ import { ConfirmDialogComponent } from '../audio/components/dialogs/confirm-dial
       </button>
     </mat-menu>
   `,
-  styles: [`
+    styles: [`
     :host {
       display: flex;
       align-items: center;

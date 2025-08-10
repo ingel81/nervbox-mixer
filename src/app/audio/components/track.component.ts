@@ -10,10 +10,9 @@ export { TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackRenameEvent } fr
 export { TrackDropEvent, TrackDragEvent } from './track-lane.component';
 
 @Component({
-  selector: 'audio-track',
-  standalone: true,
-  imports: [CommonModule, TrackHeaderComponent, TrackLaneComponent],
-  template: `
+    selector: 'audio-track',
+    imports: [CommonModule, TrackHeaderComponent, TrackLaneComponent],
+    template: `
     <!-- Track header component -->
     <track-header [track]="track"
                   (muteToggled)="onMuteToggled($event)"
@@ -37,7 +36,7 @@ export { TrackDropEvent, TrackDragEvent } from './track-lane.component';
                 (clipTrimStarted)="onClipTrimStarted($event)">
     </track-lane>
   `,
-  styleUrls: ['./track.component.css']
+    styleUrls: ['./track.component.css']
 })
 export class TrackComponent {
   @Input({ required: true }) track!: Track;

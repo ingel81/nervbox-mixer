@@ -8,10 +8,9 @@ import { EditorStateService } from '../audio/services/editor-state.service';
 import { AudioEngineService } from '../audio/services/audio-engine.service';
 
 @Component({
-  selector: 'content-creation',
-  standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatTooltipModule],
-  template: `
+    selector: 'content-creation',
+    imports: [CommonModule, MatButtonModule, MatIconModule, MatTooltipModule],
+    template: `
     
     <button mat-icon-button 
             (click)="openFileDialog()" 
@@ -35,7 +34,7 @@ import { AudioEngineService } from '../audio/services/audio-engine.service';
       <mat-icon>library_music</mat-icon>
     </button>
   `,
-  styles: [`
+    styles: [`
     :host {
       display: flex;
       align-items: center;

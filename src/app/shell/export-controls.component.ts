@@ -8,10 +8,9 @@ import { EditorStateService } from '../audio/services/editor-state.service';
 import { AudioEngineService } from '../audio/services/audio-engine.service';
 
 @Component({
-  selector: 'export-controls',
-  standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatMenuModule],
-  template: `
+    selector: 'export-controls',
+    imports: [CommonModule, MatButtonModule, MatIconModule, MatMenuModule],
+    template: `
     <button mat-button 
             [matMenuTriggerFor]="exportMenu" 
             color="accent" 
@@ -33,7 +32,7 @@ import { AudioEngineService } from '../audio/services/audio-engine.service';
       </button>
     </mat-menu>
   `,
-  styles: [`
+    styles: [`
     :host {
       display: flex;
       align-items: center;

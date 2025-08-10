@@ -14,16 +14,15 @@ export interface SaveArrangementDialogData {
 }
 
 @Component({
-  selector: 'save-arrangement-dialog',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatDialogModule,
-    MatButtonModule,
-    MatIconModule
-  ],
-  template: `
+    selector: 'save-arrangement-dialog',
+    imports: [
+        CommonModule,
+        FormsModule,
+        MatDialogModule,
+        MatButtonModule,
+        MatIconModule
+    ],
+    template: `
     <h2 mat-dialog-title>
       <mat-icon class="dialog-icon">save</mat-icon>
       Save Arrangement
@@ -74,7 +73,7 @@ export interface SaveArrangementDialogData {
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
+    styles: [`
     .dialog-icon {
       vertical-align: middle;
       margin-right: 8px;

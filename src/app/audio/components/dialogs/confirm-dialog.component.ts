@@ -14,15 +14,14 @@ export interface ConfirmDialogData {
 }
 
 @Component({
-  selector: 'confirm-dialog',
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatDialogModule,
-    MatButtonModule,
-    MatIconModule
-  ],
-  template: `
+    selector: 'confirm-dialog',
+    imports: [
+        CommonModule,
+        MatDialogModule,
+        MatButtonModule,
+        MatIconModule
+    ],
+    template: `
     <h2 mat-dialog-title>
       <mat-icon class="dialog-icon" [style.color]="data.iconColor || '#ef4444'">
         {{ data.icon || 'warning' }}
@@ -45,7 +44,7 @@ export interface ConfirmDialogData {
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
+    styles: [`
     .dialog-icon {
       vertical-align: middle;
       margin-right: 8px;

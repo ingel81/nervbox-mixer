@@ -14,10 +14,9 @@ export interface TrackDragEvent {
 }
 
 @Component({
-  selector: 'track-lane',
-  standalone: true,
-  imports: [CommonModule, ClipComponent],
-  template: `
+    selector: 'track-lane',
+    imports: [CommonModule, ClipComponent],
+    template: `
     <div class="lane" 
          (mousedown)="onLaneMouseDown($event)" 
          (drop)="onDrop($event)" 
@@ -38,7 +37,7 @@ export interface TrackDragEvent {
       <div class="playhead" [style.left.px]="(playhead * pxPerSecond)"></div>
     </div>
   `,
-  styleUrls: ['./track-lane.component.css']
+    styleUrls: ['./track-lane.component.css']
 })
 export class TrackLaneComponent {
   @Input() track!: Track;

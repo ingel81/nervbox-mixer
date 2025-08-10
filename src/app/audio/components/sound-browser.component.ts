@@ -11,13 +11,12 @@ import { SoundLibraryService } from '../services/sound-library.service';
 import { SoundLibraryItem, SoundCategory } from '../utils/sound-library';
 
 @Component({
-  selector: 'sound-browser',
-  standalone: true,
-  imports: [
-    CommonModule, FormsModule, MatButtonModule, MatIconModule, 
-    MatInputModule, MatChipsModule, MatProgressSpinnerModule, MatTooltipModule
-  ],
-  template: `
+    selector: 'sound-browser',
+    imports: [
+        CommonModule, FormsModule, MatButtonModule, MatIconModule,
+        MatInputModule, MatChipsModule, MatProgressSpinnerModule, MatTooltipModule
+    ],
+    template: `
     <div class="sound-browser">
       <div class="browser-header" 
            (mousedown)="onHeaderMouseDown($event)">
@@ -100,7 +99,7 @@ import { SoundLibraryItem, SoundCategory } from '../utils/sound-library';
       </div>
     </div>
   `,
-  styleUrls: ['./sound-browser.component.css']
+    styleUrls: ['./sound-browser.component.css']
 })
 export class SoundBrowserComponent {
   @Output() soundSelected = new EventEmitter<AudioBuffer & { name: string; category: string; id: string }>();

@@ -24,10 +24,9 @@ export interface TrackRenameEvent {
 }
 
 @Component({
-  selector: 'track-header',
-  standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatTooltipModule],
-  template: `
+    selector: 'track-header',
+    imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatTooltipModule],
+    template: `
     <div class="track-head">
       <div class="track-controls">
         <div class="title" 
@@ -65,7 +64,7 @@ export interface TrackRenameEvent {
       </div>
     </div>
   `,
-  styleUrls: ['./track-header.component.css']
+    styleUrls: ['./track-header.component.css']
 })
 export class TrackHeaderComponent implements AfterViewInit {
   @Input() track!: Track;

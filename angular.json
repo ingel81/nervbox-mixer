@@ -60,10 +60,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "nervbox-mixer:build:production"
+              "buildTarget": "nervbox-mixer:build:production"
             },
             "development": {
-              "browserTarget": "nervbox-mixer:build:development"
+              "buildTarget": "nervbox-mixer:build:development"
             }
           },
           "defaultConfiguration": "development"

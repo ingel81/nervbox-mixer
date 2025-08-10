@@ -8,10 +8,9 @@ import { EditorStateService } from '../audio/services/editor-state.service';
 import { AudioEngineService } from '../audio/services/audio-engine.service';
 
 @Component({
-  selector: 'transport-controls',
-  standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatTooltipModule],
-  template: `
+    selector: 'transport-controls',
+    imports: [CommonModule, MatButtonModule, MatIconModule, MatTooltipModule],
+    template: `
     <button mat-icon-button 
             (click)="togglePlayback()" 
             matTooltip="Play/Pause"
@@ -26,7 +25,7 @@ import { AudioEngineService } from '../audio/services/audio-engine.service';
       <mat-icon>stop</mat-icon>
     </button>
   `,
-  styles: [`
+    styles: [`
     :host {
       display: flex;
       align-items: center;
