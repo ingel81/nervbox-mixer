@@ -3,9 +3,12 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 
 import { EditorStateService } from '../audio/services/editor-state.service';
 import { AudioEngineService } from '../audio/services/audio-engine.service';
+import { WaveformService } from '../audio/services/waveform.service';
+import { RecordingDialogComponent } from '../audio/components/dialogs/recording-dialog.component';
 import { Clip } from '../audio/models/models';
 
 @Component({
@@ -26,6 +29,13 @@ import { Clip } from '../audio/models/models';
            accept="audio/*" 
            (change)="handleFileInput($event)" 
            hidden>
+    
+    <button mat-icon-button
+            (click)="openRecordingDialog()"
+            matTooltip="Record from microphone"
+            class="content-btn record-btn">
+      <mat-icon>mic</mat-icon>
+    </button>
     
     <button mat-icon-button 
             (click)="toggleSoundBrowser()" 
@@ -59,6 +69,11 @@ import { Clip } from '../audio/models/models';
       color: #ec4899 !important;
       background: rgba(236, 72, 153, 0.2) !important;
       box-shadow: 0 0 10px rgba(236, 72, 153, 0.3);
+    }
+    
+    .record-btn:hover {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
     }
     
     /* Mobile styles */
@@ -123,7 +138,9 @@ export class ContentCreationComponent {
   
   constructor(
     public editorState: EditorStateService,
-    private audio: AudioEngineService
+    private audio: AudioEngineService,
+    private waveform: WaveformService,
+    private dialog: MatDialog
   ) {}
   
   
@@ -133,6 +150,79 @@ export class ContentCreationComponent {
   
   toggleSoundBrowser(): void {
     this.editorState.toggleSoundBrowser('toolbar');
+  }
+  
+  openRecordingDialog(): void {
+    const dialogRef = this.dialog.open(RecordingDialogComponent, {
+      width: '600px',
+      panelClass: 'recording-dialog'
+    });
+    
+    dialogRef.afterClosed().subscribe(audioBuffer => {
+      if (audioBuffer) {
+        this.addRecordingToTrack(audioBuffer);
+      }
+    });
+  }
+  
+  private addRecordingToTrack(buffer: AudioBuffer): void {
+    const playheadPos = this.editorState.playhead();
+    const name = `Recording ${new Date().toLocaleTimeString()}`;
+    const color = 'linear-gradient(45deg, #ef4444, #dc2626)';
+    
+    // Generate waveform for the recording
+    const waveformData = this.waveform.generateFromBuffer(buffer, {
+      width: Math.max(200, Math.floor(buffer.duration * 100)),
+      height: 44,
+      clipColor: color
+    });
+    
+    const tracks = this.editorState.tracks();
+    let placedOnExistingTrack = false;
+    
+    for (const track of tracks) {
+      const canPlace = !track.clips.some(clip => {
+        const clipStart = clip.startTime;
+        const clipEnd = clip.startTime + clip.duration;
+        const newClipEnd = playheadPos + buffer.duration;
+        return !(newClipEnd <= clipStart || playheadPos >= clipEnd);
+      });
+      
+      if (canPlace) {
+        this.editorState.addClipToTrack(track.id, {
+          id: crypto.randomUUID(),
+          name,
+          startTime: playheadPos,
+          duration: buffer.duration,
+          offset: 0,
+          buffer,
+          color,
+          waveform: waveformData,
+          trimStart: 0,
+          trimEnd: 0,
+          originalDuration: buffer.duration
+        } as Clip);
+        placedOnExistingTrack = true;
+        break;
+      }
+    }
+    
+    if (!placedOnExistingTrack) {
+      const newTrack = this.editorState.addTrack();
+      this.editorState.addClipToTrack(newTrack.id, {
+        id: crypto.randomUUID(),
+        name,
+        startTime: playheadPos,
+        duration: buffer.duration,
+        offset: 0,
+        buffer,
+        color,
+        waveform: waveformData,
+        trimStart: 0,
+        trimEnd: 0,
+        originalDuration: buffer.duration
+      } as Clip);
+    }
   }
 
   handleFileInput(event: Event): void {
