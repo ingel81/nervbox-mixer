@@ -8,6 +8,8 @@ import { WaveformService } from '../services/waveform.service';
 import { SoundBrowserComponent } from './sound-browser.component';
 import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent } from './clip.component';
 import { TrackComponent, TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackRenameEvent, TrackDropEvent, TrackDragEvent } from './track.component';
+import { TrackHeaderComponent } from './track-header.component';
+import { TrackLaneComponent } from './track-lane.component';
 import { Clip, Track } from '../models/models';
 import { secondsToPx, pxToSeconds } from '../utils/timeline.util';
 
@@ -20,12 +22,14 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'audio-editor',
   standalone: true,
-  imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent, ClipComponent, TrackComponent],
+  imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent, ClipComponent, TrackHeaderComponent, TrackLaneComponent],
   templateUrl: './audio-editor.component.html',
   styleUrls: ['./audio-editor.component.css']
 })
 export class AudioEditorComponent {
   @ViewChild('timeline') timelineEl!: ElementRef<HTMLDivElement>;
+  @ViewChild('trackHeaders') trackHeadersEl!: ElementRef<HTMLDivElement>;
+  @ViewChild('trackLanes') trackLanesEl!: ElementRef<HTMLDivElement>;
 
   // Use signals from EditorStateService
   get pxPerSecond() { return this.editorState.pxPerSecond; }
@@ -368,6 +372,18 @@ export class AudioEditorComponent {
   
   onTrackDragLeave(event: TrackDragEvent) {
     this.onDragLeave(event.event);
+  }
+
+  onTrackScroll(event: Event) {
+    // Synchronize header scrolling with lanes
+    const lanesEl = event.target as HTMLDivElement;
+    if (this.trackHeadersEl) {
+      this.trackHeadersEl.nativeElement.scrollTop = lanesEl.scrollTop;
+    }
+    // Synchronize timeline ruler horizontal scrolling
+    if (this.timelineEl) {
+      this.timelineEl.nativeElement.scrollLeft = lanesEl.scrollLeft;
+    }
   }
 
   private restartPlaybackFromCurrentPosition() {
@@ -718,8 +734,8 @@ export class AudioEditorComponent {
   }
 
   private getTrackIndexAtClientY(clientY: number): number | null {
-    // Get all lane elements from TrackComponents
-    const trackElements = document.querySelectorAll('audio-track .lane');
+    // Get all lane elements from TrackLaneComponents
+    const trackElements = document.querySelectorAll('track-lane .lane');
     for (let i = 0; i < trackElements.length; i++) {
       const rect = trackElements[i]!.getBoundingClientRect();
       if (clientY >= rect.top && clientY <= rect.bottom) return i;

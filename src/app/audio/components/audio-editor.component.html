@@ -20,35 +20,51 @@
       </div>
     </div>
 
-    <!-- Tracks container for both heads and lanes -->
-    <ng-container *ngFor="let track of tracks(); trackBy: trackByFn">
-      <audio-track [track]="track"
-                   [pxPerSecond]="pxPerSecond()"
-                   [duration]="duration()"
-                   [playhead]="playhead()"
-                   [isDragOver]="dragOverTrack?.id === track.id"
-                   (muteToggled)="onTrackMuteToggled($event)"
-                   (soloToggled)="onTrackSoloToggled($event)"
-                   (trackDeleted)="onTrackDeleted($event)"
-                   (trackRenamed)="onTrackRenamed($event)"
-                   (trackDrop)="onTrackDrop($event)"
-                   (trackDragEnter)="onTrackDragEnter($event)"
-                   (trackDragLeave)="onTrackDragLeave($event)"
-                   (laneMouseDown)="laneMouseDown($event)"
-                   (clipSelected)="onClipSelected($event)"
-                   (clipDragStarted)="onClipDragStarted($event)"
-                   (clipTrimStarted)="onClipTrimStarted($event)">
-      </audio-track>
-    </ng-container>
+    <!-- Tracks body with separate scrollable columns -->
+    <div class="tracks-body">
+      <!-- Track headers (left column) -->
+      <div class="track-headers" #trackHeaders>
+        <ng-container *ngFor="let track of tracks(); trackBy: trackByFn">
+          <track-header [track]="track"
+                        (muteToggled)="onTrackMuteToggled($event)"
+                        (soloToggled)="onTrackSoloToggled($event)"
+                        (trackDeleted)="onTrackDeleted($event)"
+                        (trackRenamed)="onTrackRenamed($event)">
+          </track-header>
+        </ng-container>
+        
+        <!-- Add Track Button -->
+        <div class="add-track-container">
+          <button class="add-track-btn" 
+                  (click)="addTrack()" 
+                  mat-stroked-button>
+            <mat-icon>add</mat-icon>
+            Add Track
+          </button>
+        </div>
+      </div>
 
-    <!-- Add Track Button -->
-    <div class="add-track-container">
-      <button class="add-track-btn" 
-              (click)="addTrack()" 
-              mat-stroked-button>
-        <mat-icon>add</mat-icon>
-        Add Track
-      </button>
+      <!-- Track lanes (right column) -->
+      <div class="track-lanes" #trackLanes (scroll)="onTrackScroll($event)">
+        <ng-container *ngFor="let track of tracks(); trackBy: trackByFn">
+          <track-lane [track]="track"
+                      [pxPerSecond]="pxPerSecond()"
+                      [duration]="duration()"
+                      [playhead]="playhead()"
+                      [isDragOver]="dragOverTrack?.id === track.id"
+                      (trackDrop)="onTrackDrop($event)"
+                      (trackDragEnter)="onTrackDragEnter($event)"
+                      (trackDragLeave)="onTrackDragLeave($event)"
+                      (laneMouseDown)="laneMouseDown($event)"
+                      (clipSelected)="onClipSelected($event)"
+                      (clipDragStarted)="onClipDragStarted($event)"
+                      (clipTrimStarted)="onClipTrimStarted($event)">
+          </track-lane>
+        </ng-container>
+        
+        <!-- Empty lane for add track button alignment -->
+        <div class="lane empty-lane"></div>
+      </div>
     </div>
   </div>
 
