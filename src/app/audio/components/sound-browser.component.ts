@@ -72,10 +72,11 @@ import { SoundLibraryItem, SoundCategory } from '../utils/sound-library';
           <div class="sound-actions">
             <button mat-icon-button 
                     class="play-btn"
-                    (click)="$event.stopPropagation(); previewSound(sound)"
+                    (click)="$event.stopPropagation(); isPlaying(sound) ? stopPreview() : previewSound(sound)"
                     [disabled]="loadingStates[sound.id]"
-                    matTooltip="Preview">
-              <mat-icon *ngIf="!loadingStates[sound.id]">play_arrow</mat-icon>
+                    [matTooltip]="isPlaying(sound) ? 'Stop preview' : 'Preview'">
+              <mat-icon *ngIf="!loadingStates[sound.id] && !isPlaying(sound)">play_arrow</mat-icon>
+              <mat-icon *ngIf="!loadingStates[sound.id] && isPlaying(sound)">stop</mat-icon>
               <mat-progress-spinner *ngIf="loadingStates[sound.id]" 
                                    diameter="20" 
                                    mode="indeterminate">
@@ -128,17 +129,13 @@ export class SoundBrowserComponent {
   }
 
   private currentPreview?: AudioBufferSourceNode;
+  currentPreviewSound?: SoundLibraryItem;
 
   async previewSound(sound: SoundLibraryItem) {
     console.log('Preview sound:', sound.name);
     
     // Stop current preview if playing
-    if (this.currentPreview) {
-      try {
-        this.currentPreview.stop();
-      } catch {}
-      this.currentPreview = undefined;
-    }
+    this.stopPreview();
     
     this.loadingStates[sound.id] = true;
     
@@ -157,22 +154,35 @@ export class SoundBrowserComponent {
         source.start();
         
         this.currentPreview = source;
+        this.currentPreviewSound = sound;
         
-        // Auto-stop after 3 seconds
-        setTimeout(() => {
+        // Auto-stop when preview ends naturally
+        source.onended = () => {
           if (this.currentPreview === source) {
-            try {
-              source.stop();
-            } catch {}
             this.currentPreview = undefined;
+            this.currentPreviewSound = undefined;
           }
-        }, 3000);
+        };
       }
     } catch (error) {
       console.error('Failed to preview sound:', error);
     } finally {
       this.loadingStates[sound.id] = false;
     }
+  }
+
+  stopPreview() {
+    if (this.currentPreview) {
+      try {
+        this.currentPreview.stop();
+      } catch {}
+      this.currentPreview = undefined;
+      this.currentPreviewSound = undefined;
+    }
+  }
+
+  isPlaying(sound: SoundLibraryItem): boolean {
+    return this.currentPreviewSound?.id === sound.id && !!this.currentPreview;
   }
 
   async addSoundToProject(sound: SoundLibraryItem) {
