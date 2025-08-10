@@ -18,7 +18,9 @@
       "Bash(git commit:*)",
       "Bash(rm:*)",
       "Bash(git checkout:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(npx ng add:*)",
+      "Bash(npx ng update:*)"
     ],
     "deny": []
   }
