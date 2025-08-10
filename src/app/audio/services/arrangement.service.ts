@@ -111,7 +111,7 @@ export class ArrangementService {
       mute: track.mute,
       solo: track.solo,
       clips: track.clips.map(clip => ({
-        soundId: (clip as any).soundId || 'unknown',
+        soundId: (clip as any).soundId || crypto.randomUUID(),
         startTime: clip.startTime,
         duration: clip.duration !== clip.originalDuration ? clip.duration : undefined,
         trimStart: clip.trimStart > 0 ? clip.trimStart : undefined,

@@ -964,7 +964,7 @@ export class AudioEditorComponent {
           trimStart: 0,
           trimEnd: 0,
           originalDuration: buffer.duration,
-          soundId: buffer.id
+          soundId: buffer.id || crypto.randomUUID()
         } as any;
         targetTrack.clips.push(newClip);
         console.log(`Added ${buffer.name} ${placementStrategy} at ${targetStartTime.toFixed(2)}s`);
@@ -987,7 +987,7 @@ export class AudioEditorComponent {
             trimStart: 0,
             trimEnd: 0,
             originalDuration: buffer.duration,
-            soundId: buffer.id
+            soundId: buffer.id || crypto.randomUUID()
           } as any],
           mute: false,
           solo: false,
@@ -1159,8 +1159,9 @@ export class AudioEditorComponent {
           waveform,
           trimStart: 0,
           trimEnd: 0,
-          originalDuration: buffer.duration
-        };
+          originalDuration: buffer.duration,
+          soundId: buffer.id || crypto.randomUUID()
+        } as any;
         
         targetTrack.clips.push(newClip);
       }
