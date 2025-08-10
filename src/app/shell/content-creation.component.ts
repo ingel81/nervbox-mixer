@@ -189,7 +189,7 @@ export class ContentCreationComponent {
     
     buffers.forEach((buf, i) => {
       const name = files[i]?.name.replace(/\.[^.]+$/, '') || `Audio ${i + 1}`;
-      const color = this.randomColor();
+      const color = this.getColorByFilename(name);
       
       // Try to find a track with space at playhead position
       const tracks = this.editorState.tracks();
@@ -244,6 +244,29 @@ export class ContentCreationComponent {
     });
   }
   
+  private getColorByFilename(filename: string): string {
+    const colors = [
+      'linear-gradient(45deg, #dc2626, #b91c1c)',
+      'linear-gradient(45deg, #f59e0b, #d97706)',
+      'linear-gradient(45deg, #10b981, #059669)',
+      'linear-gradient(45deg, #3b82f6, #1d4ed8)',
+      'linear-gradient(45deg, #8b5cf6, #7c3aed)',
+      'linear-gradient(45deg, #ec4899, #be185d)',
+      'linear-gradient(45deg, #06b6d4, #0891b2)',
+      'linear-gradient(45deg, #84cc16, #65a30d)'
+    ];
+    
+    // Simple hash function for consistent color assignment
+    let hash = 0;
+    for (let i = 0; i < filename.length; i++) {
+      const char = filename.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    return colors[Math.abs(hash) % colors.length];
+  }
+
   private randomColor(): string {
     const colors = [
       'linear-gradient(45deg, #dc2626, #b91c1c)',

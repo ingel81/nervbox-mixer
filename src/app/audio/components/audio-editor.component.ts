@@ -196,7 +196,7 @@ export class AudioEditorComponent {
         // Add all clips to this track
         buffers.forEach((buf, i) => {
           const name = filesArray[i]?.name.replace(/\.[^.]+$/, '') || `Audio ${i + 1}`;
-          const color = this.randomColor();
+          const color = this.getColorByFilename(name);
           const waveform = this.waveformService.generateFromBuffer(buf, {
             width: Math.floor(buf.duration * this.pxPerSecond()),
             height: 44,
@@ -222,7 +222,7 @@ export class AudioEditorComponent {
         // Files dropped in general area - distribute intelligently
         buffers.forEach((buf, i) => {
           const name = filesArray[i]?.name.replace(/\.[^.]+$/, '') || `Audio ${i + 1}`;
-          const color = this.randomColor();
+          const color = this.getColorByFilename(name);
           const waveform = this.waveformService.generateFromBuffer(buf, {
             width: Math.floor(buf.duration * this.pxPerSecond()),
             height: 44,
@@ -874,6 +874,31 @@ export class AudioEditorComponent {
     }
   }
 
+  private getColorByFilename(filename: string): string {
+    const colors = [
+      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+      'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+      'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+      'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+      'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+      'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+      'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+      'linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%)'
+    ];
+    
+    // Simple hash function for consistent color assignment
+    let hash = 0;
+    for (let i = 0; i < filename.length; i++) {
+      const char = filename.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    return colors[Math.abs(hash) % colors.length]!;
+  }
+
   randomColor() { 
     const colors = [
       'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -942,7 +967,7 @@ export class AudioEditorComponent {
         ...this.clipboardClip!,
         id: crypto.randomUUID(),
         startTime: this.playhead(), // Paste at current playhead position
-        color: this.randomColor() // New color
+        color: this.getColorByFilename(this.clipboardClip!.name) // Consistent color based on name
       };
 
       targetTrack.clips.push(pastedClip);
@@ -978,7 +1003,7 @@ export class AudioEditorComponent {
 
 
   async onSoundSelected(buffer: AudioBuffer & { name: string; category: string; id?: string }) {
-    const color = this.randomColor();
+    const color = this.getColorByFilename(buffer.name);
     const waveform = this.waveformService.generateFromBuffer(buffer, {
       width: Math.floor(buffer.duration * this.pxPerSecond()),
       height: 44,
@@ -1229,7 +1254,7 @@ export class AudioEditorComponent {
   }
 
   private addSoundToTrack(buffer: AudioBuffer & { name: string; category: string; id?: string }, track: Track, startTime: number) {
-    const color = this.randomColor();
+    const color = this.getColorByFilename(buffer.name);
     const waveform = this.waveformService.generateFromBuffer(buffer, {
       width: Math.floor(buffer.duration * this.pxPerSecond()),
       height: 44,
