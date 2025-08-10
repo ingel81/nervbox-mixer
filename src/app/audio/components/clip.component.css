@@ -157,23 +157,21 @@
 }
 
 .clip.selected { 
-  border: 1px solid #f97316;
+  border: 6px solid #ffffff;
   box-shadow: 
-    0 4px 20px rgba(249, 115, 22, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 0 40px rgba(249, 115, 22, 0.2);
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .clip.selected::after {
   content: '';
   position: absolute;
-  top: -1px;
-  left: -1px;
-  right: -1px;
-  bottom: -1px;
-  background: linear-gradient(45deg, #f97316, #fbbf24, #f97316);
-  opacity: 0.2;
-  animation: pulse 2s ease-in-out infinite;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border: 4px solid #ffffff;
+  border-radius: 6px;
   pointer-events: none;
 }
 
@@ -243,8 +241,8 @@
 
 /* Animations */
 @keyframes pulse {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 0.3; }
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
 }
 
 /* Mobile-specific adjustments */
