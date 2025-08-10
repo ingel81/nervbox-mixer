@@ -122,7 +122,7 @@ export class WaveformService {
     options: WaveformOptions = {}
   ): string {
     const {
-      height = 32,
+      height = 44,
       clipColor = '',
       pxPerSecond = 120
     } = options;
@@ -138,69 +138,81 @@ export class WaveformService {
     
     console.log(`Generating trimmed waveform: duration=${duration}s, width=${width}px, samples=${audioData.length}`);
     
-    // Clear canvas
-    ctx.fillStyle = 'rgba(0,0,0,0)';
+    const step = Math.ceil(audioData.length / width);
+    const amp = height / 2;
+    
+    // Clear canvas with slight background (same as generateFromBuffer)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.fillRect(0, 0, width, height);
     
-    // Sample the audio data
-    const samplesPerPixel = Math.max(1, Math.floor(audioData.length / width));
+    // Use consistent color for waveforms (same as generateFromBuffer)
     const waveColor = this.getWaveformColor(clipColor);
+    
+    // Create stronger gradient for better visibility (same as generateFromBuffer)
+    const waveGradient = ctx.createLinearGradient(0, 0, 0, height);
     const rgb = this.hexToRgb(waveColor);
+    waveGradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1.0)`);
+    waveGradient.addColorStop(0.3, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`);
+    waveGradient.addColorStop(0.7, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`);
+    waveGradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1.0)`);
     
-    ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`;
-    ctx.strokeStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6)`;
-    ctx.lineWidth = 1;
-    
+    // Draw filled waveform (same algorithm as generateFromBuffer)
     ctx.beginPath();
+    ctx.moveTo(0, amp);
     
-    // Draw top half
-    for (let x = 0; x < width; x++) {
-      const startIdx = x * samplesPerPixel;
-      const endIdx = Math.min(startIdx + samplesPerPixel, audioData.length);
+    for (let i = 0; i < width; i++) {
+      let min = 1.0;
+      let max = -1.0;
       
-      let max = 0;
-      
-      for (let i = startIdx; i < endIdx; i++) {
-        const sample = audioData[i];
-        max = Math.max(max, Math.abs(sample));
+      for (let j = 0; j < step; j++) {
+        const datum = audioData[(i * step) + j];
+        if (datum !== undefined) {
+          if (datum < min) min = datum;
+          if (datum > max) max = datum;
+        }
       }
       
-      // Amplify for visibility
+      // Amplify weak signals for better visibility
+      min *= 1.5;
       max *= 1.5;
+      min = Math.max(-1, min);
       max = Math.min(1, max);
       
-      const yMax = (height / 2) - (max * height / 2);
-      
-      if (x === 0) {
-        ctx.moveTo(x, yMax);
-      } else {
-        ctx.lineTo(x, yMax);
-      }
+      ctx.lineTo(i, (1 + max) * amp);
     }
     
-    // Draw bottom half
-    for (let x = width - 1; x >= 0; x--) {
-      const startIdx = x * samplesPerPixel;
-      const endIdx = Math.min(startIdx + samplesPerPixel, audioData.length);
+    // Complete the path for filled waveform
+    for (let i = width - 1; i >= 0; i--) {
+      let min = 1.0;
+      let max = -1.0;
       
-      let min = 0;
-      
-      for (let i = startIdx; i < endIdx; i++) {
-        const sample = audioData[i];
-        min = Math.min(min, sample);
+      for (let j = 0; j < step; j++) {
+        const datum = audioData[(i * step) + j];
+        if (datum !== undefined) {
+          if (datum < min) min = datum;
+          if (datum > max) max = datum;
+        }
       }
       
-      // Amplify for visibility
+      // Amplify weak signals
       min *= 1.5;
+      max *= 1.5;
       min = Math.max(-1, min);
+      max = Math.min(1, max);
       
-      const yMin = (height / 2) + (min * height / 2);
-      ctx.lineTo(x, yMin);
+      ctx.lineTo(i, (1 + min) * amp);
     }
     
     ctx.closePath();
+    ctx.fillStyle = waveGradient;
     ctx.fill();
-    ctx.stroke();
+    
+    // Add subtle outline if needed (same as generateFromBuffer)
+    if (this.needsOutline(clipColor)) {
+      ctx.strokeStyle = waveColor;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
     
     return canvas.toDataURL();
   }
