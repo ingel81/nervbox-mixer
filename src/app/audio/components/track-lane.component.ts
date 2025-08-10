@@ -28,7 +28,6 @@ export interface TrackDragEvent {
         <audio-clip *ngFor="let clip of track.clips"
                     [clip]="clip"
                     [pxPerSecond]="pxPerSecond"
-                    [playhead]="playhead"
                     (clipSelected)="onClipSelected($event)"
                     (dragStarted)="onClipDragStarted($event)"
                     (trimStarted)="onClipTrimStarted($event)">

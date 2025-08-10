@@ -24,7 +24,7 @@ import { Clip } from '../audio/models/models';
            type="file" 
            multiple 
            accept="audio/*" 
-           (change)="onFilesSelected($event.target.files)" 
+           (change)="handleFileInput($event)" 
            hidden>
     
     <button mat-icon-button 
@@ -133,6 +133,13 @@ export class ContentCreationComponent {
   
   toggleSoundBrowser(): void {
     this.editorState.showSoundBrowser.update(show => !show);
+  }
+
+  handleFileInput(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    if (target.files) {
+      this.onFilesSelected(target.files);
+    }
   }
   
   async onFilesSelected(files: FileList | null): Promise<void> {

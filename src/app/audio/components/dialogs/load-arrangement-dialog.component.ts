@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ArrangementStorageService, SavedArrangement } from '../../services/arrangement-storage.service';
 import { ConfirmDialogComponent } from './confirm-dialog.component';
-import { Track } from '../../models/models';
+import { TrackDefinition } from '../../models/models';
 
 @Component({
     selector: 'load-arrangement-dialog',
@@ -38,7 +38,7 @@ import { Track } from '../../models/models';
         <div class="arrangement-list">
           <div *ngFor="let arr of filteredArrangements()" 
                class="arrangement-item"
-               [class.selected]="selectedArrangement[0]?.id === arr.id"
+               [class.selected]="selectedArrangement.length > 0 && selectedArrangement[0].id === arr.id"
                (click)="selectArrangement(arr)">
             <div class="arrangement-header">
               <mat-icon class="arrangement-icon">music_note</mat-icon>
@@ -329,7 +329,7 @@ export class LoadArrangementDialogComponent {
     this.selectedArrangement = [arrangement];
   }
 
-  getTrackNames(tracks: Track[]): string {
+  getTrackNames(tracks: TrackDefinition[]): string {
     if (tracks.length === 0) return '';
     const names = tracks.slice(0, 3).map(t => t.name).join(', ');
     if (tracks.length > 3) {
