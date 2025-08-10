@@ -2,6 +2,7 @@
 const eslint = require("@eslint/js");
 const tseslint = require("typescript-eslint");
 const angular = require("angular-eslint");
+const prettier = require("eslint-config-prettier");
 
 module.exports = tseslint.config(
   {
@@ -11,6 +12,7 @@ module.exports = tseslint.config(
       ...tseslint.configs.recommended,
       ...tseslint.configs.stylistic,
       ...angular.configs.tsRecommended,
+      prettier,
     ],
     processor: angular.processInlineTemplates,
     rules: {
@@ -30,6 +32,17 @@ module.exports = tseslint.config(
           style: "kebab-case",
         },
       ],
+      // TypeScript specific rules
+      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "prefer-const": "error",
+      // Angular specific rules
+      "@angular-eslint/no-empty-lifecycle-method": "error",
+      "@angular-eslint/use-lifecycle-interface": "error",
+      "@angular-eslint/prefer-on-push-component-change-detection": "off",
+      "@angular-eslint/component-selector": "off",
+      "@angular-eslint/prefer-inject": "off",
     },
   },
   {
@@ -38,6 +51,18 @@ module.exports = tseslint.config(
       ...angular.configs.templateRecommended,
       ...angular.configs.templateAccessibility,
     ],
-    rules: {},
+    rules: {
+      "@angular-eslint/template/click-events-have-key-events": "off",
+      "@angular-eslint/template/interactive-supports-focus": "off",
+    },
+  },
+  {
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      ".angular/**",
+      "src/assets/sounds/**",
+      "scripts/**",
+    ],
   }
 );

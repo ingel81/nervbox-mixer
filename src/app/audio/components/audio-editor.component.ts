@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, ViewChild, ViewChildren, QueryList, computed, effect, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AudioEngineService } from '../services/audio-engine.service';
 import { SoundLibraryService } from '../services/sound-library.service';
@@ -6,12 +6,12 @@ import { EditorStateService } from '../services/editor-state.service';
 import { DefaultArrangementService } from '../services/default-arrangement.service';
 import { WaveformService } from '../services/waveform.service';
 import { SoundBrowserComponent } from './sound-browser.component';
-import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent } from './clip.component';
-import { TrackComponent, TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackRenameEvent, TrackDropEvent, TrackDragEvent } from './track.component';
+import { ClipDragEvent, ClipTrimEvent, ClipSelectEvent } from './clip.component';
+import { TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackRenameEvent, TrackDropEvent, TrackDragEvent } from './track.component';
 import { TrackHeaderComponent } from './track-header.component';
 import { TrackLaneComponent } from './track-lane.component';
 import { Clip, Track } from '../models/models';
-import { secondsToPx, pxToSeconds } from '../utils/timeline.util';
+import { pxToSeconds } from '../utils/timeline.util';
 
 import { MatSliderModule } from '@angular/material/slider';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,7 +21,7 @@ import { environment } from '../../../environments/environment';
 
 @Component({
     selector: 'audio-editor',
-    imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent, ClipComponent, TrackHeaderComponent, TrackLaneComponent],
+    imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent, TrackHeaderComponent, TrackLaneComponent],
     templateUrl: './audio-editor.component.html',
     styleUrls: ['./audio-editor.component.css']
 })
