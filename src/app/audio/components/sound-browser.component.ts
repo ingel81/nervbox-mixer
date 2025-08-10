@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,7 +17,7 @@ import { SoundLibraryItem, SoundCategory } from '../utils/sound-library';
         MatInputModule, MatChipsModule, MatProgressSpinnerModule, MatTooltipModule
     ],
     template: `
-    <div class="sound-browser">
+    <div class="sound-browser" [class.cta-position]="openedFromCta">
       <div class="browser-header" 
            (mousedown)="onHeaderMouseDown($event)">
         <h3>Sound Library</h3>
@@ -102,6 +102,7 @@ import { SoundLibraryItem, SoundCategory } from '../utils/sound-library';
     styleUrls: ['./sound-browser.component.css']
 })
 export class SoundBrowserComponent {
+  @Input() openedFromCta = false;
   @Output() soundSelected = new EventEmitter<AudioBuffer & { name: string; category: string; id: string }>();
   @Output() browserToggled = new EventEmitter<void>();
 

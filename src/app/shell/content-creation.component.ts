@@ -132,7 +132,7 @@ export class ContentCreationComponent {
   }
   
   toggleSoundBrowser(): void {
-    this.editorState.showSoundBrowser.update(show => !show);
+    this.editorState.toggleSoundBrowser('toolbar');
   }
 
   handleFileInput(event: Event): void {

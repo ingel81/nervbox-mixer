@@ -70,9 +70,21 @@
 
   <!-- Sound Browser -->
   <sound-browser *ngIf="showSoundBrowser()"
+                 [openedFromCta]="soundBrowserOpenedFromCta()"
                  (soundSelected)="onSoundSelected($event)"
                  (browserToggled)="toggleSoundBrowser()">
   </sound-browser>
+
+  <!-- Sound Library Call to Action -->
+  <div class="sound-cta" *ngIf="!showSoundBrowser()">
+    <button class="sound-cta-btn" 
+            (click)="toggleSoundBrowser('cta')" 
+            mat-raised-button
+            color="primary">
+      <mat-icon>library_music</mat-icon>
+      <span>Add Sounds</span>
+    </button>
+  </div>
 
   <!-- Version Info -->
   <div class="version-info">

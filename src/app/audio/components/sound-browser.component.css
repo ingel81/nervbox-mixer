@@ -20,6 +20,13 @@
   overflow: hidden;
 }
 
+.sound-browser.cta-position {
+  top: auto;
+  bottom: 80px;
+  right: auto;
+  left: 20px;
+}
+
 
 .browser-header {
   display: flex !important;

@@ -37,6 +37,7 @@ export class AudioEditorComponent {
   get tracks() { return this.editorState.tracks; }
   get selectedClipId() { return this.editorState.selectedClipId; }
   get showSoundBrowser() { return this.editorState.showSoundBrowser; }
+  get soundBrowserOpenedFromCta() { return this.editorState.soundBrowserOpenedFromCta; }
   
   // Environment info
   version = environment.version;
@@ -338,8 +339,8 @@ export class AudioEditorComponent {
     return track.id;
   }
 
-  toggleSoundBrowser() {
-    this.editorState.showSoundBrowser.update(show => !show);
+  toggleSoundBrowser(source?: string) {
+    this.editorState.toggleSoundBrowser(source);
   }
 
   // Track event handlers

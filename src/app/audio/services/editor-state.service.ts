@@ -16,6 +16,7 @@ export class EditorStateService {
   pxPerSecond = signal(100);
   duration = signal(30);
   showSoundBrowser = signal(false);
+  soundBrowserOpenedFromCta = signal(false);
   
   // Drag state
   dragState: { id: string; startX: number; origStartTime: number; clipRef?: Clip } | null = null;
@@ -26,6 +27,17 @@ export class EditorStateService {
   
   // Clipboard
   clipboardClip: Clip | null = null;
+  
+  // Sound browser control
+  toggleSoundBrowser(source?: string): void {
+    const wasShown = this.showSoundBrowser();
+    this.showSoundBrowser.update(show => !show);
+    
+    // Track opening source if opening (not closing)
+    if (!wasShown) {
+      this.soundBrowserOpenedFromCta.set(source === 'cta');
+    }
+  }
   
   // Computed values
   flattenedClips = computed(() => {
