@@ -18,8 +18,7 @@ export class EditorStateService {
   showSoundBrowser = signal(false);
   soundBrowserOpenedFromCta = signal(false);
   
-  // Drag state
-  dragState: { id: string; startX: number; origStartTime: number; clipRef?: Clip } | null = null;
+  // Legacy drag state removed - using Virtual Drag System
   dragOverTrack: Track | null = null;
   
   // Drag preview state for Sound Browser

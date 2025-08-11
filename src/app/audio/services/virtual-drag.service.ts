@@ -108,7 +108,6 @@ export class VirtualDragService {
     const targetTrack = trackResult?.element || null;
     const targetTrackIndex = trackResult?.index ?? -1;
     
-    console.log(`Drag update - targetTrack:`, targetTrack, `targetTrackIndex:`, targetTrackIndex);
 
     // Calculate vertical position - always follow mouse vertically
     let deltaY = coords.clientY - (state.originalPosition.top + state.originalPosition.height / 2);
@@ -119,7 +118,6 @@ export class VirtualDragService {
       const targetCenterY = targetRect.top + (targetRect.height / 2);
       const clipHalfHeight = state.originalPosition.height / 2;
       deltaY = (targetCenterY - clipHalfHeight) - state.originalPosition.top;
-      console.log(`Snapping to track ${targetTrackIndex}, deltaY:`, deltaY);
     }
 
     // Apply visual transform using translate instead of position
@@ -190,11 +188,9 @@ export class VirtualDragService {
       const trackElement = tracks[i] as HTMLElement;
       const rect = trackElement.getBoundingClientRect();
       if (y >= rect.top && y <= rect.bottom) {
-        console.log(`Found track at position ${y}: track-lane index ${i}, rect:`, rect);
         return { element: trackElement, index: i };
       }
     }
-    console.log(`No track found at position ${y}`);
     return null;
   }
 
@@ -203,10 +199,8 @@ export class VirtualDragService {
     const trackIndex = element.getAttribute('data-track-index');
     if (trackIndex !== null) {
       const index = parseInt(trackIndex, 10);
-      console.log(`Track index from element:`, index);
       return index;
     }
-    console.log(`No data-track-index found on element`, element);
     return -1;
   }
 

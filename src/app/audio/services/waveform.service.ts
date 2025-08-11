@@ -136,7 +136,6 @@ export class WaveformService {
     canvas.width = width;
     canvas.height = height;
     
-    console.log(`Generating trimmed waveform: duration=${duration}s, width=${width}px, samples=${audioData.length}`);
     
     const step = Math.ceil(audioData.length / width);
     const amp = height / 2;

@@ -51,18 +51,15 @@ export class AudioEditorComponent {
   duration = computed(() => {
     const t = this.editorState.tracks();
     let max = 0;
-    let maxClip = null;
     for (const tr of t) {
       for (const c of tr.clips) {
         const clipEnd = c.startTime + c.duration;
         if (clipEnd > max) {
           max = clipEnd;
-          maxClip = c;
         }
       }
     }
     const result = Math.max(10, Math.ceil(max) + 5); // Add 5s buffer
-    console.log(`Duration calculated: ${result}s from ${t.length} tracks with total ${t.reduce((sum, tr) => sum + tr.clips.length, 0)} clips. Max clip end: ${max}s`, maxClip?.name);
     return result;
   });
 
@@ -129,7 +126,6 @@ export class AudioEditorComponent {
   async onFilesSelected(files: FileList | null, targetTrack?: Track) {
     if (!files || files.length === 0) return;
     
-    console.log(`Importing ${files.length} audio files...`);
     
     // Process files in batches to avoid memory issues
     const filesArray = Array.from(files);
@@ -151,7 +147,6 @@ export class AudioEditorComponent {
           })
         );
         buffers.push(...batchBuffers.filter(b => b !== null) as AudioBuffer[]);
-        console.log(`Processed ${Math.min(i + batchSize, filesArray.length)} of ${filesArray.length} files`);
       } catch (err) {
         console.error('Batch decode error:', err);
       }
@@ -162,7 +157,6 @@ export class AudioEditorComponent {
       return;
     }
     
-    console.log(`Successfully imported ${buffers.length} files`);
     
     this.tracks.update(list => {
       const createTrack = (): Track => ({ id: crypto.randomUUID(), name: `Track ${list.length + 1}`, clips: [] as Clip[], mute: false, solo: false, volume: 1, pan: 0 });
@@ -252,7 +246,6 @@ export class AudioEditorComponent {
           });
           startTime += buf.duration + 0.1;
         });
-        console.log(`Added ${buffers.length} files to ${track.name} starting at ${startTime.toFixed(2)}s`);
       } else {
         // Files dropped in general area - distribute intelligently
         buffers.forEach((buf, i) => {
@@ -291,7 +284,6 @@ export class AudioEditorComponent {
                 originalDuration: buf.duration 
               });
               placedOnExistingTrack = true;
-              console.log(`Added ${name} to existing ${track.name} at playhead`);
               break;
             }
           }
@@ -313,7 +305,6 @@ export class AudioEditorComponent {
               originalDuration: buf.duration 
             });
             list.push(newTrack);
-            console.log(`Added ${name} to new ${newTrack.name} at playhead`);
           }
         });
       }
@@ -492,8 +483,6 @@ export class AudioEditorComponent {
   }
 
   // Use drag state from service
-  get dragState() { return this.editorState.dragState; }
-  set dragState(value) { this.editorState.dragState = value; }
   
   get trimState() { return this.editorState.trimState; }
   set trimState(value) { this.editorState.trimState = value; }
@@ -515,13 +504,7 @@ export class AudioEditorComponent {
       return;
     }
     
-    // Legacy drag handling (will be removed in future)
-    this.dragState = { 
-      id: event.clip.id, 
-      startX: event.startX, 
-      origStartTime: event.origStartTime, 
-      clipRef: event.clip 
-    };
+    // Legacy drag handling removed - using virtual drag system
   }
   
   private handleVirtualDragCompletion(event: ClipDragEvent) {
@@ -665,7 +648,6 @@ export class AudioEditorComponent {
     return this.selectedClipDeletePosition();
   }
 
-  private lastDragUpdate = 0;
   private rafId: number | null = null;
   private seekingRafId: number | null = null;
   
@@ -676,7 +658,7 @@ export class AudioEditorComponent {
   @HostListener('window:mousemove', ['$event'])
   onMouseMove(ev: MouseEvent) {
     // Early exit if nothing is active - massive performance improvement
-    if (!this.seeking && !this.dragState) {
+    if (!this.seeking) {
       return;
     }
     
@@ -716,165 +698,7 @@ export class AudioEditorComponent {
     }
     
     // Trimming is now handled by individual ClipComponents
-    
-    // Handle clip dragging with optimized updates
-    if (this.dragState) {
-      // Cancel previous RAF
-      if (this.rafId) {
-        cancelAnimationFrame(this.rafId);
-      }
-      
-      // Throttle updates using RAF for smooth 60fps
-      this.rafId = requestAnimationFrame(() => {
-        if (!this.dragState) return;
-        
-        const dx = ev.clientX - this.dragState.startX;
-        const deltaSec = pxToSeconds(dx, this.pxPerSecond());
-        const newTime = Math.max(0, this.dragState.origStartTime + deltaSec);
-        
-        // Direct update for smoother dragging
-        if (this.dragState.clipRef) {
-          // Check for overlaps with other clips on the same track
-          const draggedClip = this.dragState.clipRef;
-          let finalTime = newTime;
-          
-          // Find the track containing this clip
-          const tracks = this.tracks();
-          let currentTrack: Track | null = null;
-          for (const track of tracks) {
-            if (track.clips.some(c => c.id === draggedClip.id)) {
-              currentTrack = track;
-              break;
-            }
-          }
-          
-          if (currentTrack) {
-            // Check for overlaps with other clips on same track
-            const otherClips = currentTrack.clips.filter(c => c.id !== draggedClip.id);
-            
-            for (const otherClip of otherClips) {
-              const draggedStart = finalTime;
-              const draggedEnd = finalTime + draggedClip.duration;
-              const otherStart = otherClip.startTime;
-              const otherEnd = otherClip.startTime + otherClip.duration;
-              
-              // Check if clips would overlap
-              if (!(draggedEnd <= otherStart || draggedStart >= otherEnd)) {
-                // Snap to avoid overlap - position after the blocking clip
-                if (draggedStart < otherStart) {
-                  finalTime = Math.max(0, otherStart - draggedClip.duration - 0.05);
-                } else {
-                  finalTime = otherEnd + 0.05; // 50ms gap
-                }
-              }
-            }
-          }
-          
-          this.dragState.clipRef.startTime = Math.max(0, finalTime);
-          
-          // Only check for track changes occasionally to reduce overhead
-          const now = performance.now();
-          if (now - this.lastDragUpdate > 100) { // Every 100ms
-            const targetTrackIdx = this.getTrackIndexAtClientY(ev.clientY);
-            
-            // Only proceed if we're actually changing tracks
-            if (targetTrackIdx !== null) {
-              this.tracks.update(list => {
-                // Find current track
-                let sourceTrackIdx = -1;
-                let clipIdx = -1;
-                for (let ti = 0; ti < list.length; ti++) {
-                  const idx = list[ti]!.clips.findIndex(c => c.id === this.dragState!.clipRef?.id);
-                  if (idx !== -1) {
-                    sourceTrackIdx = ti;
-                    clipIdx = idx;
-                    break;
-                  }
-                }
-                
-                // Move between tracks if needed
-                if (targetTrackIdx !== sourceTrackIdx && 
-                    targetTrackIdx >= 0 && targetTrackIdx < list.length && 
-                    sourceTrackIdx >= 0 && this.dragState!.clipRef) {
-                  
-                  const sourceTrack = list[sourceTrackIdx]!;
-                  const targetTrack = list[targetTrackIdx]!;
-                  const draggedClip = this.dragState!.clipRef;
-                  let targetStartTime = draggedClip.startTime;
-                  
-                  // Check if current position on target track is available
-                  const positionAvailable = !targetTrack.clips.some(clip => {
-                    const clipStart = clip.startTime;
-                    const clipEnd = clip.startTime + clip.duration;
-                    const draggedEnd = targetStartTime + draggedClip.duration;
-                    return !(draggedEnd <= clipStart || targetStartTime >= clipEnd);
-                  });
-                  
-                  if (!positionAvailable) {
-                    // Find nearest available position
-                    const sortedClips = [...targetTrack.clips].sort((a, b) => a.startTime - b.startTime);
-                    let foundPosition = false;
-                    
-                    // Check if we can fit before the first clip
-                    if (sortedClips.length > 0 && sortedClips[0].startTime >= draggedClip.duration + 0.05) {
-                      targetStartTime = 0;
-                      foundPosition = true;
-                    }
-                    
-                    // Try to find a gap between clips
-                    if (!foundPosition) {
-                      for (let i = 0; i < sortedClips.length - 1; i++) {
-                        const currentClip = sortedClips[i];
-                        const nextClip = sortedClips[i + 1];
-                        const gapStart = currentClip.startTime + currentClip.duration + 0.05;
-                        const gapEnd = nextClip.startTime;
-                        const requiredSpace = draggedClip.duration + 0.05;
-                        
-                        if ((gapEnd - gapStart) >= requiredSpace) {
-                          targetStartTime = gapStart;
-                          foundPosition = true;
-                          break;
-                        }
-                      }
-                    }
-                    
-                    // Place after all existing clips
-                    if (!foundPosition) {
-                      if (sortedClips.length > 0) {
-                        const lastClip = sortedClips[sortedClips.length - 1];
-                        targetStartTime = lastClip.startTime + lastClip.duration + 0.05;
-                      } else {
-                        targetStartTime = Math.max(0, targetStartTime);
-                      }
-                    }
-                  }
-                  
-                  // Remove from source track
-                  sourceTrack.clips.splice(clipIdx, 1);
-                  
-                  // Update clip position and add to target track
-                  draggedClip.startTime = Math.max(0, targetStartTime);
-                  targetTrack.clips.push(draggedClip);
-                  
-                  console.log(`Moved "${draggedClip.name}" from ${sourceTrack.name} to ${targetTrack.name} at ${targetStartTime.toFixed(2)}s`);
-                }
-                
-                // Return new array to trigger change detection
-                return list.map(track => ({
-                  ...track,
-                  clips: [...track.clips]
-                }));
-              });
-            }
-            
-            this.lastDragUpdate = now;
-          }
-        }
-      });
-    }
-    
-    // Seeking is now handled in the dedicated seeking section above
-    // This legacy seeking code is no longer needed
+    // Clip dragging is now handled by the Virtual Drag System
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -885,15 +709,12 @@ export class AudioEditorComponent {
       return;
     }
 
-    console.log('Key pressed:', event.key, 'Ctrl:', event.ctrlKey); // Debug
 
     const selectedClip = this.getSelectedClip();
-    console.log('Selected clip:', selectedClip?.name || 'none'); // Debug
 
     // Copy (Ctrl+C)
     if (event.ctrlKey && (event.key === 'c' || event.key === 'C') && selectedClip) {
       event.preventDefault();
-      console.log('Copying clip:', selectedClip.name);
       this.copyClip(selectedClip);
       return;
     }
@@ -901,7 +722,6 @@ export class AudioEditorComponent {
     // Paste (Ctrl+V)
     if (event.ctrlKey && (event.key === 'v' || event.key === 'V')) {
       event.preventDefault();
-      console.log('Pasting clip, clipboard has:', this.clipboardClip?.name || 'nothing');
       if (this.clipboardClip) {
         this.pasteClip();
       }
@@ -911,7 +731,6 @@ export class AudioEditorComponent {
     // Delete (Del)
     if (event.key === 'Delete' && selectedClip) {
       event.preventDefault();
-      console.log('Deleting clip:', selectedClip.name);
       this.deleteClip(selectedClip);
       return;
     }
@@ -938,7 +757,6 @@ export class AudioEditorComponent {
       this.seekingRafId = null;
     }
     
-    this.dragState = null;
     this.trimState = null;
     this.seeking = false;
     (document.body as HTMLElement).style.userSelect = '';
@@ -989,15 +807,6 @@ export class AudioEditorComponent {
     }
   }
 
-  private getTrackIndexAtClientY(clientY: number): number | null {
-    // Get all lane elements from TrackLaneComponents
-    const trackElements = document.querySelectorAll('track-lane .lane');
-    for (let i = 0; i < trackElements.length; i++) {
-      const rect = trackElements[i]!.getBoundingClientRect();
-      if (clientY >= rect.top && clientY <= rect.bottom) return i;
-    }
-    return null;
-  }
 
   onWheel(ev: WheelEvent) {
     if (!ev.ctrlKey) return;
@@ -1109,7 +918,6 @@ export class AudioEditorComponent {
       id: crypto.randomUUID(), // New ID for the copy
       startTime: 0 // Reset position for pasting
     };
-    console.log(`Clip "${clip.name}" copied to clipboard`);
   }
 
   pasteClip(): void {
@@ -1119,7 +927,7 @@ export class AudioEditorComponent {
     const pastedClip = this.editorState.pasteClip();
     
     if (pastedClip) {
-      console.log(`Clip "${pastedClip.name}" pasted at ${pastedClip.startTime.toFixed(2)}s`);
+      // Clip successfully pasted by EditorStateService
     }
   }
 
@@ -1145,7 +953,6 @@ export class AudioEditorComponent {
     // Select the new duplicate
     this.editorState.selectedClipId.set(duplicate.id);
     
-    console.log(`Clip "${clip.name}" duplicated at ${duplicate.startTime.toFixed(2)}s`);
   }
 
   deleteClip(clip: Clip): void {
@@ -1154,7 +961,6 @@ export class AudioEditorComponent {
         const clipIndex = track.clips.findIndex(c => c.id === clip.id);
         if (clipIndex !== -1) {
           track.clips.splice(clipIndex, 1);
-          console.log(`Clip "${clip.name}" deleted`);
           break;
         }
       }
@@ -1184,20 +990,15 @@ export class AudioEditorComponent {
     // Add sound to track
     this.addSoundToTrack(buffer, targetTrack, freePosition);
     
-    console.log(`Added ${buffer.name} to ${targetTrack.name} at ${freePosition.toFixed(2)}s`);
   }
   
   // Sound drag handlers
   onSoundDragStarted(event: { sound: { id: string; name: string; category: string }, buffer: AudioBuffer, position: { x: number; y: number } }) {
-    console.log('[AudioEditor] onSoundDragStarted called with:', event.sound.name, 'at position:', event.position);
     this.editorState.startSoundDrag(event.sound, event.buffer, event.position);
-    console.log('[AudioEditor] Drag preview state after start:', this.editorState.dragPreview());
   }
   
   private handleSoundDragStart(detail: { sound: { id: string; name: string; category: string }, buffer: AudioBuffer, position: { x: number; y: number } }) {
-    console.log('[AudioEditor] handleSoundDragStart called with:', detail.sound.name, 'at position:', detail.position);
     this.editorState.startSoundDrag(detail.sound, detail.buffer, detail.position);
-    console.log('[AudioEditor] Drag preview state after start:', this.editorState.dragPreview());
   }
   
   private handleSoundDragMove(detail: { position: { x: number; y: number }, sound: { id: string; name: string; category: string } }) {
@@ -1207,10 +1008,7 @@ export class AudioEditorComponent {
     // Update drag preview position and target
     this.editorState.updateSoundDragPosition(detail.position, targetTrack);
     
-    // Debug log every 10th call to avoid spam
-    if (Math.random() < 0.1) {
-      console.log('[AudioEditor] Drag move - position:', detail.position, 'target track:', targetTrack?.name);
-    }
+    // Debug log removed
   }
   
   private handleSoundDragEnd(detail: { position: { x: number; y: number }, sound: { id: string; name: string; category: string } }) {
@@ -1234,7 +1032,6 @@ export class AudioEditorComponent {
       });
       this.addSoundToTrack(extendedBuffer, dragPreview.targetTrack, dropTime);
       
-      console.log(`Dropped ${dragPreview.sound.name} on ${dragPreview.targetTrack.name} at ${dropTime.toFixed(2)}s`);
     }
     
     // End drag operation
@@ -1276,7 +1073,6 @@ export class AudioEditorComponent {
   // Now using dynamic per-lane dragover only when needed
 
   onDragEnter(event: DragEvent, track: Track) {
-    console.log(`[DRAG PERF] AudioEditor onDragEnter called for track: ${track.name}`);
     // Skip processing if sound drag is not active (window dragging)
     if (!(window as Window & { soundDragActive?: boolean }).soundDragActive) {
       return;
@@ -1287,7 +1083,6 @@ export class AudioEditorComponent {
   }
 
   onDragLeave(event: DragEvent) {
-    console.log('[DRAG PERF] AudioEditor onDragLeave called');
     // Skip processing if sound drag is not active (window dragging)
     if (!(window as Window & { soundDragActive?: boolean }).soundDragActive) {
       return;
@@ -1310,12 +1105,11 @@ export class AudioEditorComponent {
       try {
         const dragData = JSON.parse(textData);
         if (dragData.type === 'sound') {
-          console.log(`Dropped sound ${dragData.name} on track ${track.name}`);
           this.handleSoundDrop(dragData, track, event);
           return;
         }
       } catch {
-        console.log('Not a sound drop, checking for files...');
+        // JSON parsing failed - not a valid sound drop
       }
     }
     
@@ -1383,7 +1177,6 @@ export class AudioEditorComponent {
       // Add to specific track at drop position
       this.addSoundToTrack(audioBuffer, track, dropTime);
       
-      console.log(`Added ${soundData.name} to ${track.name} at ${dropTime.toFixed(2)}s`);
       
     } catch (error) {
       console.error('Error handling sound drop:', error);
@@ -1411,7 +1204,6 @@ export class AudioEditorComponent {
     if (overlappingClip) {
       // Find next available position after overlapping clip
       finalStartTime = overlappingClip.startTime + overlappingClip.duration + 0.1;
-      console.log(`Adjusted position due to overlap: ${finalStartTime.toFixed(2)}s`);
     }
     
     this.tracks.update(list => {
@@ -1447,7 +1239,6 @@ export class AudioEditorComponent {
     const rect = (ev.currentTarget as HTMLElement).getBoundingClientRect();
     const x = ev.clientX - rect.left;
     const timePosition = pxToSeconds(x, this.pxPerSecond());
-    console.log(`Timeline seek to: ${timePosition.toFixed(3)}s, isPlaying: ${this.isPlaying()}`);
     this.seekTo(timePosition);
     this.seeking = true;
     (document.body as HTMLElement).style.userSelect = 'none';
@@ -1470,7 +1261,6 @@ export class AudioEditorComponent {
     const rect = clipsEl.getBoundingClientRect();
     const x = ev.clientX - rect.left;
     const timePosition = pxToSeconds(x, this.pxPerSecond());
-    console.log(`Lane seek to: ${timePosition.toFixed(3)}s, isPlaying: ${this.isPlaying()}`);
     this.seekTo(timePosition);
     this.seeking = true;
     (document.body as HTMLElement).style.userSelect = 'none';

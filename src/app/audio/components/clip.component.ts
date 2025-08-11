@@ -123,7 +123,7 @@ export class ClipComponent {
   ) {}
 
   isSelected = computed(() => this.editorState.selectedClipId() === this.clip.id);
-  isDragging = computed(() => this.editorState.dragState?.id === this.clip.id || this.isDragActive());
+  isDragging = computed(() => this.isDragActive());
   isTrimming = computed(() => this.editorState.trimState?.id === this.clip.id || this.isTrimActive());
 
   onClipMouseDown(event: MouseEvent) {
@@ -301,7 +301,6 @@ export class ClipComponent {
       this.clip.duration = this.clip.originalDuration - this.clip.trimStart - (this.clip.trimEnd || 0);
       this.clip.startTime = originalRightEdge - this.clip.duration; // Right edge stays fixed
       
-      console.log(`Left trim: trimStart=${newTrimStart.toFixed(3)}, startTime=${this.clip.startTime.toFixed(3)}, duration=${this.clip.duration.toFixed(3)}, rightEdge=${originalRightEdge.toFixed(3)}`);
     } else {
       // Trim from end - only adjust duration
       const maxTrimEnd = this.clip.originalDuration - (this.clip.trimStart || 0) - 0.001; // Min 1ms
@@ -398,13 +397,11 @@ export class ClipComponent {
     event.stopPropagation();
     event.preventDefault();
     this.clipDeleted.emit({ clip: this.clip });
-    console.log('Delete button touched for clip:', this.clip.name);
   }
 
   onDuplicateTouch(event: TouchEvent) {
     event.stopPropagation();
     event.preventDefault();
     this.clipDuplicated.emit({ clip: this.clip });
-    console.log('Duplicate button touched for clip:', this.clip.name);
   }
 }

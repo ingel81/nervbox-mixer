@@ -46,10 +46,6 @@ export class AudioEngineService {
     this.startContextTime = ctx.currentTime + 0.01; // Reduced from 0.05 to 0.01
     this.startTimelineTime = fromTime;
     
-    console.log(`\n=== PLAYBACK START ===`);
-    console.log(`Timeline position: ${fromTime.toFixed(6)}s`);
-    console.log(`Audio context time: ${ctx.currentTime.toFixed(6)}s`);
-    console.log(`Start scheduled for: ${this.startContextTime.toFixed(6)}s`);
 
     for (const c of clips) {
       if (c.muted) continue;
@@ -67,17 +63,13 @@ export class AudioEngineService {
       const sampleRate = c.buffer.sampleRate;
       const totalSamples = c.buffer.length;
       
-      console.log(`\nClip "${c.buffer.constructor.name || 'Audio'}"`);
-      console.log(`  Timeline: start=${c.startTime.toFixed(6)}s, duration=${c.duration.toFixed(6)}s`);
-      console.log(`  Trim: start=${trimStart.toFixed(6)}s, end=${(trimEnd || 0).toFixed(6)}s`);
       
       // Calculate exactly where in the clip timeline we should start
       let clipPlayOffset = 0;
       if (fromTime > c.startTime) {
         clipPlayOffset = fromTime - c.startTime;
-        console.log(`  ★ Playhead inside clip, offset=${clipPlayOffset.toFixed(6)}s`);
       } else {
-        console.log(`  ★ Clip starts later, will schedule for +${relStart.toFixed(6)}s`);
+        // Clip starts later than playhead
       }
       
       // Convert to precise sample positions
@@ -98,10 +90,8 @@ export class AudioEngineService {
       const actualOffset = clampedStart / sampleRate;
       const playLen = (clampedEnd - clampedStart) / sampleRate;
       
-      console.log(`  Final: offset=${actualOffset.toFixed(6)}s, duration=${playLen.toFixed(6)}s, samples=${clampedEnd - clampedStart}`);
       
       if (playLen < 0.00001) {
-        console.log(`Skipping clip - too short: ${playLen}s`);
         continue; // Skip if less than 0.01ms (extremely short)
       }
       
@@ -122,12 +112,10 @@ export class AudioEngineService {
       const scheduleDelay = Math.max(0, relStart);
       const preciseScheduleTime = this.startContextTime + scheduleDelay;
       
-      console.log(`  ⏰ Scheduling: delay=${scheduleDelay.toFixed(6)}s, at context time=${preciseScheduleTime.toFixed(6)}s`);
       
       try {
         // Use high-precision start method
         src.start(preciseScheduleTime, actualOffset, playLen);
-        console.log(`  ✓ Started successfully`);
       } catch (error) {
         console.error(`  ✗ Failed to start:`, error);
         continue;

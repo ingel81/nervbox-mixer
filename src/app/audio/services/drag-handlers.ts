@@ -57,7 +57,7 @@ export abstract class BaseDragHandler {
     if (!this.config || !this.element) return;
 
     const coords = this.normalizeInput(event);
-    const { newTime, targetTrack } = this.virtualDragService.updateVirtualPosition(coords, this.startX);
+    const { newTime } = this.virtualDragService.updateVirtualPosition(coords, this.startX);
 
     // Get the track index directly from the track position
     const trackResult = this.virtualDragService.getTrackAtPosition(coords.clientY);
@@ -67,7 +67,6 @@ export abstract class BaseDragHandler {
       targetTrackIndex
     );
 
-    console.log(`Drag End - targetTrack:`, targetTrack, `targetTrackIndex:`, targetTrackIndex, `targetTrackObj:`, targetTrackObj);
 
     // Commit final state
     const result: DragResult = {
