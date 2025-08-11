@@ -509,12 +509,57 @@ export class AudioEditorComponent {
   }
 
   onClipDragStarted(event: ClipDragEvent) {
+    // Check if this is a virtual drag completion event
+    if (event.finalTime !== undefined || event.targetTrack) {
+      this.handleVirtualDragCompletion(event);
+      return;
+    }
+    
+    // Legacy drag handling (will be removed in future)
     this.dragState = { 
       id: event.clip.id, 
       startX: event.startX, 
       origStartTime: event.origStartTime, 
       clipRef: event.clip 
     };
+  }
+  
+  private handleVirtualDragCompletion(event: ClipDragEvent) {
+    const clip = event.clip;
+    const newTime = event.finalTime!;
+    const targetTrack = event.targetTrack;
+    
+    // Delay the position update to prevent animation
+    // The visual state needs to be restored first
+    requestAnimationFrame(() => {
+      // Update clip position
+      clip.startTime = newTime;
+      
+      // Handle track change if needed
+      if (targetTrack) {
+        this.tracks.update(list => {
+          // Remove clip from its current track
+          for (const track of list) {
+            const clipIndex = track.clips.findIndex(c => c.id === clip.id);
+            if (clipIndex !== -1) {
+              track.clips.splice(clipIndex, 1);
+              break;
+            }
+          }
+          
+          // Add clip to target track
+          const targetTrackObj = list.find(t => t.id === targetTrack.id);
+          if (targetTrackObj) {
+            targetTrackObj.clips.push(clip);
+          }
+          
+          return [...list];
+        });
+      } else {
+        // Just update position, trigger change detection
+        this.tracks.update(list => [...list]);
+      }
+    });
   }
 
   onClipTrimStarted(event: ClipTrimEvent) {

@@ -1,15 +1,20 @@
-import { Component, Input, Output, EventEmitter, HostListener, computed, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, HostListener, computed, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { Clip } from '../models/models';
+import { Clip, Track } from '../models/models';
 import { EditorStateService } from '../services/editor-state.service';
 import { WaveformService } from '../services/waveform.service';
+import { UnifiedDragService } from '../services/unified-drag.service';
+import { DragResult } from '../services/virtual-drag.service';
 import { pxToSeconds } from '../utils/timeline.util';
 
 export interface ClipDragEvent {
   clip: Clip;
   startX: number;
   origStartTime: number;
+  // For unified virtual drag completion
+  finalTime?: number;
+  targetTrack?: Track;
 }
 
 export interface ClipTrimEvent {
@@ -40,6 +45,7 @@ export interface ClipDuplicateEvent {
     template: `
     <div class="clip"
          [attr.data-clip-id]="clip.id"
+         [attr.data-track-index]="trackIndex"
          [class.selected]="isSelected()"
          [class.dragging]="isDragging()"
          [class.trimming]="isTrimming()"
@@ -97,6 +103,8 @@ export interface ClipDuplicateEvent {
 export class ClipComponent {
   @Input({ required: true }) clip!: Clip;
   @Input({ required: true }) pxPerSecond!: number;
+  @Input({ required: true }) tracks!: Track[];
+  @Input() trackIndex = -1;
   
   @Output() clipSelected = new EventEmitter<ClipSelectEvent>();
   @Output() dragStarted = new EventEmitter<ClipDragEvent>();
@@ -107,6 +115,7 @@ export class ClipComponent {
   private isDragActive = signal(false);
   private isTrimActive = signal(false);
   private waveformUpdateTimeout: number | null = null;
+  private unifiedDragService = inject(UnifiedDragService);
 
   constructor(
     private editorState: EditorStateService,
@@ -123,12 +132,23 @@ export class ClipComponent {
     // Select this clip
     this.clipSelected.emit({ clip: this.clip });
     
-    // Start drag operation
-    const startX = event.clientX;
-    this.dragStarted.emit({
+    // Use unified drag system
+    const clipElement = event.currentTarget as HTMLElement;
+    this.unifiedDragService.startDrag(clipElement, event, {
       clip: this.clip,
-      startX,
-      origStartTime: this.clip.startTime
+      tracks: this.tracks,
+      pxPerSecond: this.pxPerSecond,
+      onDragComplete: (result: DragResult) => {
+        // Emit virtual drag completion event
+        this.dragStarted.emit({
+          clip: this.clip,
+          startX: event.clientX,
+          origStartTime: this.clip.startTime,
+          finalTime: result.finalTime,
+          targetTrack: result.targetTrack || undefined
+        });
+        this.isDragActive.set(false);
+      }
     });
     
     this.isDragActive.set(true);
@@ -142,43 +162,28 @@ export class ClipComponent {
     // Select this clip
     this.clipSelected.emit({ clip: this.clip });
     
-    // Start drag operation
+    // Use unified drag system
+    const clipElement = event.currentTarget as HTMLElement;
     const touch = event.touches[0];
-    const startX = touch.clientX;
-    this.dragStarted.emit({
+    this.unifiedDragService.startDrag(clipElement, event, {
       clip: this.clip,
-      startX,
-      origStartTime: this.clip.startTime
+      tracks: this.tracks,
+      pxPerSecond: this.pxPerSecond,
+      onDragComplete: (result: DragResult) => {
+        // Emit virtual drag completion event
+        this.dragStarted.emit({
+          clip: this.clip,
+          startX: touch.clientX,
+          origStartTime: this.clip.startTime,
+          finalTime: result.finalTime,
+          targetTrack: result.targetTrack || undefined
+        });
+        this.isDragActive.set(false);
+      }
     });
     
     this.isDragActive.set(true);
     (document.body as HTMLElement).style.userSelect = 'none';
-    
-    // Add touch event listeners
-    document.addEventListener('touchmove', this.handleTouchMove, { passive: false });
-    document.addEventListener('touchend', this.handleTouchEnd);
-  }
-
-  private handleTouchMove = (event: TouchEvent) => {
-    event.preventDefault();
-    const touch = event.touches[0];
-    // Dispatch synthetic mouse event for drag handling
-    const mouseEvent = new MouseEvent('mousemove', {
-      clientX: touch.clientX,
-      clientY: touch.clientY,
-      bubbles: true
-    });
-    document.dispatchEvent(mouseEvent);
-  }
-
-  private handleTouchEnd = () => {
-    this.isDragActive.set(false);
-    (document.body as HTMLElement).style.userSelect = '';
-    document.removeEventListener('touchmove', this.handleTouchMove);
-    document.removeEventListener('touchend', this.handleTouchEnd);
-    // Dispatch synthetic mouseup
-    const mouseEvent = new MouseEvent('mouseup', { bubbles: true });
-    window.dispatchEvent(mouseEvent);
   }
 
   onStartTrimming(event: MouseEvent, side: 'start' | 'end') {

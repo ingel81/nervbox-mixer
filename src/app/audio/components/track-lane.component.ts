@@ -24,6 +24,7 @@ export interface TrackHoverEvent {
     template: `
     <div class="lane" 
          #laneElement
+         [attr.data-track-index]="trackIndex"
          (mousedown)="onLaneMouseDown($event)" 
          (touchstart)="onLaneTouchStart($event)"
          (mouseenter)="onLaneMouseEnter()"
@@ -38,6 +39,8 @@ export interface TrackHoverEvent {
         <audio-clip *ngFor="let clip of track.clips"
                     [clip]="clip"
                     [pxPerSecond]="pxPerSecond"
+                    [tracks]="tracks"
+                    [trackIndex]="trackIndex"
                     (clipSelected)="onClipSelected($event)"
                     (dragStarted)="onClipDragStarted($event)"
                     (trimStarted)="onClipTrimStarted($event)"
@@ -52,6 +55,8 @@ export interface TrackHoverEvent {
 })
 export class TrackLaneComponent {
   @Input() track!: Track;
+  @Input() tracks!: Track[];
+  @Input() trackIndex!: number;
   @Input() pxPerSecond!: number;
   @Input() duration!: number;
   @Input() playhead!: number;

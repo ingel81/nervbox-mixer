@@ -23,6 +23,8 @@ export { TrackDropEvent, TrackDragEvent } from './track-lane.component';
 
     <!-- Track lane component -->
     <track-lane [track]="track"
+                [tracks]="tracks"
+                [trackIndex]="trackIndex"
                 [pxPerSecond]="pxPerSecond"
                 [duration]="duration"
                 [playhead]="playhead"
@@ -40,6 +42,8 @@ export { TrackDropEvent, TrackDragEvent } from './track-lane.component';
 })
 export class TrackComponent {
   @Input({ required: true }) track!: Track;
+  @Input({ required: true }) tracks!: Track[];
+  @Input({ required: true }) trackIndex!: number;
   @Input({ required: true }) pxPerSecond!: number;
   @Input({ required: true }) duration!: number;
   @Input({ required: true }) playhead!: number;
