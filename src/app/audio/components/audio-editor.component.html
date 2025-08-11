@@ -113,6 +113,15 @@
     <mat-icon>delete_outline</mat-icon>
   </button>
 
+  <!-- Mobile Clip Duplicate Button -->
+  <button class="mobile-clip-duplicate-btn" 
+          (click)="duplicateSelectedClip()"
+          [style.top.px]="getSelectedClipDuplicatePosition()?.top"
+          [style.right.px]="getSelectedClipDuplicatePosition()?.right"
+          *ngIf="selectedClipId() && isTouchDevice() && getSelectedClipDuplicatePosition()">
+    <mat-icon>content_copy</mat-icon>
+  </button>
+
 
   <!-- Version Info -->
   <div class="version-info">

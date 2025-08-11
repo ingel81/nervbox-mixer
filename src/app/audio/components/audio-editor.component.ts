@@ -541,6 +541,27 @@ export class AudioEditorComponent {
     }
   }
 
+  duplicateSelectedClip() {
+    const selectedClip = this.getSelectedClip();
+    if (selectedClip) {
+      this.duplicateClip(selectedClip);
+    }
+  }
+
+  getSelectedClipDuplicatePosition(): { top: number, right: number } | null {
+    const selectedId = this.selectedClipId();
+    if (!selectedId) return null;
+
+    const clipElement = document.querySelector(`[data-clip-id="${selectedId}"]`) as HTMLElement;
+    if (!clipElement) return null;
+
+    const rect = clipElement.getBoundingClientRect();
+    return {
+      top: rect.top - 33, // Same Y as delete button (33px above clip)
+      right: window.innerWidth - rect.right - 14 // 14px to the right of clip right edge
+    };
+  }
+
   laneTouchStart(ev: TouchEvent, track: Track) {
     // Similar to laneMouseDown but for touch
     if ((ev.target as HTMLElement)?.closest('.clip')) return;
@@ -568,8 +589,8 @@ export class AudioEditorComponent {
 
     const rect = clipElement.getBoundingClientRect();
     return {
-      top: rect.bottom + 5, // 5px below clip
-      right: window.innerWidth - rect.right + 2 // 2px to the left of clip right edge
+      top: rect.top - 33, // 33px above clip (button height + margin)
+      right: window.innerWidth - rect.left - 14 // 14px to the right of clip left edge (overlapping)
     };
   }
 
@@ -1029,6 +1050,31 @@ export class AudioEditorComponent {
     if (pastedClip) {
       console.log(`Clip "${pastedClip.name}" pasted at ${pastedClip.startTime.toFixed(2)}s`);
     }
+  }
+
+  duplicateClip(clip: Clip): void {
+    // Create a duplicate clip positioned after the original
+    const duplicate: Clip = {
+      ...clip,
+      id: crypto.randomUUID(),
+      startTime: clip.startTime + clip.duration + 0.1 // Small gap after original
+    };
+
+    // Find the track containing the original clip and add duplicate
+    this.tracks.update(trackList => {
+      for (const track of trackList) {
+        if (track.clips.some(c => c.id === clip.id)) {
+          track.clips.push(duplicate);
+          break;
+        }
+      }
+      return trackList;
+    });
+
+    // Select the new duplicate
+    this.editorState.selectedClipId.set(duplicate.id);
+    
+    console.log(`Clip "${clip.name}" duplicated at ${duplicate.startTime.toFixed(2)}s`);
   }
 
   deleteClip(clip: Clip): void {
