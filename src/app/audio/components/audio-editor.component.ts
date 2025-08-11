@@ -6,6 +6,7 @@ import { EditorStateService } from '../services/editor-state.service';
 import { DefaultArrangementService } from '../services/default-arrangement.service';
 import { WaveformService } from '../services/waveform.service';
 import { SoundBrowserComponent } from './sound-browser.component';
+import { BottomPanelComponent } from './bottom-panel.component';
 import { ClipDragEvent, ClipTrimEvent, ClipSelectEvent, ClipDeleteEvent } from './clip.component';
 import { TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackRenameEvent, TrackDropEvent, TrackDragEvent } from './track.component';
 import { TrackHeaderComponent } from './track-header.component';
@@ -21,7 +22,7 @@ import { environment } from '../../../environments/environment';
 
 @Component({
     selector: 'audio-editor',
-    imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent, TrackHeaderComponent, TrackLaneComponent],
+    imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent, BottomPanelComponent, TrackHeaderComponent, TrackLaneComponent],
     templateUrl: './audio-editor.component.html',
     styleUrls: ['./audio-editor.component.css']
 })
@@ -81,6 +82,13 @@ export class AudioEditorComponent {
     
     // Initialize sound library
     this.soundLibrary.preloadEssentials().catch(console.error);
+    
+    // Listen for sound selection from bottom panel
+    document.addEventListener('soundSelected', (event: Event) => {
+      if (event instanceof CustomEvent) {
+        this.onSoundSelected(event.detail);
+      }
+    });
     
     effect(() => {
       if (!this.isPlaying()) this.audio.stop();

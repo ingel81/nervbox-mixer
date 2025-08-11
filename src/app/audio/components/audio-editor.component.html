@@ -101,16 +101,6 @@
     <mat-icon>delete_outline</mat-icon>
   </button>
 
-  <!-- Sound Library Call to Action -->
-  <div class="sound-cta" *ngIf="!showSoundBrowser()">
-    <button class="sound-cta-btn" 
-            (click)="toggleSoundBrowser('cta')" 
-            mat-raised-button
-            color="primary">
-      <mat-icon>library_music</mat-icon>
-      <span>Add Sounds</span>
-    </button>
-  </div>
 
   <!-- Version Info -->
   <div class="version-info">
@@ -121,4 +111,7 @@
       </svg>
     </a>
   </div>
+
+  <!-- Bottom Panel -->
+  <bottom-panel></bottom-panel>
 </div>

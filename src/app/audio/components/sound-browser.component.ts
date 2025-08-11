@@ -17,8 +17,11 @@ import { SoundLibraryItem, SoundCategory } from '../utils/sound-library';
         MatInputModule, MatChipsModule, MatProgressSpinnerModule, MatTooltipModule
     ],
     template: `
-    <div class="sound-browser" [class.cta-position]="openedFromCta">
+    <div class="sound-browser" 
+         [class.cta-position]="openedFromCta" 
+         [class.panel-mode]="panelMode">
       <div class="browser-header" 
+           *ngIf="!panelMode"
            (mousedown)="onHeaderMouseDown($event)">
         <h3>Sound Library</h3>
         <button (click)="toggleBrowser()" class="close-btn">×</button>
@@ -103,6 +106,7 @@ import { SoundLibraryItem, SoundCategory } from '../utils/sound-library';
 })
 export class SoundBrowserComponent {
   @Input() openedFromCta = false;
+  @Input() panelMode = false;
   @Output() soundSelected = new EventEmitter<AudioBuffer & { name: string; category: string; id: string }>();
   @Output() browserToggled = new EventEmitter<void>();
 

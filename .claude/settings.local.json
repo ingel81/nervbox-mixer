@@ -29,7 +29,8 @@
       "mcp__playwright__browser_click",
       "mcp__playwright__browser_evaluate",
       "Bash(npm run e2e:*)",
-      "Bash(npx playwright test:*)"
+      "Bash(npx playwright test:*)",
+      "WebFetch(domain:material.angular.dev)"
     ],
     "deny": []
   }
