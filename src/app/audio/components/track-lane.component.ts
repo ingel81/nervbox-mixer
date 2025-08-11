@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent, ClipDeleteEvent } from './clip.component';
+import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent, ClipDeleteEvent, ClipDuplicateEvent } from './clip.component';
 import { Track } from '../models/models';
 
 export interface TrackDropEvent {
@@ -41,7 +41,8 @@ export interface TrackHoverEvent {
                     (clipSelected)="onClipSelected($event)"
                     (dragStarted)="onClipDragStarted($event)"
                     (trimStarted)="onClipTrimStarted($event)"
-                    (clipDeleted)="onClipDeleted($event)">
+                    (clipDeleted)="onClipDeleted($event)"
+                    (clipDuplicated)="onClipDuplicated($event)">
         </audio-clip>
       </div>
       <div class="playhead" [style.left.px]="(playhead * pxPerSecond)"></div>
@@ -73,6 +74,7 @@ export class TrackLaneComponent {
   @Output() clipDragStarted = new EventEmitter<ClipDragEvent>();
   @Output() clipTrimStarted = new EventEmitter<ClipTrimEvent>();
   @Output() clipDeleted = new EventEmitter<ClipDeleteEvent>();
+  @Output() clipDuplicated = new EventEmitter<ClipDuplicateEvent>();
 
   constructor(private elementRef: ElementRef) {}
 
@@ -114,6 +116,10 @@ export class TrackLaneComponent {
 
   onClipDeleted(event: ClipDeleteEvent) {
     this.clipDeleted.emit(event);
+  }
+
+  onClipDuplicated(event: ClipDuplicateEvent) {
+    this.clipDuplicated.emit(event);
   }
   
   // Sound drag preview methods

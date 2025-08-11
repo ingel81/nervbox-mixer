@@ -8,7 +8,7 @@ import { WaveformService } from '../services/waveform.service';
 import { SoundBrowserComponent } from './sound-browser.component';
 import { BottomPanelComponent } from './bottom-panel.component';
 import { PreviewClipComponent } from './preview-clip.component';
-import { ClipDragEvent, ClipTrimEvent, ClipSelectEvent, ClipDeleteEvent } from './clip.component';
+import { ClipDragEvent, ClipTrimEvent, ClipSelectEvent, ClipDeleteEvent, ClipDuplicateEvent } from './clip.component';
 import { TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackRenameEvent, TrackDropEvent, TrackDragEvent } from './track.component';
 import { TrackHeaderComponent } from './track-header.component';
 import { TrackLaneComponent } from './track-lane.component';
@@ -532,6 +532,10 @@ export class AudioEditorComponent {
 
   onClipDeleted(event: ClipDeleteEvent) {
     this.editorState.removeClip(event.clip.id);
+  }
+
+  onClipDuplicated(event: ClipDuplicateEvent) {
+    this.duplicateClip(event.clip);
   }
 
   deleteSelectedClip() {

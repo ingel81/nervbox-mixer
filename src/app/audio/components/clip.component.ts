@@ -30,6 +30,10 @@ export interface ClipDeleteEvent {
   clip: Clip;
 }
 
+export interface ClipDuplicateEvent {
+  clip: Clip;
+}
+
 @Component({
     selector: 'audio-clip',
     imports: [CommonModule, MatIconModule],
@@ -71,6 +75,21 @@ export interface ClipDeleteEvent {
            [style.width.px]="clip.duration * pxPerSecond"
            [style.object-fit]="'fill'"
            alt="Waveform">
+      
+      <!-- Mobile Action Buttons (only shown when selected on touch devices) -->
+      <button class="mobile-clip-delete-btn-relative" 
+              (click)="onDeleteClick($event)"
+              (touchstart)="onDeleteTouch($event)"
+              *ngIf="isSelected() && isTouchDevice()">
+        <mat-icon>delete_outline</mat-icon>
+      </button>
+      
+      <button class="mobile-clip-duplicate-btn-relative" 
+              (click)="onDuplicateClick($event)"
+              (touchstart)="onDuplicateTouch($event)"
+              *ngIf="isSelected() && isTouchDevice()">
+        <mat-icon>content_copy</mat-icon>
+      </button>
     </div>
   `,
     styleUrls: ['./clip.component.css']
@@ -83,6 +102,7 @@ export class ClipComponent {
   @Output() dragStarted = new EventEmitter<ClipDragEvent>();
   @Output() trimStarted = new EventEmitter<ClipTrimEvent>();
   @Output() clipDeleted = new EventEmitter<ClipDeleteEvent>();
+  @Output() clipDuplicated = new EventEmitter<ClipDuplicateEvent>();
 
   private isDragActive = signal(false);
   private isTrimActive = signal(false);
@@ -351,5 +371,35 @@ export class ClipComponent {
     const secs = Math.floor(seconds % 60);
     const ms = Math.floor((seconds % 1) * 100);
     return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+  }
+
+  isTouchDevice(): boolean {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  }
+
+  onDeleteClick(event: MouseEvent) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.clipDeleted.emit({ clip: this.clip });
+  }
+
+  onDuplicateClick(event: MouseEvent) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.clipDuplicated.emit({ clip: this.clip });
+  }
+
+  onDeleteTouch(event: TouchEvent) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.clipDeleted.emit({ clip: this.clip });
+    console.log('Delete button touched for clip:', this.clip.name);
+  }
+
+  onDuplicateTouch(event: TouchEvent) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.clipDuplicated.emit({ clip: this.clip });
+    console.log('Duplicate button touched for clip:', this.clip.name);
   }
 }

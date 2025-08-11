@@ -11,7 +11,7 @@
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
   cursor: grab;
   user-select: none;
-  overflow: hidden;
+  overflow: visible;
   transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
   display: flex;
   flex-direction: column;
@@ -221,10 +221,73 @@
   }
 }
 
+/* Mobile Action Buttons - Relative to Clip */
+.mobile-clip-delete-btn-relative,
+.mobile-clip-duplicate-btn-relative {
+  position: absolute !important;
+  top: -38px !important; /* 38px above clip */
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 50% !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 70 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
+  transition: all 0.2s ease !important;
+  opacity: 0.95 !important;
+  backdrop-filter: blur(4px) !important;
+  touch-action: manipulation !important;
+  pointer-events: all !important;
+  user-select: none !important;
+}
+
+.mobile-clip-delete-btn-relative {
+  left: -14px !important; /* 14px left from clip left edge */
+  background: rgba(220, 38, 38, 0.9) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 8px rgba(220, 38, 38, 0.4) !important;
+}
+
+.mobile-clip-duplicate-btn-relative {
+  right: -14px !important; /* 14px right from clip right edge */
+  background: rgba(34, 197, 94, 0.9) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 8px rgba(34, 197, 94, 0.4) !important;
+}
+
+.mobile-clip-delete-btn-relative:hover {
+  background: rgba(185, 28, 28, 1) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  transform: scale(1.15) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.8), 0 0 12px rgba(220, 38, 38, 0.6) !important;
+}
+
+.mobile-clip-duplicate-btn-relative:hover {
+  background: rgba(22, 163, 74, 1) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  transform: scale(1.15) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.8), 0 0 12px rgba(34, 197, 94, 0.6) !important;
+}
+
+.mobile-clip-delete-btn-relative mat-icon,
+.mobile-clip-duplicate-btn-relative mat-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  line-height: 16px !important;
+  font-weight: bold !important;
+}
+
 /* Touch-specific styles */
 @media (pointer: coarse) {
   .clip {
-    touch-action: none; /* Allow custom touch handling */
+    touch-action: pan-x pan-y; /* Allow touch but don't interfere with button touches */
   }
 
   /* Always show resize handles on touch devices */
