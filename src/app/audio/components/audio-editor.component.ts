@@ -1101,7 +1101,9 @@ export class AudioEditorComponent {
     
     if (dragPreview && dragPreview.isValidDrop && dragPreview.targetTrack) {
       // Calculate drop position in timeline
-      const dropTime = this.getTimeAtPosition(detail.position.x);
+      // The clip should start exactly at the mouse position
+      const mouseTime = this.getTimeAtPosition(detail.position.x);
+      const dropTime = Math.max(0, mouseTime);
       
       // Add sound to target track by extending the buffer with metadata
       const extendedBuffer = Object.assign(dragPreview.buffer, {
