@@ -1101,8 +1101,12 @@ export class AudioEditorComponent {
     
     if (dragPreview && dragPreview.isValidDrop && dragPreview.targetTrack) {
       // Calculate drop position in timeline
-      // The clip should start exactly at the mouse position
-      const mouseTime = this.getTimeAtPosition(detail.position.x);
+      // The preview is centered with CSS transform: translate(-50%, -50%)
+      // So we need to adjust for the half width to get the actual start position
+      const clipDuration = dragPreview.buffer.duration;
+      const clipWidthInPx = clipDuration * this.pxPerSecond();
+      const adjustedX = detail.position.x - (clipWidthInPx / 2);
+      const mouseTime = this.getTimeAtPosition(adjustedX);
       const dropTime = Math.max(0, mouseTime);
       
       // Add sound to target track by extending the buffer with metadata
@@ -1245,7 +1249,11 @@ export class AudioEditorComponent {
       }
       
       const rect = clipsEl.getBoundingClientRect();
-      const x = event.clientX - rect.left;
+      // Die Preview wird mit CSS transform: translate(-50%, -50%) zentriert angezeigt.
+      // Das bedeutet, die visuelle Position ist um die halbe Breite nach links verschoben.
+      // Beim Drop müssen wir das berücksichtigen, um WYSIWYG zu erreichen.
+      const clipWidthInPx = buffer.duration * this.pxPerSecond();
+      const x = event.clientX - rect.left - (clipWidthInPx / 2);
       const dropTime = Math.max(0, pxToSeconds(x, this.pxPerSecond()));
       
       // Create the audio buffer with metadata
