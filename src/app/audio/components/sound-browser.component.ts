@@ -62,8 +62,8 @@ import { SoundLibraryItem, SoundCategory } from '../utils/sound-library';
              *ngFor="let sound of libraryService.filteredSounds()"
              [class.loading]="loadingStates[sound.id]"
              [class.dragging]="currentDraggedSound?.id === sound.id"
-             (click)="addSoundToProject(sound)"
-             (mousedown)="onSoundMouseDown($event, sound)">
+             [class.desktop-mode]="!isTouchDevice"
+             (pointerdown)="onSoundItemPointerDown($event, sound)">
           
           <div class="sound-info">
             <div class="sound-name">{{ sound.name }}</div>
@@ -78,6 +78,16 @@ import { SoundLibraryItem, SoundCategory } from '../utils/sound-library';
           </div>
 
           <div class="sound-actions">
+            <button mat-icon-button 
+                    class="drag-btn"
+                    *ngIf="isTouchDevice"
+                    (pointerdown)="onDragAnchorPointerDown($event, sound)"
+                    [disabled]="loadingStates[sound.id]"
+                    matTooltip="Drag to timeline"
+                    #dragAnchor>
+              <mat-icon>drag_indicator</mat-icon>
+            </button>
+            
             <button mat-icon-button 
                     class="play-btn"
                     (click)="$event.stopPropagation(); isPlaying(sound) ? stopPreview() : previewSound(sound)"
@@ -127,7 +137,18 @@ export class SoundBrowserComponent {
   isDraggingSound = false;
   currentDraggedSound?: SoundLibraryItem;
   
+  // Touch device detection
+  isTouchDevice = this.detectTouchDevice();
+
   constructor(public libraryService: SoundLibraryService) {}
+
+  private detectTouchDevice(): boolean {
+    return (
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    );
+  }
 
   toggleBrowser() {
     this.browserToggled.emit();
@@ -230,59 +251,103 @@ export class SoundBrowserComponent {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
-  // Sound drag with mouse events (replaces HTML5 drag & drop)
-  onSoundMouseDown(event: MouseEvent, sound: SoundLibraryItem) {
+  // Hybrid drag handling: full item on desktop, anchor on mobile
+  onSoundItemPointerDown(event: PointerEvent, sound: SoundLibraryItem) {
+    // Only handle on desktop (non-touch devices)
+    if (this.isTouchDevice) return;
+    
     // Don't start drag on button clicks
     if ((event.target as HTMLElement).closest('button')) {
       return;
     }
     
-    // Store potential drag start
-    this.currentDraggedSound = sound;
-    const startPos = { x: event.clientX, y: event.clientY };
-    let isDragStarted = false;
-    
-    // Setup mouse move to detect drag threshold
-    const mouseMoveHandler = (moveEvent: MouseEvent) => {
-      const deltaX = Math.abs(moveEvent.clientX - startPos.x);
-      const deltaY = Math.abs(moveEvent.clientY - startPos.y);
-      
-      // Start drag if moved more than 5 pixels
-      if (!isDragStarted && (deltaX > 5 || deltaY > 5)) {
-        isDragStarted = true;
-        this.isDraggingSound = true;
-        
-        // Set cursor
-        document.body.style.cursor = 'grabbing';
-        
-        // Continue with drag updates
-        document.addEventListener('mousemove', this.onSoundMouseMove);
-        
-        // Load sound buffer and start drag (async but don't wait)
-        this.loadAndStartDrag(sound, { x: moveEvent.clientX, y: moveEvent.clientY });
-      }
-    };
-    
-    // Setup mouse up to handle click or drag end
-    const mouseUpHandler = (upEvent: MouseEvent) => {
-      document.removeEventListener('mousemove', mouseMoveHandler);
-      document.removeEventListener('mouseup', mouseUpHandler);
-      
-      if (!isDragStarted) {
-        // It was a click, not a drag - add sound to project
-        this.addSoundToProject(sound);
-      } else {
-        // It was a drag - handle drop
-        this.onSoundMouseUp(upEvent);
-      }
-    };
-    
-    document.addEventListener('mousemove', mouseMoveHandler);
-    document.addEventListener('mouseup', mouseUpHandler);
+    this.startDragOperation(event, sound, false); // false = no threshold needed
   }
 
-  private onSoundMouseMove = (event: MouseEvent) => {
+  // Touch-friendly drag with drag anchor button (mobile only)
+  onDragAnchorPointerDown(event: PointerEvent, sound: SoundLibraryItem) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    this.startDragOperation(event, sound, true); // true = immediate drag
+  }
+
+  private startDragOperation(event: PointerEvent, sound: SoundLibraryItem, immediate: boolean) {
+    // Capture the pointer for consistent tracking
+    const target = event.target as HTMLElement;
+    target.setPointerCapture(event.pointerId);
+    
+    const startPos = { x: event.clientX, y: event.clientY };
+    let isDragStarted = immediate;
+    
+    if (immediate) {
+      // Immediately start drag (mobile anchor)
+      this.currentDraggedSound = sound;
+      this.isDraggingSound = true;
+      document.body.style.cursor = 'grabbing';
+      this.loadAndStartDrag(sound, startPos);
+    } else {
+      // Desktop: store potential drag start
+      this.currentDraggedSound = sound;
+    }
+    
+    // Setup pointer event listeners
+    const pointerMoveHandler = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== event.pointerId) return;
+      
+      if (!isDragStarted && !immediate) {
+        // Desktop: Check drag threshold
+        const deltaX = Math.abs(moveEvent.clientX - startPos.x);
+        const deltaY = Math.abs(moveEvent.clientY - startPos.y);
+        
+        if (deltaX > 5 || deltaY > 5) {
+          isDragStarted = true;
+          this.isDraggingSound = true;
+          document.body.style.cursor = 'grabbing';
+          this.loadAndStartDrag(sound, { x: moveEvent.clientX, y: moveEvent.clientY });
+        }
+      }
+      
+      if (isDragStarted) {
+        this.onSoundPointerMove(moveEvent);
+      }
+    };
+    
+    const pointerUpHandler = (upEvent: PointerEvent) => {
+      if (upEvent.pointerId !== event.pointerId) return;
+      
+      document.removeEventListener('pointermove', pointerMoveHandler);
+      document.removeEventListener('pointerup', pointerUpHandler);
+      document.removeEventListener('pointercancel', pointerUpHandler);
+      
+      // Release pointer capture
+      try {
+        target.releasePointerCapture(upEvent.pointerId);
+      } catch {
+        // Ignore if already released
+      }
+      
+      if (!isDragStarted && !immediate) {
+        // Desktop: It was a click, not a drag - add sound to project
+        this.addSoundToProject(sound);
+      } else if (isDragStarted) {
+        // It was a drag - handle drop
+        this.onSoundPointerUp(upEvent);
+      }
+      
+      // Reset drag state
+      this.currentDraggedSound = undefined;
+    };
+    
+    document.addEventListener('pointermove', pointerMoveHandler, { passive: false });
+    document.addEventListener('pointerup', pointerUpHandler);
+    document.addEventListener('pointercancel', pointerUpHandler);
+  }
+
+  private onSoundPointerMove = (event: PointerEvent) => {
     if (!this.isDraggingSound || !this.currentDraggedSound) return;
+    
+    event.preventDefault();
     
     // Emit move event with current position
     const position = { x: event.clientX, y: event.clientY };
@@ -292,7 +357,7 @@ export class SoundBrowserComponent {
     }));
   }
 
-  private onSoundMouseUp = (event: MouseEvent) => {
+  private onSoundPointerUp = (event: PointerEvent) => {
     if (!this.isDraggingSound || !this.currentDraggedSound) return;
     
     // Emit drop event
@@ -347,10 +412,6 @@ export class SoundBrowserComponent {
   private endSoundDrag() {
     this.isDraggingSound = false;
     this.currentDraggedSound = undefined;
-    
-    // Remove global listeners
-    document.removeEventListener('mousemove', this.onSoundMouseMove);
-    document.removeEventListener('mouseup', this.onSoundMouseUp);
     
     // Reset cursor
     document.body.style.cursor = 'auto';

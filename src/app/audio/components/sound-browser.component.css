@@ -225,16 +225,40 @@
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
   border: 1px solid rgba(147, 51, 234, 0.15);
   border-radius: 6px;
-  cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  touch-action: manipulation;
 }
 
-.sound-item:hover {
+/* Desktop: full item is draggable */
+.sound-item.desktop-mode {
+  cursor: pointer;
+}
+
+.sound-item.desktop-mode:hover {
+  cursor: grab;
+}
+
+.sound-item.desktop-mode.dragging {
+  cursor: grabbing;
+}
+
+/* Mobile: only drag anchor is draggable */
+.sound-item:not(.desktop-mode) {
+  cursor: default;
+}
+
+.sound-item.desktop-mode:hover {
   background: linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, rgba(236, 72, 153, 0.05) 100%);
   border-color: rgba(147, 51, 234, 0.4);
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(147, 51, 234, 0.2);
+}
+
+/* Mobile hover is more subtle since only buttons are interactive */
+.sound-item:not(.desktop-mode):hover {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.04) 0%, rgba(236, 72, 153, 0.02) 100%);
+  border-color: rgba(147, 51, 234, 0.2);
 }
 
 .sound-item.dragging {
@@ -321,7 +345,7 @@
   align-items: center;
 }
 
-.play-btn, .add-btn {
+.drag-btn, .play-btn, .add-btn {
   width: 24px !important;
   height: 24px !important;
   padding: 0 !important;
@@ -337,6 +361,24 @@
   justify-content: center !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
+  touch-action: none !important;
+}
+
+.drag-btn {
+  background: rgba(147, 51, 234, 0.1) !important;
+  border: 1px solid rgba(147, 51, 234, 0.2) !important;
+  color: rgba(147, 51, 234, 0.8) !important;
+  cursor: grab !important;
+}
+
+.drag-btn:hover:not(:disabled) {
+  background: rgba(147, 51, 234, 0.2) !important;
+  border-color: rgba(147, 51, 234, 0.4) !important;
+  color: rgba(147, 51, 234, 1) !important;
+}
+
+.drag-btn:active {
+  cursor: grabbing !important;
 }
 
 .play-btn {
@@ -345,7 +387,7 @@
   color: rgba(249, 115, 22, 0.8) !important;
 }
 
-.play-btn mat-icon, .add-btn mat-icon {
+.drag-btn mat-icon, .play-btn mat-icon, .add-btn mat-icon {
   font-size: 16px !important;
   width: 16px !important;
   height: 16px !important;
