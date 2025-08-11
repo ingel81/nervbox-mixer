@@ -25,7 +25,6 @@ import { AudioEditorComponent } from '../audio/components/audio-editor.component
       <span class="logo">
         <span class="logo-text">NervBox</span> 
         <span class="logo-subtitle">Mixer</span> 
-        <span class="alpha-badge">ALPHA</span>
       </span>
       <span class="spacer"></span>
 

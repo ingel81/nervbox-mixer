@@ -31,6 +31,7 @@ export class EditorStateService {
   } | null>(null);
   
   isDraggingSound = signal(false);
+  isDraggingClip = signal(false);
   
   // Trim state
   trimState: { id: string; side: 'start' | 'end'; startX: number; originalTrimStart: number; originalTrimEnd: number; originalDuration: number; originalStartTime: number; clipRef: Clip } | null = null;
@@ -372,5 +373,14 @@ export class EditorStateService {
   endSoundDrag(): void {
     this.isDraggingSound.set(false);
     this.dragPreview.set(null);
+  }
+
+  // Clip drag state management
+  startClipDrag(): void {
+    this.isDraggingClip.set(true);
+  }
+
+  endClipDrag(): void {
+    this.isDraggingClip.set(false);
   }
 }

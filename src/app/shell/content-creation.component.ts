@@ -88,8 +88,6 @@ import { Clip } from '../audio/models/models';
       }
       
       .content-btn {
-        width: 40px !important;
-        height: 40px !important;
         background: transparent !important;
         border: none !important;
         border-radius: 0 !important;
@@ -119,12 +117,7 @@ import { Clip } from '../audio/models/models';
       }
     }
     
-    @media (max-width: 480px) {
-      .content-btn {
-        width: 36px !important;
-        height: 36px !important;
-      }
-      
+    @media (max-width: 480px) {      
       .content-btn mat-icon {
         font-size: 18px !important;
         width: 18px !important;

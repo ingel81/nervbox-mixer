@@ -82,20 +82,6 @@ export interface ClipDuplicateEvent {
            [style.object-fit]="'fill'"
            alt="Waveform">
       
-      <!-- Mobile Action Buttons (only shown when selected on touch devices) -->
-      <button class="mobile-clip-delete-btn-relative" 
-              (click)="onDeleteClick($event)"
-              (touchstart)="onDeleteTouch($event)"
-              *ngIf="isSelected() && isTouchDevice()">
-        <mat-icon>delete_outline</mat-icon>
-      </button>
-      
-      <button class="mobile-clip-duplicate-btn-relative" 
-              (click)="onDuplicateClick($event)"
-              (touchstart)="onDuplicateTouch($event)"
-              *ngIf="isSelected() && isTouchDevice()">
-        <mat-icon>content_copy</mat-icon>
-      </button>
     </div>
   `,
     styleUrls: ['./clip.component.css']
@@ -148,10 +134,12 @@ export class ClipComponent {
           targetTrack: result.targetTrack || undefined
         });
         this.isDragActive.set(false);
+        this.editorState.endClipDrag(); // Notify global state
       }
     });
     
     this.isDragActive.set(true);
+    this.editorState.startClipDrag(); // Notify global state
     (document.body as HTMLElement).style.userSelect = 'none';
   }
 
@@ -179,10 +167,12 @@ export class ClipComponent {
           targetTrack: result.targetTrack || undefined
         });
         this.isDragActive.set(false);
+        this.editorState.endClipDrag(); // Notify global state
       }
     });
     
     this.isDragActive.set(true);
+    this.editorState.startClipDrag(); // Notify global state
     (document.body as HTMLElement).style.userSelect = 'none';
   }
 
@@ -270,6 +260,7 @@ export class ClipComponent {
   @HostListener('window:mouseup')
   onMouseUp() {
     this.isDragActive.set(false);
+    this.editorState.endClipDrag(); // Notify global state
     this.isTrimActive.set(false);
     (document.body as HTMLElement).style.userSelect = '';
   }
@@ -381,27 +372,4 @@ export class ClipComponent {
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   }
 
-  onDeleteClick(event: MouseEvent) {
-    event.stopPropagation();
-    event.preventDefault();
-    this.clipDeleted.emit({ clip: this.clip });
-  }
-
-  onDuplicateClick(event: MouseEvent) {
-    event.stopPropagation();
-    event.preventDefault();
-    this.clipDuplicated.emit({ clip: this.clip });
-  }
-
-  onDeleteTouch(event: TouchEvent) {
-    event.stopPropagation();
-    event.preventDefault();
-    this.clipDeleted.emit({ clip: this.clip });
-  }
-
-  onDuplicateTouch(event: TouchEvent) {
-    event.stopPropagation();
-    event.preventDefault();
-    this.clipDuplicated.emit({ clip: this.clip });
-  }
 }

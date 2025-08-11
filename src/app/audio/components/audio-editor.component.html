@@ -77,16 +77,41 @@
           </track-lane>
         </ng-container>
       </div>
+
+      <!-- Add Track Button inside tracks-body -->
+      <div class="add-track-container">
+        <button class="add-track-btn" 
+                (click)="addTrack()" 
+                mat-stroked-button>
+          <mat-icon>add</mat-icon>
+          Add Track
+        </button>
+      </div>
     </div>
 
-    <!-- Add Track Button -->
-    <div class="add-track-container">
-      <button class="add-track-btn" 
-              (click)="addTrack()" 
-              mat-stroked-button>
-        <mat-icon>add</mat-icon>
-        Add Track
-      </button>
+    <!-- Mobile Button Layer using CSS Subgrid -->
+    <div class="mobile-button-layer" *ngIf="isTouchDevice()">
+      <div class="mobile-button-container">
+        <!-- Mobile Delete Button -->
+        <button class="mobile-clip-btn delete"
+                [style.top.px]="getMobileButtonTop(selectedClipId())"
+                [style.left.px]="getMobileDeleteButtonLeft(selectedClipId())"
+                (click)="deleteSelectedClip()"
+                (touchstart)="deleteSelectedClip()"
+                *ngIf="selectedClipId() && !editorState.isDraggingClip()">
+          <mat-icon>delete_outline</mat-icon>
+        </button>
+        
+        <!-- Mobile Duplicate Button -->
+        <button class="mobile-clip-btn duplicate"
+                [style.top.px]="getMobileButtonTop(selectedClipId())"
+                [style.left.px]="getMobileDuplicateButtonLeft(selectedClipId())"
+                (click)="duplicateSelectedClip()"
+                (touchstart)="duplicateSelectedClip()"
+                *ngIf="selectedClipId() && !editorState.isDraggingClip()">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </div>
     </div>
   </div>
 
