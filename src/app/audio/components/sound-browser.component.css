@@ -74,9 +74,16 @@
 }
 
 .search-section {
-  padding: 6px 12px 6px 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid rgba(147, 51, 234, 0.1);
   background: rgba(0, 0, 0, 0.2);
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
 }
 
 .search-input {
@@ -84,20 +91,48 @@
   box-sizing: border-box;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(147, 51, 234, 0.4);
-  border-radius: 3px;
-  padding: 3px 6px;
+  border-radius: 4px;
+  padding: 6px 8px;
   color: white;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   outline: none;
   transition: all 0.2s ease;
+  height: 28px;
+}
+
+.clear-search-btn {
+  background: rgba(147, 51, 234, 0.1);
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.clear-search-btn:hover {
+  background: rgba(147, 51, 234, 0.2);
+  border-color: rgba(147, 51, 234, 0.4);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.clear-search-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
   height: 16px;
+  line-height: 16px;
 }
 
 .search-input::placeholder {
   color: rgba(255, 255, 255, 0.4);
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .search-input:focus {
@@ -106,9 +141,9 @@
 }
 
 .categories {
-  padding: 2px 4px;
+  padding: 6px 8px;
   border-bottom: 1px solid rgba(147, 51, 234, 0.1);
-  min-height: 24px;
+  min-height: 32px;
   max-height: fit-content;
   overflow: visible;
 }
@@ -116,23 +151,23 @@
 .category-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 1px;
+  gap: 4px;
   justify-content: flex-start;
 }
 
 .category-chips ::ng-deep mat-chip-option {
-  font-size: 5px !important;
+  font-size: 10px !important;
   font-family: 'JetBrains Mono', monospace !important;
   text-transform: uppercase !important;
-  letter-spacing: 0px !important;
-  font-weight: 400 !important;
+  letter-spacing: 0.5px !important;
+  font-weight: 600 !important;
   background: rgba(255, 255, 255, 0.1) !important;
   color: rgba(255, 255, 255, 0.95) !important;
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  padding: 0px 1px !important;
+  padding: 4px 8px !important;
   height: auto !important;
-  min-height: 16px !important;
-  max-height: 16px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
   line-height: 16px !important;
   min-width: auto !important;
   max-width: fit-content !important;

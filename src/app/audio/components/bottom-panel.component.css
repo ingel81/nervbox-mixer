@@ -26,6 +26,7 @@
 .panel-tab {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 8px 14px;
   background: rgba(251, 146, 60, 0.08);
@@ -75,6 +76,9 @@
   font-size: 16px;
   width: 16px;
   height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tab-label {
@@ -239,6 +243,7 @@
     padding: 6px 10px;
     font-size: 10px;
     height: 36px;
+    justify-content: center;
   }
   
   .panel-tab.raised {
@@ -251,9 +256,12 @@
   }
   
   .panel-tab mat-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .tab-content {
@@ -273,7 +281,8 @@
   .panel-tab {
     padding: 4px 8px;
     height: 32px;
-    gap: 4px;
+    gap: 0;
+    justify-content: center;
   }
   
   .panel-tab.raised {
@@ -282,8 +291,11 @@
   }
   
   .panel-tab mat-icon {
-    font-size: 14px;
-    width: 14px;
-    height: 14px;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }

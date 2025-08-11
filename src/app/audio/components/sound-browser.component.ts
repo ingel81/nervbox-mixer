@@ -29,11 +29,19 @@ import { SoundLibraryItem, SoundCategory } from '../utils/sound-library';
 
       <!-- Search -->
       <div class="search-section">
-        <input type="text" 
-               class="search-input"
-               placeholder="Search..." 
-               [value]="libraryService.searchTerm()"
-               (input)="onSearchChange($event)">
+        <div class="search-container">
+          <input type="text" 
+                 class="search-input"
+                 placeholder="Search..." 
+                 [value]="libraryService.searchTerm()"
+                 (input)="onSearchChange($event)">
+          <button class="clear-search-btn" 
+                  *ngIf="libraryService.searchTerm()"
+                  (click)="clearSearch()"
+                  matTooltip="Clear search">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </div>
       </div>
 
       <!-- Categories -->
@@ -128,6 +136,10 @@ export class SoundBrowserComponent {
   onSearchChange(event: Event) {
     const target = event.target as HTMLInputElement;
     this.libraryService.setSearchTerm(target.value);
+  }
+
+  clearSearch() {
+    this.libraryService.setSearchTerm('');
   }
 
   selectCategory(category: SoundCategory) {
