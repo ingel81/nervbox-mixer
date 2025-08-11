@@ -714,9 +714,15 @@
     min-height: 36px !important;
   }
 
-  /* Hide version info on very small screens */
+  /* Adjust version info for very small screens but keep visible */
   .version-info {
-    display: none;
+    font-size: 8px;
+    bottom: 2px;
+    right: 2px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 2px 4px;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
   }
 }
 
@@ -729,6 +735,60 @@
   .playhead {
     cursor: pointer;
     touch-action: manipulation;
+  }
+
+  /* Much larger scrollbars for touch devices */
+  .track-lanes::-webkit-scrollbar {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .track-lanes::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.6) !important;
+    border-radius: 10px !important;
+    border: 2px solid rgba(147, 51, 234, 0.2) !important;
+  }
+
+  .track-lanes::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.8) 0%, rgba(236, 72, 153, 0.7) 100%) !important;
+    border-radius: 10px !important;
+    border: 2px solid rgba(147, 51, 234, 0.4) !important;
+    box-shadow: 0 0 12px rgba(147, 51, 234, 0.6) !important;
+    min-height: 40px !important;
+    min-width: 40px !important;
+  }
+
+  .track-lanes::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(135deg, rgba(147, 51, 234, 1) 0%, rgba(236, 72, 153, 0.9) 100%) !important;
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.8) !important;
+    border-color: rgba(147, 51, 234, 0.6) !important;
+  }
+
+  /* Also apply to general tracks scrollbar */
+  .tracks::-webkit-scrollbar {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .tracks::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.6) !important;
+    border-radius: 10px !important;
+    border: 2px solid rgba(147, 51, 234, 0.2) !important;
+  }
+
+  .tracks::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.4) !important;
+    border-radius: 10px !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3) !important;
+    min-height: 40px !important;
+    min-width: 40px !important;
+  }
+
+  .tracks::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.5) !important;
   }
 
   /* Disable hover effects on touch devices */
