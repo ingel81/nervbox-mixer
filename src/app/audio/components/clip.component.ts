@@ -64,6 +64,7 @@ export interface ClipDeleteEvent {
         <div class="clip-duration">{{ formatDuration(clip.duration) }}</div>
       </div>
       
+      
       <img *ngIf="clip.waveform" 
            [src]="clip.waveform" 
            class="clip-waveform-img"
@@ -344,11 +345,6 @@ export class ClipComponent {
     });
   }
 
-  onDeleteClip(event: Event) {
-    event.stopPropagation();
-    event.preventDefault();
-    this.clipDeleted.emit({ clip: this.clip });
-  }
 
   formatDuration(seconds: number): string {
     const mins = Math.floor(seconds / 60);

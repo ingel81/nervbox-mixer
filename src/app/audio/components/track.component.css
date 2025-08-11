@@ -5,3 +5,10 @@
   grid-template-rows: 1fr;
   height: 60px;
 }
+
+/* Mobile - Compact tracks */
+@media (max-width: 768px) {
+  :host {
+    height: 48px;
+  }
+}
