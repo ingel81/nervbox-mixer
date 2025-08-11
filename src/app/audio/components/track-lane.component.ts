@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent, ClipDeleteEvent } from './clip.component';
 import { Track } from '../models/models';
@@ -13,18 +13,27 @@ export interface TrackDragEvent {
   event: DragEvent;
 }
 
+export interface TrackHoverEvent {
+  track: Track;
+  isHovering: boolean;
+}
+
 @Component({
     selector: 'track-lane',
     imports: [CommonModule, ClipComponent],
     template: `
     <div class="lane" 
+         #laneElement
          (mousedown)="onLaneMouseDown($event)" 
          (touchstart)="onLaneTouchStart($event)"
+         (mouseenter)="onLaneMouseEnter()"
+         (mouseleave)="onLaneMouseLeave()"
          (drop)="onDrop($event)" 
          (dragover)="onDragOver($event)"
          (dragenter)="onDragEnter($event)"
          (dragleave)="onDragLeave($event)"
-         [class.drag-over]="isDragOver">
+         [class.drag-over]="isDragOver"
+         [class.sound-drag-hover]="isSoundDragTarget()">
       <div class="clips" [style.width.px]="duration * pxPerSecond">
         <audio-clip *ngFor="let clip of track.clips"
                     [clip]="clip"
@@ -46,16 +55,26 @@ export class TrackLaneComponent {
   @Input() duration!: number;
   @Input() playhead!: number;
   @Input() isDragOver = false;
+  @Input() dragPreview: {
+    sound: { id: string; name: string; category: string };
+    buffer: AudioBuffer;
+    position: { x: number; y: number };
+    targetTrack: Track | null;
+    isValidDrop: boolean;
+  } | null = null;
 
   @Output() trackDrop = new EventEmitter<TrackDropEvent>();
   @Output() trackDragEnter = new EventEmitter<TrackDragEvent>();
   @Output() trackDragLeave = new EventEmitter<TrackDragEvent>();
+  @Output() trackHover = new EventEmitter<TrackHoverEvent>();
   @Output() laneMouseDown = new EventEmitter<MouseEvent>();
   @Output() laneTouchStart = new EventEmitter<TouchEvent>();
   @Output() clipSelected = new EventEmitter<ClipSelectEvent>();
   @Output() clipDragStarted = new EventEmitter<ClipDragEvent>();
   @Output() clipTrimStarted = new EventEmitter<ClipTrimEvent>();
   @Output() clipDeleted = new EventEmitter<ClipDeleteEvent>();
+
+  constructor(private elementRef: ElementRef) {}
 
   onDrop(event: DragEvent) {
     this.trackDrop.emit({ track: this.track, event });
@@ -95,5 +114,33 @@ export class TrackLaneComponent {
 
   onClipDeleted(event: ClipDeleteEvent) {
     this.clipDeleted.emit(event);
+  }
+  
+  // Sound drag preview methods
+  isSoundDragTarget(): boolean {
+    return this.dragPreview?.targetTrack?.id === this.track.id;
+  }
+  
+  shouldShowPreview(): boolean {
+    return !!this.dragPreview && this.isSoundDragTarget();
+  }
+  
+  getPreviewPosition(): { x: number; y: number } {
+    if (!this.dragPreview) return { x: 0, y: 0 };
+    
+    // Convert global position to relative position within the track lane
+    const laneRect = this.elementRef.nativeElement.getBoundingClientRect();
+    return {
+      x: this.dragPreview.position.x - laneRect.left,
+      y: this.dragPreview.position.y - laneRect.top
+    };
+  }
+  
+  onLaneMouseEnter() {
+    this.trackHover.emit({ track: this.track, isHovering: true });
+  }
+  
+  onLaneMouseLeave() {
+    this.trackHover.emit({ track: this.track, isHovering: false });
   }
 }

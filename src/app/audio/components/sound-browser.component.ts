@@ -53,11 +53,9 @@ import { SoundLibraryItem, SoundCategory } from '../utils/sound-library';
         <div class="sound-item" 
              *ngFor="let sound of libraryService.filteredSounds()"
              [class.loading]="loadingStates[sound.id]"
-             [class.dragging]="draggedSound?.id === sound.id"
+             [class.dragging]="currentDraggedSound?.id === sound.id"
              (click)="addSoundToProject(sound)"
-             draggable="true"
-             (dragstart)="onDragStart($event, sound)"
-             (dragend)="onDragEnd($event)">
+             (mousedown)="onSoundMouseDown($event, sound)">
           
           <div class="sound-info">
             <div class="sound-name">{{ sound.name }}</div>
@@ -109,13 +107,17 @@ export class SoundBrowserComponent {
   @Input() panelMode = false;
   @Output() soundSelected = new EventEmitter<AudioBuffer & { name: string; category: string; id: string }>();
   @Output() browserToggled = new EventEmitter<void>();
+  @Output() soundDragStarted = new EventEmitter<{ sound: SoundLibraryItem; buffer: AudioBuffer; position: { x: number; y: number } }>();
 
   loadingStates: Record<string, boolean> = {};
   
-  // Drag state
-  isDragging = false;
-  dragOffset = { x: 0, y: 0 };
-  draggedSound?: SoundLibraryItem;
+  // Window drag state (for moving the browser window)
+  isWindowDragging = false;
+  windowDragOffset = { x: 0, y: 0 };
+  
+  // Sound drag state (for dragging sounds to tracks)
+  isDraggingSound = false;
+  currentDraggedSound?: SoundLibraryItem;
   
   constructor(public libraryService: SoundLibraryService) {}
 
@@ -216,94 +218,171 @@ export class SoundBrowserComponent {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
-  // Drag & Drop for sounds
-  onDragStart(event: DragEvent, sound: SoundLibraryItem) {
-    console.log('Drag start:', sound.name);
-    this.draggedSound = sound;
-    
-    // Signal that a sound is being dragged (not the window)
-    (window as Window & { soundDragActive?: boolean }).soundDragActive = true;
-    
-    // Set drag data
-    event.dataTransfer!.effectAllowed = 'copy';
-    event.dataTransfer!.setData('text/plain', JSON.stringify({
-      type: 'sound',
-      id: sound.id,
-      name: sound.name,
-      category: sound.category
-    }));
-    
-    // Create drag image
-    const dragImage = document.createElement('div');
-    dragImage.className = 'drag-image';
-    dragImage.textContent = sound.name;
-    dragImage.style.cssText = `
-      position: fixed;
-      top: -1000px;
-      left: -1000px;
-      background: rgba(147, 51, 234, 0.9);
-      color: white;
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
-      box-shadow: 0 4px 12px rgba(147, 51, 234, 0.5);
-      z-index: 10000;
-    `;
-    document.body.appendChild(dragImage);
-    event.dataTransfer!.setDragImage(dragImage, 0, 0);
-    
-    // Clean up drag image after a delay
-    setTimeout(() => document.body.removeChild(dragImage), 100);
-  }
-
-  onDragEnd(_event: DragEvent) {
-    console.log('Drag end');
-    this.draggedSound = undefined;
-    
-    // Clear sound drag flag
-    (window as Window & { soundDragActive?: boolean }).soundDragActive = false;
-  }
-
-  onHeaderMouseDown(event: MouseEvent) {
-    // Nicht draggen wenn auf Close-Button geklickt wird
-    if ((event.target as HTMLElement).classList.contains('close-btn')) {
+  // Sound drag with mouse events (replaces HTML5 drag & drop)
+  onSoundMouseDown(event: MouseEvent, sound: SoundLibraryItem) {
+    // Don't start drag on button clicks
+    if ((event.target as HTMLElement).closest('button')) {
       return;
     }
     
-    this.isDragging = true;
+    // Store potential drag start
+    this.currentDraggedSound = sound;
+    const startPos = { x: event.clientX, y: event.clientY };
+    let isDragStarted = false;
+    
+    // Setup mouse move to detect drag threshold
+    const mouseMoveHandler = (moveEvent: MouseEvent) => {
+      const deltaX = Math.abs(moveEvent.clientX - startPos.x);
+      const deltaY = Math.abs(moveEvent.clientY - startPos.y);
+      
+      // Start drag if moved more than 5 pixels
+      if (!isDragStarted && (deltaX > 5 || deltaY > 5)) {
+        isDragStarted = true;
+        this.isDraggingSound = true;
+        
+        // Set cursor
+        document.body.style.cursor = 'grabbing';
+        
+        // Continue with drag updates
+        document.addEventListener('mousemove', this.onSoundMouseMove);
+        
+        // Load sound buffer and start drag (async but don't wait)
+        this.loadAndStartDrag(sound, { x: moveEvent.clientX, y: moveEvent.clientY });
+      }
+    };
+    
+    // Setup mouse up to handle click or drag end
+    const mouseUpHandler = (upEvent: MouseEvent) => {
+      document.removeEventListener('mousemove', mouseMoveHandler);
+      document.removeEventListener('mouseup', mouseUpHandler);
+      
+      if (!isDragStarted) {
+        // It was a click, not a drag - add sound to project
+        this.addSoundToProject(sound);
+      } else {
+        // It was a drag - handle drop
+        this.onSoundMouseUp(upEvent);
+      }
+    };
+    
+    document.addEventListener('mousemove', mouseMoveHandler);
+    document.addEventListener('mouseup', mouseUpHandler);
+  }
+
+  private onSoundMouseMove = (event: MouseEvent) => {
+    if (!this.isDraggingSound || !this.currentDraggedSound) return;
+    
+    // Emit move event with current position
+    const position = { x: event.clientX, y: event.clientY };
+    // This will be handled by the parent component
+    document.dispatchEvent(new CustomEvent('soundDragMove', {
+      detail: { position, sound: this.currentDraggedSound }
+    }));
+  }
+
+  private onSoundMouseUp = (event: MouseEvent) => {
+    if (!this.isDraggingSound || !this.currentDraggedSound) return;
+    
+    // Emit drop event
+    document.dispatchEvent(new CustomEvent('soundDragEnd', {
+      detail: { 
+        position: { x: event.clientX, y: event.clientY }, 
+        sound: this.currentDraggedSound 
+      }
+    }));
+    
+    this.endSoundDrag();
+  }
+  
+  private async loadAndStartDrag(sound: SoundLibraryItem, position: { x: number; y: number }) {
+    console.log('[loadAndStartDrag] Starting drag for:', sound.name);
+    try {
+      this.loadingStates[sound.id] = true;
+      const buffer = await this.libraryService.loadSound(sound.id);
+      
+      if (buffer && this.isDraggingSound) {
+        console.log('[loadAndStartDrag] Buffer loaded, dispatching soundDragStart event');
+        
+        // Dispatch via custom event for immediate handling
+        document.dispatchEvent(new CustomEvent('soundDragStart', {
+          detail: {
+            sound: {
+              id: sound.id,
+              name: sound.name,
+              category: sound.category
+            },
+            buffer,
+            position
+          }
+        }));
+        
+        // Also emit for Angular binding (if needed)
+        this.soundDragStarted.emit({
+          sound,
+          buffer,
+          position
+        });
+      } else {
+        console.log('[loadAndStartDrag] Buffer not loaded or drag cancelled');
+      }
+    } catch (error) {
+      console.error('Failed to load sound for drag:', error);
+    } finally {
+      this.loadingStates[sound.id] = false;
+    }
+  }
+  
+  private endSoundDrag() {
+    this.isDraggingSound = false;
+    this.currentDraggedSound = undefined;
+    
+    // Remove global listeners
+    document.removeEventListener('mousemove', this.onSoundMouseMove);
+    document.removeEventListener('mouseup', this.onSoundMouseUp);
+    
+    // Reset cursor
+    document.body.style.cursor = 'auto';
+  }
+
+  onHeaderMouseDown(event: MouseEvent) {
+    // Don't drag if clicking close button or if sound is being dragged
+    if ((event.target as HTMLElement).classList.contains('close-btn') || this.isDraggingSound) {
+      return;
+    }
+    
+    this.isWindowDragging = true;
     const rect = (event.currentTarget as HTMLElement).closest('.sound-browser')!.getBoundingClientRect();
-    this.dragOffset = {
+    this.windowDragOffset = {
       x: event.clientX - rect.left,
       y: event.clientY - rect.top
     };
     
-    // Global mouse events für dragging
-    document.addEventListener('mousemove', this.onMouseMove);
-    document.addEventListener('mouseup', this.onMouseUp);
+    // Global mouse events for window dragging
+    document.addEventListener('mousemove', this.onWindowMouseMove);
+    document.addEventListener('mouseup', this.onWindowMouseUp);
     
     event.preventDefault();
   }
 
-  private onMouseMove = (event: MouseEvent) => {
-    if (!this.isDragging) return;
+  private onWindowMouseMove = (event: MouseEvent) => {
+    if (!this.isWindowDragging) return;
     
     const soundBrowser = document.querySelector('.sound-browser') as HTMLElement;
     if (!soundBrowser) return;
     
     const newX = Math.max(0, Math.min(window.innerWidth - soundBrowser.offsetWidth, 
-                                    event.clientX - this.dragOffset.x));
+                                    event.clientX - this.windowDragOffset.x));
     const newY = Math.max(0, Math.min(window.innerHeight - soundBrowser.offsetHeight, 
-                                    event.clientY - this.dragOffset.y));
+                                    event.clientY - this.windowDragOffset.y));
     
     soundBrowser.style.left = `${newX}px`;
     soundBrowser.style.top = `${newY}px`;
     soundBrowser.style.right = 'auto';
   }
 
-  private onMouseUp = () => {
-    this.isDragging = false;
-    document.removeEventListener('mousemove', this.onMouseMove);
-    document.removeEventListener('mouseup', this.onMouseUp);
+  private onWindowMouseUp = () => {
+    this.isWindowDragging = false;
+    document.removeEventListener('mousemove', this.onWindowMouseMove);
+    document.removeEventListener('mouseup', this.onWindowMouseUp);
   }
 }

@@ -7,6 +7,7 @@ import { DefaultArrangementService } from '../services/default-arrangement.servi
 import { WaveformService } from '../services/waveform.service';
 import { SoundBrowserComponent } from './sound-browser.component';
 import { BottomPanelComponent } from './bottom-panel.component';
+import { PreviewClipComponent } from './preview-clip.component';
 import { ClipDragEvent, ClipTrimEvent, ClipSelectEvent, ClipDeleteEvent } from './clip.component';
 import { TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackRenameEvent, TrackDropEvent, TrackDragEvent } from './track.component';
 import { TrackHeaderComponent } from './track-header.component';
@@ -22,7 +23,7 @@ import { environment } from '../../../environments/environment';
 
 @Component({
     selector: 'audio-editor',
-    imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent, BottomPanelComponent, TrackHeaderComponent, TrackLaneComponent],
+    imports: [CommonModule, MatSliderModule, MatIconModule, MatButtonModule, MatTooltipModule, SoundBrowserComponent, BottomPanelComponent, PreviewClipComponent, TrackHeaderComponent, TrackLaneComponent],
     templateUrl: './audio-editor.component.html',
     styleUrls: ['./audio-editor.component.css']
 })
@@ -92,6 +93,32 @@ export class AudioEditorComponent {
     
     effect(() => {
       if (!this.isPlaying()) this.audio.stop();
+    });
+    
+    // Setup sound drag event listeners
+    this.setupSoundDragListeners();
+  }
+  
+  private setupSoundDragListeners(): void {
+    // Listen for sound drag start events
+    document.addEventListener('soundDragStart', (event: Event) => {
+      if (event instanceof CustomEvent) {
+        this.handleSoundDragStart(event.detail);
+      }
+    });
+    
+    // Listen for sound drag move events
+    document.addEventListener('soundDragMove', (event: Event) => {
+      if (event instanceof CustomEvent) {
+        this.handleSoundDragMove(event.detail);
+      }
+    });
+    
+    // Listen for sound drag end events
+    document.addEventListener('soundDragEnd', (event: Event) => {
+      if (event instanceof CustomEvent) {
+        this.handleSoundDragEnd(event.detail);
+      }
     });
   }
 
@@ -1041,6 +1068,84 @@ export class AudioEditorComponent {
     this.addSoundToTrack(buffer, targetTrack, freePosition);
     
     console.log(`Added ${buffer.name} to ${targetTrack.name} at ${freePosition.toFixed(2)}s`);
+  }
+  
+  // Sound drag handlers
+  onSoundDragStarted(event: { sound: { id: string; name: string; category: string }, buffer: AudioBuffer, position: { x: number; y: number } }) {
+    console.log('[AudioEditor] onSoundDragStarted called with:', event.sound.name, 'at position:', event.position);
+    this.editorState.startSoundDrag(event.sound, event.buffer, event.position);
+    console.log('[AudioEditor] Drag preview state after start:', this.editorState.dragPreview());
+  }
+  
+  private handleSoundDragStart(detail: { sound: { id: string; name: string; category: string }, buffer: AudioBuffer, position: { x: number; y: number } }) {
+    console.log('[AudioEditor] handleSoundDragStart called with:', detail.sound.name, 'at position:', detail.position);
+    this.editorState.startSoundDrag(detail.sound, detail.buffer, detail.position);
+    console.log('[AudioEditor] Drag preview state after start:', this.editorState.dragPreview());
+  }
+  
+  private handleSoundDragMove(detail: { position: { x: number; y: number }, sound: { id: string; name: string; category: string } }) {
+    // Find which track is being hovered
+    const targetTrack = this.getTrackAtPosition(detail.position.y);
+    
+    // Update drag preview position and target
+    this.editorState.updateSoundDragPosition(detail.position, targetTrack);
+    
+    // Debug log every 10th call to avoid spam
+    if (Math.random() < 0.1) {
+      console.log('[AudioEditor] Drag move - position:', detail.position, 'target track:', targetTrack?.name);
+    }
+  }
+  
+  private handleSoundDragEnd(detail: { position: { x: number; y: number }, sound: { id: string; name: string; category: string } }) {
+    const dragPreview = this.editorState.dragPreview();
+    
+    if (dragPreview && dragPreview.isValidDrop && dragPreview.targetTrack) {
+      // Calculate drop position in timeline
+      const dropTime = this.getTimeAtPosition(detail.position.x);
+      
+      // Add sound to target track by extending the buffer with metadata
+      const extendedBuffer = Object.assign(dragPreview.buffer, {
+        name: dragPreview.sound.name,
+        category: dragPreview.sound.category,
+        id: dragPreview.sound.id
+      });
+      this.addSoundToTrack(extendedBuffer, dragPreview.targetTrack, dropTime);
+      
+      console.log(`Dropped ${dragPreview.sound.name} on ${dragPreview.targetTrack.name} at ${dropTime.toFixed(2)}s`);
+    }
+    
+    // End drag operation
+    this.editorState.endSoundDrag();
+  }
+  
+  private getTrackAtPosition(y: number): Track | undefined {
+    // Get track lane elements
+    const trackLanes = this.trackLanesEl.nativeElement.querySelectorAll('track-lane');
+    
+    for (let i = 0; i < trackLanes.length; i++) {
+      const trackElement = trackLanes[i] as HTMLElement;
+      const rect = trackElement.getBoundingClientRect();
+      
+      if (y >= rect.top && y <= rect.bottom) {
+        return this.tracks()[i];
+      }
+    }
+    
+    return undefined;
+  }
+  
+  private getTimeAtPosition(x: number): number {
+    // Get timeline container position
+    const trackLanesRect = this.trackLanesEl.nativeElement.getBoundingClientRect();
+    const relativeX = x - trackLanesRect.left + this.trackLanesEl.nativeElement.scrollLeft;
+    
+    // Convert pixel position to time
+    return Math.max(0, relativeX / this.pxPerSecond());
+  }
+  
+  onTrackHover(_event: { track: Track; isHovering: boolean }) {
+    // Track hover is handled automatically by the drag preview system
+    // This method exists for potential future use
   }
 
   // --- Drag & Drop from Sound Library ---

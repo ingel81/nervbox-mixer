@@ -60,9 +60,11 @@
                       [duration]="duration()"
                       [playhead]="playhead()"
                       [isDragOver]="dragOverTrack?.id === track.id"
+                      [dragPreview]="editorState.dragPreview()"
                       (trackDrop)="onTrackDrop($event)"
                       (trackDragEnter)="onTrackDragEnter($event)"
                       (trackDragLeave)="onTrackDragLeave($event)"
+                      (trackHover)="onTrackHover($event)"
                       (laneMouseDown)="laneMouseDown($event, track)"
                       (laneTouchStart)="laneTouchStart($event, track)"
                       (clipSelected)="onClipSelected($event)"
@@ -89,8 +91,18 @@
   <sound-browser *ngIf="showSoundBrowser()"
                  [openedFromCta]="soundBrowserOpenedFromCta()"
                  (soundSelected)="onSoundSelected($event)"
+                 (soundDragStarted)="onSoundDragStarted($event)"
                  (browserToggled)="toggleSoundBrowser()">
   </sound-browser>
+
+  <!-- Drag Preview Overlay -->
+  <preview-clip *ngIf="editorState.dragPreview()"
+                [soundName]="editorState.dragPreview()!.sound.name"
+                [audioBuffer]="editorState.dragPreview()!.buffer"
+                [position]="editorState.dragPreview()!.position"
+                [pxPerSecond]="pxPerSecond()"
+                [isValidDrop]="editorState.dragPreview()!.isValidDrop">
+  </preview-clip>
 
   <!-- Mobile Clip Delete Button -->
   <button class="mobile-clip-delete-btn" 

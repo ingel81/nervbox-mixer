@@ -22,6 +22,17 @@ export class EditorStateService {
   dragState: { id: string; startX: number; origStartTime: number; clipRef?: Clip } | null = null;
   dragOverTrack: Track | null = null;
   
+  // Drag preview state for Sound Browser
+  dragPreview = signal<{
+    sound: { id: string; name: string; category: string };
+    buffer: AudioBuffer;
+    position: { x: number; y: number };
+    targetTrack: Track | null;
+    isValidDrop: boolean;
+  } | null>(null);
+  
+  isDraggingSound = signal(false);
+  
   // Trim state
   trimState: { id: string; side: 'start' | 'end'; startX: number; originalTrimStart: number; originalTrimEnd: number; originalDuration: number; originalStartTime: number; clipRef: Clip } | null = null;
   
@@ -333,5 +344,34 @@ export class EditorStateService {
   // Arrangement name management
   setArrangementName(name: string): void {
     this.currentArrangementName.set(name);
+  }
+  
+  // Drag preview methods for Sound Browser
+  startSoundDrag(sound: { id: string; name: string; category: string }, buffer: AudioBuffer, position: { x: number; y: number }): void {
+    this.isDraggingSound.set(true);
+    this.dragPreview.set({
+      sound,
+      buffer,
+      position,
+      targetTrack: null,
+      isValidDrop: false
+    });
+  }
+  
+  updateSoundDragPosition(position: { x: number; y: number }, targetTrack?: Track): void {
+    const current = this.dragPreview();
+    if (!current) return;
+    
+    this.dragPreview.set({
+      ...current,
+      position,
+      targetTrack: targetTrack || null,
+      isValidDrop: !!targetTrack
+    });
+  }
+  
+  endSoundDrag(): void {
+    this.isDraggingSound.set(false);
+    this.dragPreview.set(null);
   }
 }
