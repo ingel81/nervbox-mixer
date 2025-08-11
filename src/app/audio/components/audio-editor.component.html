@@ -107,18 +107,18 @@
   <!-- Mobile Clip Delete Button -->
   <button class="mobile-clip-delete-btn" 
           (click)="deleteSelectedClip()"
-          [style.top.px]="getSelectedClipPosition()?.top"
-          [style.right.px]="getSelectedClipPosition()?.right"
-          *ngIf="selectedClipId() && isTouchDevice() && getSelectedClipPosition()">
+          [style.top.px]="selectedClipDeletePosition()?.top"
+          [style.right.px]="selectedClipDeletePosition()?.right"
+          *ngIf="selectedClipId() && isTouchDevice() && selectedClipDeletePosition()">
     <mat-icon>delete_outline</mat-icon>
   </button>
 
   <!-- Mobile Clip Duplicate Button -->
   <button class="mobile-clip-duplicate-btn" 
           (click)="duplicateSelectedClip()"
-          [style.top.px]="getSelectedClipDuplicatePosition()?.top"
-          [style.right.px]="getSelectedClipDuplicatePosition()?.right"
-          *ngIf="selectedClipId() && isTouchDevice() && getSelectedClipDuplicatePosition()">
+          [style.top.px]="selectedClipDuplicatePosition()?.top"
+          [style.right.px]="selectedClipDuplicatePosition()?.right"
+          *ngIf="selectedClipId() && isTouchDevice() && selectedClipDuplicatePosition()">
     <mat-icon>content_copy</mat-icon>
   </button>
 

@@ -549,17 +549,7 @@ export class AudioEditorComponent {
   }
 
   getSelectedClipDuplicatePosition(): { top: number, right: number } | null {
-    const selectedId = this.selectedClipId();
-    if (!selectedId) return null;
-
-    const clipElement = document.querySelector(`[data-clip-id="${selectedId}"]`) as HTMLElement;
-    if (!clipElement) return null;
-
-    const rect = clipElement.getBoundingClientRect();
-    return {
-      top: rect.top - 33, // Same Y as delete button (33px above clip)
-      right: window.innerWidth - rect.right - 14 // 14px to the right of clip right edge
-    };
+    return this.selectedClipDuplicatePosition();
   }
 
   laneTouchStart(ev: TouchEvent, track: Track) {
@@ -580,18 +570,50 @@ export class AudioEditorComponent {
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   }
 
-  getSelectedClipPosition(): { top: number, right: number } | null {
+  // Computed signals for button positions to prevent ExpressionChangedAfterItHasBeenCheckedError
+  selectedClipDeletePosition = computed(() => {
     const selectedId = this.selectedClipId();
     if (!selectedId) return null;
 
-    const clipElement = document.querySelector(`[data-clip-id="${selectedId}"]`) as HTMLElement;
-    if (!clipElement) return null;
+    // Use setTimeout to defer DOM queries to next tick
+    setTimeout(() => {
+      const clipElement = document.querySelector(`[data-clip-id="${selectedId}"]`) as HTMLElement;
+      if (!clipElement) return;
 
-    const rect = clipElement.getBoundingClientRect();
-    return {
-      top: rect.top - 33, // 33px above clip (button height + margin)
-      right: window.innerWidth - rect.left - 14 // 14px to the right of clip left edge (overlapping)
-    };
+      const rect = clipElement.getBoundingClientRect();
+      this.deletePosition.set({
+        top: rect.top - 33, // 33px above clip (button height + margin)
+        right: window.innerWidth - rect.left - 14 // 14px to the right of clip left edge (overlapping)
+      });
+    });
+
+    return this.deletePosition();
+  });
+
+  selectedClipDuplicatePosition = computed(() => {
+    const selectedId = this.selectedClipId();
+    if (!selectedId) return null;
+
+    // Use setTimeout to defer DOM queries to next tick
+    setTimeout(() => {
+      const clipElement = document.querySelector(`[data-clip-id="${selectedId}"]`) as HTMLElement;
+      if (!clipElement) return;
+
+      const rect = clipElement.getBoundingClientRect();
+      this.duplicatePosition.set({
+        top: rect.top - 33, // Same Y as delete button (33px above clip)
+        right: window.innerWidth - rect.right - 14 // 14px to the right of clip right edge
+      });
+    });
+
+    return this.duplicatePosition();
+  });
+
+  private deletePosition = signal<{ top: number, right: number } | null>(null);
+  private duplicatePosition = signal<{ top: number, right: number } | null>(null);
+
+  getSelectedClipPosition(): { top: number, right: number } | null {
+    return this.selectedClipDeletePosition();
   }
 
   private lastDragUpdate = 0;
