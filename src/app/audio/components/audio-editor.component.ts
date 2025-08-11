@@ -295,6 +295,11 @@ export class AudioEditorComponent {
     const defaultTracks = await this.defaultArrangement.createDefaultHipHopTracks();
     this.editorState.tracks.update(list => [...list, ...defaultTracks]);
     this.editorState.setArrangementName('DefaultBeat');
+    
+    // Activate first track
+    if (defaultTracks.length > 0) {
+      this.editorState.setActiveTrack(defaultTracks[0].id);
+    }
   }
 
   private removeTrack(track: Track) {
@@ -358,6 +363,10 @@ export class AudioEditorComponent {
 
   onTrackRenamed(event: TrackRenameEvent) {
     this.editorState.renameTrack(event.track.id, event.newName);
+  }
+  
+  onTrackHeaderClicked(event: { track: Track }) {
+    this.editorState.setActiveTrack(event.track.id);
   }
   
   onTrackDrop(event: TrackDropEvent) {
@@ -497,9 +506,12 @@ export class AudioEditorComponent {
     }
   }
 
-  laneTouchStart(ev: TouchEvent) {
+  laneTouchStart(ev: TouchEvent, track: Track) {
     // Similar to laneMouseDown but for touch
     if ((ev.target as HTMLElement)?.closest('.clip')) return;
+    
+    // Activate the touched track
+    this.editorState.setActiveTrack(track.id);
     
     // Deselect current clip when touching empty lane area
     this.editorState.selectedClipId.set(null);
@@ -976,41 +988,12 @@ export class AudioEditorComponent {
   pasteClip(): void {
     if (!this.clipboardClip) return;
 
-    this.tracks.update(list => {
-      // Find first empty track or create new one
-      let targetTrack = list.find(t => t.clips.length === 0);
-      
-      if (!targetTrack) {
-        // Create new track
-        targetTrack = {
-          id: crypto.randomUUID(),
-          name: `Track ${list.length + 1}`,
-          clips: [],
-          mute: false,
-          solo: false,
-          volume: 1,
-          pan: 0
-        };
-        list.push(targetTrack);
-      }
-
-      // Create the pasted clip with a new ID
-      const pastedClip: Clip = {
-        ...this.clipboardClip!,
-        id: crypto.randomUUID(),
-        startTime: this.playhead(), // Paste at current playhead position
-        color: this.getColorByFilename(this.clipboardClip!.name) // Consistent color based on name
-      };
-
-      targetTrack.clips.push(pastedClip);
-      
-      // Select the newly pasted clip
-      this.editorState.selectedClipId.set(pastedClip.id);
-      
-      console.log(`Clip "${pastedClip.name}" pasted to ${targetTrack.name}`);
-      
-      return [...list];
-    });
+    // Use EditorStateService for pasting - it handles active track and collision detection
+    const pastedClip = this.editorState.pasteClip();
+    
+    if (pastedClip) {
+      console.log(`Clip "${pastedClip.name}" pasted at ${pastedClip.startTime.toFixed(2)}s`);
+    }
   }
 
   deleteClip(clip: Clip): void {
@@ -1035,139 +1018,21 @@ export class AudioEditorComponent {
 
 
   async onSoundSelected(buffer: AudioBuffer & { name: string; category: string; id?: string }) {
-    const color = this.getColorByFilename(buffer.name);
-    const waveform = this.waveformService.generateFromBuffer(buffer, {
-      width: Math.floor(buffer.duration * this.pxPerSecond()),
-      height: 44,
-      clipColor: color
-    });
-    const playheadPosition = this.playhead();
+    // Get or create active track
+    const targetTrack = this.editorState.getOrCreateActiveTrack();
     
-    this.tracks.update(list => {
-      // Strategy: Try to place at playhead position on existing track, otherwise create new track
-      let targetTrack: Track | null = null;
-      let targetStartTime = playheadPosition;
-      let placementStrategy = '';
-      
-      // First pass: Look for exact playhead position availability
-      for (const track of list) {
-        const isPositionFree = !track.clips.some(clip => {
-          const clipStart = clip.startTime;
-          const clipEnd = clip.startTime + clip.duration;
-          const newClipEnd = playheadPosition + buffer.duration;
-          return !(newClipEnd <= clipStart || playheadPosition >= clipEnd);
-        });
-        
-        if (isPositionFree) {
-          targetTrack = track;
-          targetStartTime = playheadPosition;
-          placementStrategy = `at playhead on ${track.name}`;
-          break;
-        }
-      }
-      
-      // Second pass: If playhead position not available, look for nearest gap on any track
-      if (!targetTrack) {
-        let bestOption: { track: Track; startTime: number; distance: number } | null = null;
-        
-        for (const track of list) {
-          const sortedClips = [...track.clips].sort((a, b) => a.startTime - b.startTime);
-          
-          // Check gap before first clip
-          if (sortedClips.length > 0 && sortedClips[0].startTime >= buffer.duration + 0.05) {
-            const distance = Math.abs(0 - playheadPosition);
-            if (!bestOption || distance < bestOption.distance) {
-              bestOption = { track, startTime: 0, distance };
-            }
-          }
-          
-          // Check gaps between clips
-          for (let i = 0; i < sortedClips.length - 1; i++) {
-            const currentClip = sortedClips[i];
-            const nextClip = sortedClips[i + 1];
-            const gapStart = currentClip.startTime + currentClip.duration + 0.05;
-            const gapSize = nextClip.startTime - gapStart;
-            
-            if (gapSize >= buffer.duration) {
-              const distance = Math.abs(gapStart - playheadPosition);
-              if (!bestOption || distance < bestOption.distance) {
-                bestOption = { track, startTime: gapStart, distance };
-              }
-            }
-          }
-          
-          // Check position after last clip
-          if (sortedClips.length > 0) {
-            const lastClip = sortedClips[sortedClips.length - 1];
-            const afterLastPosition = lastClip.startTime + lastClip.duration + 0.05;
-            const distance = Math.abs(afterLastPosition - playheadPosition);
-            if (!bestOption || distance < bestOption.distance) {
-              bestOption = { track, startTime: afterLastPosition, distance };
-            }
-          }
-        }
-        
-        if (bestOption) {
-          targetTrack = bestOption.track;
-          targetStartTime = bestOption.startTime;
-          placementStrategy = `in nearest gap on ${bestOption.track.name}`;
-        }
-      }
-      
-      if (targetTrack) {
-        // Add to existing track
-        const newClip = {
-          id: crypto.randomUUID(),
-          name: buffer.name,
-          startTime: targetStartTime,
-          duration: buffer.duration,
-          offset: 0,
-          buffer: buffer,
-          color,
-          waveform,
-          trimStart: 0,
-          trimEnd: 0,
-          originalDuration: buffer.duration,
-          soundId: buffer.id || crypto.randomUUID()
-        } as Clip;
-        targetTrack.clips.push(newClip);
-        console.log(`Added ${buffer.name} ${placementStrategy} at ${targetStartTime.toFixed(2)}s`);
-        console.log(`Track "${targetTrack.name}" now has ${targetTrack.clips.length} clips:`, 
-                    targetTrack.clips.map(c => `${c.name}@${c.startTime.toFixed(1)}s`));
-      } else {
-        // Create new track - all existing tracks are too busy
-        const newTrack: Track = {
-          id: crypto.randomUUID(),
-          name: `Track ${list.length + 1}`,
-          clips: [{
-            id: crypto.randomUUID(),
-            name: buffer.name,
-            startTime: playheadPosition,
-            duration: buffer.duration,
-            offset: 0,
-            buffer: buffer,
-            color,
-            waveform,
-            trimStart: 0,
-            trimEnd: 0,
-            originalDuration: buffer.duration,
-            soundId: buffer.id || crypto.randomUUID()
-          } as Clip],
-          mute: false,
-          solo: false,
-          volume: 1,
-          pan: 0
-        };
-        list.push(newTrack);
-        console.log(`Added ${buffer.name} on new ${newTrack.name} at playhead ${playheadPosition.toFixed(2)}s`);
-      }
-      
-      // Return new array with deep copy to ensure change detection
-      return list.map(track => ({
-        ...track,
-        clips: [...track.clips]
-      }));
-    });
+    // Find free position starting from playhead
+    const playheadPos = this.playhead();
+    const freePosition = this.editorState.findNextFreePosition(
+      targetTrack,
+      playheadPos,
+      buffer.duration
+    );
+    
+    // Add sound to track
+    this.addSoundToTrack(buffer, targetTrack, freePosition);
+    
+    console.log(`Added ${buffer.name} to ${targetTrack.name} at ${freePosition.toFixed(2)}s`);
   }
 
   // --- Drag & Drop from Sound Library ---
@@ -1347,9 +1212,12 @@ export class AudioEditorComponent {
     this.seeking = true;
     (document.body as HTMLElement).style.userSelect = 'none';
   }
-  laneMouseDown(ev: MouseEvent) {
+  laneMouseDown(ev: MouseEvent, track: Track) {
     // Wenn auf einem Clip (oder innerhalb), kein Seeking auslösen
     if ((ev.target as HTMLElement)?.closest('.clip')) return;
+    
+    // Activate the clicked track
+    this.editorState.setActiveTrack(track.id);
     
     // Deselect current clip when clicking on empty lane area
     this.editorState.selectedClipId.set(null);

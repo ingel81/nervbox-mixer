@@ -41,10 +41,12 @@
       <div class="track-headers" #trackHeaders>
         <ng-container *ngFor="let track of tracks(); trackBy: trackByFn">
           <track-header [track]="track"
+                        [class.active]="editorState.activeTrackId() === track.id"
                         (muteToggled)="onTrackMuteToggled($event)"
                         (soloToggled)="onTrackSoloToggled($event)"
                         (trackDeleted)="onTrackDeleted($event)"
-                        (trackRenamed)="onTrackRenamed($event)">
+                        (trackRenamed)="onTrackRenamed($event)"
+                        (trackClicked)="onTrackHeaderClicked($event)">
           </track-header>
         </ng-container>
       </div>
@@ -53,6 +55,7 @@
       <div class="track-lanes" #trackLanes (scroll)="onTrackScroll($event)">
         <ng-container *ngFor="let track of tracks(); trackBy: trackByFn">
           <track-lane [track]="track"
+                      [class.active]="editorState.activeTrackId() === track.id"
                       [pxPerSecond]="pxPerSecond()"
                       [duration]="duration()"
                       [playhead]="playhead()"
@@ -60,8 +63,8 @@
                       (trackDrop)="onTrackDrop($event)"
                       (trackDragEnter)="onTrackDragEnter($event)"
                       (trackDragLeave)="onTrackDragLeave($event)"
-                      (laneMouseDown)="laneMouseDown($event)"
-                      (laneTouchStart)="laneTouchStart($event)"
+                      (laneMouseDown)="laneMouseDown($event, track)"
+                      (laneTouchStart)="laneTouchStart($event, track)"
                       (clipSelected)="onClipSelected($event)"
                       (clipDragStarted)="onClipDragStarted($event)"
                       (clipTrimStarted)="onClipTrimStarted($event)"

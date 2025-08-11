@@ -23,11 +23,15 @@ export interface TrackRenameEvent {
   newName: string;
 }
 
+export interface TrackClickEvent {
+  track: Track;
+}
+
 @Component({
     selector: 'track-header',
     imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatTooltipModule],
     template: `
-    <div class="track-head">
+    <div class="track-head" (click)="onHeaderClick($event)">
       <div class="track-controls">
         <div class="title" 
              [class.editing]="isEditing">
@@ -73,6 +77,7 @@ export class TrackHeaderComponent implements AfterViewInit {
   @Output() soloToggled = new EventEmitter<TrackSoloEvent>();
   @Output() trackDeleted = new EventEmitter<TrackDeleteEvent>();
   @Output() trackRenamed = new EventEmitter<TrackRenameEvent>();
+  @Output() trackClicked = new EventEmitter<TrackClickEvent>();
   
   @ViewChild('nameInput') nameInputEl?: ElementRef<HTMLInputElement>;
 
@@ -123,5 +128,16 @@ export class TrackHeaderComponent implements AfterViewInit {
 
   onRemoveTrack() {
     this.trackDeleted.emit({ track: this.track });
+  }
+
+  onHeaderClick(event: MouseEvent) {
+    // Don't trigger if clicking on buttons or during editing
+    if ((event.target as HTMLElement).closest('button') || 
+        (event.target as HTMLElement).closest('.edit-icon') ||
+        this.isEditing) {
+      return;
+    }
+    
+    this.trackClicked.emit({ track: this.track });
   }
 }

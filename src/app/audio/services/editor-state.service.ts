@@ -28,6 +28,14 @@ export class EditorStateService {
   // Clipboard
   clipboardClip: Clip | null = null;
   
+  // Active track management
+  activeTrackId = signal<string | null>(null);
+  activeTrack = computed(() => {
+    const id = this.activeTrackId();
+    if (!id) return null;
+    return this.tracks().find(t => t.id === id) || null;
+  });
+  
   // Sound browser control
   toggleSoundBrowser(source?: string): void {
     const wasShown = this.showSoundBrowser();
@@ -68,11 +76,67 @@ export class EditorStateService {
     };
     
     this.tracks.update(list => [...list, newTrack]);
+    
+    // Automatically activate new track
+    this.setActiveTrack(newTrack.id);
+    
     return newTrack;
   }
   
   removeTrack(trackId: string): void {
+    // If removing active track, activate next available track
+    if (this.activeTrackId() === trackId) {
+      const tracks = this.tracks();
+      const index = tracks.findIndex(t => t.id === trackId);
+      if (index !== -1) {
+        const nextTrack = tracks[index + 1] || tracks[index - 1];
+        this.setActiveTrack(nextTrack?.id || null);
+      }
+    }
+    
     this.tracks.update(list => list.filter(t => t.id !== trackId));
+  }
+  
+  // Active track methods
+  setActiveTrack(trackId: string | null): void {
+    this.activeTrackId.set(trackId);
+  }
+  
+  getOrCreateActiveTrack(): Track {
+    let track = this.activeTrack();
+    
+    if (!track) {
+      // Try to get first track
+      const tracks = this.tracks();
+      if (tracks.length > 0) {
+        track = tracks[0];
+        this.setActiveTrack(track.id);
+      } else {
+        // Create new track
+        track = this.addTrack();
+      }
+    }
+    
+    return track;
+  }
+  
+  findNextFreePosition(track: Track, startTime: number, clipDuration: number): number {
+    const sortedClips = [...track.clips].sort((a, b) => a.startTime - b.startTime);
+    
+    // Check if playhead position is free
+    const collision = sortedClips.find(clip => {
+      const clipStart = clip.startTime;
+      const clipEnd = clip.startTime + clip.duration;
+      const newClipEnd = startTime + clipDuration;
+      return !(newClipEnd <= clipStart || startTime >= clipEnd);
+    });
+    
+    if (!collision) {
+      return startTime; // Position is free
+    }
+    
+    // Find next free position after the colliding clip
+    return collision.startTime + collision.duration + 0.1; // Small gap
   }
   
   updateTrack(trackId: string, updates: Partial<Track>): void {
@@ -186,21 +250,26 @@ export class EditorStateService {
   pasteClip(targetTrackId?: string): Clip | null {
     if (!this.clipboardClip) return null;
     
+    // Get target track - use provided ID, active track, or create new
+    const targetTrack = targetTrackId 
+      ? this.tracks().find(t => t.id === targetTrackId)
+      : this.getOrCreateActiveTrack();
+    
+    if (!targetTrack) return null;
+    
+    // Find free position starting from playhead
+    const playheadPos = this.playhead();
+    const freePosition = this.findNextFreePosition(
+      targetTrack, 
+      playheadPos, 
+      this.clipboardClip.duration
+    );
+    
     const pastedClip: Clip = {
       ...this.clipboardClip,
       id: crypto.randomUUID(),
-      startTime: this.playhead() // Paste at playhead position
+      startTime: freePosition
     };
-    
-    // Find target track or create new one
-    const tracks = this.tracks();
-    let targetTrack = targetTrackId 
-      ? tracks.find(t => t.id === targetTrackId)
-      : tracks.find(t => t.clips.length === 0);
-    
-    if (!targetTrack) {
-      targetTrack = this.addTrack();
-    }
     
     this.addClipToTrack(targetTrack.id, pastedClip);
     this.selectClip(pastedClip.id);
