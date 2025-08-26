@@ -607,7 +607,6 @@ export class AudioEditorComponent {
     const clipElement = document.querySelector(`[data-clip-id="${selectedId}"]`) as HTMLElement;
     if (!clipElement) return null;
     
-    const trackLanesEl = this.trackLanesEl.nativeElement;
     const buttonLayerEl = document.querySelector('.mobile-button-layer') as HTMLElement;
     if (!buttonLayerEl) return null;
     
@@ -769,12 +768,15 @@ export class AudioEditorComponent {
 
   @HostListener('window:touchend')
   onTouchEnd() {
+    // Reset pinch zoom distance when gesture ends
+    this.lastTouchDistance = 0;
     // Same cleanup as mouseup for touch events
     this.onMouseUp();
   }
 
   // Pinch-to-zoom support for mobile
   private lastTouchDistance = 0;
+  private initialPinchZoom = 0;
   
   @HostListener('touchstart', ['$event'])
   onTouchStart(event: TouchEvent) {
@@ -786,6 +788,8 @@ export class AudioEditorComponent {
         touch2.clientX - touch1.clientX,
         touch2.clientY - touch1.clientY
       );
+      // Store the initial zoom level when pinch starts
+      this.initialPinchZoom = this.pxPerSecond();
     }
   }
 
@@ -806,9 +810,9 @@ export class AudioEditorComponent {
         const currentPx = this.pxPerSecond();
         const newPx = Math.min(600, Math.max(40, Math.round(currentPx * scale)));
         this.pxPerSecond.set(newPx);
+        // Update lastTouchDistance for next frame
+        this.lastTouchDistance = currentDistance;
       }
-      
-      this.lastTouchDistance = currentDistance;
     }
   }
 

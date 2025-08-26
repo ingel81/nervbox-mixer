@@ -138,8 +138,7 @@ export class TouchDragHandler extends BaseDragHandler {
         this.touchId = touch.identifier;
       } else {
         // Find the specific touch we're tracking
-        for (let i = 0; i < touchEvent.touches.length; i++) {
-          const touchItem = touchEvent.touches[i];
+        for (const touchItem of Array.from(touchEvent.touches)) {
           if (touchItem.identifier === this.touchId) {
             touch = touchItem;
             break;
