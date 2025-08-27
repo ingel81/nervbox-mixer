@@ -806,12 +806,24 @@ export class AudioEditorComponent {
       );
       
       if (this.lastTouchDistance > 0) {
-        const scale = currentDistance / this.lastTouchDistance;
-        const currentPx = this.pxPerSecond();
-        const newPx = Math.min(2000, Math.max(10, Math.round(currentPx * scale)));
-        this.pxPerSecond.set(newPx);
-        // Update lastTouchDistance for next frame
-        this.lastTouchDistance = currentDistance;
+        // For pinch zoom, use center of viewport as anchor point
+        const trackLanes = this.trackLanesEl?.nativeElement;
+        if (trackLanes) {
+          const viewportCenterX = trackLanes.scrollLeft + (trackLanes.clientWidth / 2);
+          const timeAtCenter = viewportCenterX / this.pxPerSecond();
+          
+          const scale = currentDistance / this.lastTouchDistance;
+          const currentPx = this.pxPerSecond();
+          const newPx = Math.min(2000, Math.max(10, Math.round(currentPx * scale)));
+          this.pxPerSecond.set(newPx);
+          
+          // Adjust scroll to keep center point fixed
+          const newCenterX = timeAtCenter * newPx;
+          trackLanes.scrollLeft = newCenterX - (trackLanes.clientWidth / 2);
+          
+          // Update lastTouchDistance for next frame
+          this.lastTouchDistance = currentDistance;
+        }
       }
     }
   }
@@ -820,9 +832,29 @@ export class AudioEditorComponent {
   onWheel(ev: WheelEvent) {
     if (!ev.ctrlKey) return;
     ev.preventDefault();
+    
+    // Get the timeline element and mouse position relative to it
+    const trackLanes = this.trackLanesEl?.nativeElement;
+    if (!trackLanes) return;
+    
+    const rect = trackLanes.getBoundingClientRect();
+    const mouseX = ev.clientX - rect.left + trackLanes.scrollLeft;
+    
+    // Calculate time at mouse position before zoom
+    const timeAtMouse = mouseX / this.pxPerSecond();
+    
+    // Apply zoom
     const factor = ev.deltaY > 0 ? 0.9 : 1.1;
-    const next = Math.min(2000, Math.max(10, Math.round(this.pxPerSecond() * factor)));
-    this.pxPerSecond.set(next);
+    const oldPx = this.pxPerSecond();
+    const newPx = Math.min(2000, Math.max(10, Math.round(oldPx * factor)));
+    this.pxPerSecond.set(newPx);
+    
+    // Calculate new pixel position for the same time point
+    const newMouseX = timeAtMouse * newPx;
+    
+    // Adjust scroll to keep the time point under the mouse
+    const scrollAdjustment = newMouseX - mouseX;
+    trackLanes.scrollLeft += scrollAdjustment;
   }
 
   private tickRAF?: number;
