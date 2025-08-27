@@ -808,7 +808,7 @@ export class AudioEditorComponent {
       if (this.lastTouchDistance > 0) {
         const scale = currentDistance / this.lastTouchDistance;
         const currentPx = this.pxPerSecond();
-        const newPx = Math.min(600, Math.max(40, Math.round(currentPx * scale)));
+        const newPx = Math.min(2000, Math.max(10, Math.round(currentPx * scale)));
         this.pxPerSecond.set(newPx);
         // Update lastTouchDistance for next frame
         this.lastTouchDistance = currentDistance;
@@ -821,7 +821,7 @@ export class AudioEditorComponent {
     if (!ev.ctrlKey) return;
     ev.preventDefault();
     const factor = ev.deltaY > 0 ? 0.9 : 1.1;
-    const next = Math.min(600, Math.max(40, Math.round(this.pxPerSecond() * factor)));
+    const next = Math.min(2000, Math.max(10, Math.round(this.pxPerSecond() * factor)));
     this.pxPerSecond.set(next);
   }
 

@@ -19,7 +19,6 @@
   padding: 6px 8px;
   will-change: transform;
   z-index: 3;
-  min-width: 20px !important;
   opacity: 1 !important;
 }
 
