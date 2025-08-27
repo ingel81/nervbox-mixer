@@ -46,7 +46,7 @@ export class UnifiedDragService {
     // Select appropriate handler based on event type and configuration
     if (config.preferPointerEvents && this.usePointerEvents && event instanceof PointerEvent) {
       this.activeHandler = this.pointerHandler;
-    } else if (event instanceof TouchEvent) {
+    } else if (typeof TouchEvent !== 'undefined' && event instanceof TouchEvent) {
       this.activeHandler = this.touchHandler;
     } else if (event instanceof MouseEvent) {
       this.activeHandler = this.mouseHandler;
