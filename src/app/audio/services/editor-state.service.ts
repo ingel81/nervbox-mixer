@@ -47,6 +47,20 @@ export class EditorStateService {
     return this.tracks().find(t => t.id === id) || null;
   });
   
+  // Loop region state
+  loopEnabled = signal(false);
+  loopStart = signal(0); // in seconds
+  loopEnd = signal(4); // in seconds
+  snapToGrid = signal(false);
+  gridResolution = signal(0.25); // 1/4 beat at 120 BPM
+  
+  // Computed loop region validation
+  validLoopRegion = computed(() => {
+    const start = this.loopStart();
+    const end = this.loopEnd();
+    return end > start && end - start >= 0.1; // Minimum 100ms loop
+  });
+  
   // Sound browser control
   toggleSoundBrowser(source?: string): void {
     const wasShown = this.showSoundBrowser();
@@ -242,6 +256,34 @@ export class EditorStateService {
   
   seekTo(seconds: number): void {
     this.playhead.set(Math.max(0, Math.min(seconds, this.duration())));
+  }
+  
+  // Loop control methods
+  toggleLoop(): void {
+    this.loopEnabled.update(enabled => !enabled);
+  }
+  
+  setLoopRegion(start: number, end: number): void {
+    // Ensure valid loop region
+    if (end > start) {
+      this.loopStart.set(start);
+      this.loopEnd.set(end);
+    }
+  }
+  
+  setLoopToSelection(): void {
+    const selectedClip = this.selectedClip();
+    if (selectedClip) {
+      this.setLoopRegion(selectedClip.startTime, selectedClip.startTime + selectedClip.duration);
+      this.loopEnabled.set(true);
+    }
+  }
+  
+  snapLoopMarkerToGrid(time: number): number {
+    if (!this.snapToGrid()) return time;
+    
+    const grid = this.gridResolution();
+    return Math.round(time / grid) * grid;
   }
   
   // Selection

@@ -41,6 +41,21 @@ export class AudioEditorComponent {
   get showSoundBrowser() { return this.editorState.showSoundBrowser; }
   get soundBrowserOpenedFromCta() { return this.editorState.soundBrowserOpenedFromCta; }
   
+  // Loop dragging state
+  private loopDragState: {
+    marker: 'start' | 'end';
+    startX: number;
+    originalValue: number;
+  } | null = null;
+  
+  // Loop region dragging state  
+  private loopRegionDragState: {
+    startX: number;
+    originalStart: number;
+    originalEnd: number;
+    loopDuration: number;
+  } | null = null;
+  
   // Environment info
   version = environment.version;
   author = environment.author;
@@ -373,6 +388,103 @@ export class AudioEditorComponent {
   toggleSoundBrowser(source?: string) {
     this.editorState.toggleSoundBrowser(source);
   }
+  
+  // Loop controls
+  toggleLoop() {
+    this.editorState.toggleLoop();
+  }
+  
+  loopMarkerMouseDown(event: MouseEvent, marker: 'start' | 'end') {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const rect = this.timelineEl.nativeElement.getBoundingClientRect();
+    
+    // Account for timeline horizontal scrolling - use track lanes scrollLeft
+    const trackLanesEl = this.trackLanesEl?.nativeElement;
+    const scrollLeft = trackLanesEl ? trackLanesEl.scrollLeft : 0;
+    
+    const startX = event.clientX - rect.left + scrollLeft;
+    
+    this.loopDragState = {
+      marker,
+      startX,
+      originalValue: marker === 'start' ? this.editorState.loopStart() : this.editorState.loopEnd()
+    };
+    
+    (document.body as HTMLElement).style.userSelect = 'none';
+  }
+  
+  loopMarkerTouchStart(event: TouchEvent, marker: 'start' | 'end') {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const touch = event.touches[0];
+    if (!touch) return;
+    
+    const rect = this.timelineEl.nativeElement.getBoundingClientRect();
+    
+    // Account for timeline horizontal scrolling - use track lanes scrollLeft
+    const trackLanesEl = this.trackLanesEl?.nativeElement;
+    const scrollLeft = trackLanesEl ? trackLanesEl.scrollLeft : 0;
+    
+    const startX = touch.clientX - rect.left + scrollLeft;
+    
+    this.loopDragState = {
+      marker,
+      startX,
+      originalValue: marker === 'start' ? this.editorState.loopStart() : this.editorState.loopEnd()
+    };
+    
+    (document.body as HTMLElement).style.userSelect = 'none';
+  }
+  
+  loopRegionMouseDown(event: MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const rect = this.timelineEl.nativeElement.getBoundingClientRect();
+    
+    // Account for timeline horizontal scrolling - use track lanes scrollLeft
+    const trackLanesEl = this.trackLanesEl?.nativeElement;
+    const scrollLeft = trackLanesEl ? trackLanesEl.scrollLeft : 0;
+    
+    const startX = event.clientX - rect.left + scrollLeft;
+    
+    this.loopRegionDragState = {
+      startX,
+      originalStart: this.editorState.loopStart(),
+      originalEnd: this.editorState.loopEnd(),
+      loopDuration: this.editorState.loopEnd() - this.editorState.loopStart()
+    };
+    
+    (document.body as HTMLElement).style.userSelect = 'none';
+  }
+  
+  loopRegionTouchStart(event: TouchEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const touch = event.touches[0];
+    if (!touch) return;
+    
+    const rect = this.timelineEl.nativeElement.getBoundingClientRect();
+    
+    // Account for timeline horizontal scrolling - use track lanes scrollLeft
+    const trackLanesEl = this.trackLanesEl?.nativeElement;
+    const scrollLeft = trackLanesEl ? trackLanesEl.scrollLeft : 0;
+    
+    const startX = touch.clientX - rect.left + scrollLeft;
+    
+    this.loopRegionDragState = {
+      startX,
+      originalStart: this.editorState.loopStart(),
+      originalEnd: this.editorState.loopEnd(),
+      loopDuration: this.editorState.loopEnd() - this.editorState.loopStart()
+    };
+    
+    (document.body as HTMLElement).style.userSelect = 'none';
+  }
 
   // Track event handlers
   onTrackMuteToggled(event: TrackMuteEvent) {
@@ -438,8 +550,21 @@ export class AudioEditorComponent {
   }
   
   play(): void {
+    let startPosition = this.playhead();
+    
+    // If loop is enabled and playhead is outside loop region, start at loop start
+    if (this.editorState.loopEnabled() && this.editorState.validLoopRegion()) {
+      const loopStart = this.editorState.loopStart();
+      const loopEnd = this.editorState.loopEnd();
+      
+      if (startPosition < loopStart || startPosition >= loopEnd) {
+        startPosition = loopStart;
+        this.playhead.set(startPosition);
+      }
+    }
+    
     const clips = this.getPlayableClips();
-    this.audio.play(clips, this.playhead());
+    this.audio.play(clips, startPosition);
     this.editorState.play();
     this.tickPlayhead();
   }
@@ -660,7 +785,66 @@ export class AudioEditorComponent {
 
 
   @HostListener('window:mousemove', ['$event'])
-  onMouseMove(ev: MouseEvent) {
+  @HostListener('window:touchmove', ['$event'])
+  onMouseMove(ev: MouseEvent | TouchEvent) {
+    // Handle loop region dragging (move entire loop)
+    if (this.loopRegionDragState) {
+      const rect = this.timelineEl.nativeElement.getBoundingClientRect();
+      
+      // Account for timeline horizontal scrolling - use track lanes scrollLeft
+      const trackLanesEl = this.trackLanesEl?.nativeElement;
+      const scrollLeft = trackLanesEl ? trackLanesEl.scrollLeft : 0;
+      
+      // Get clientX from either mouse or touch event
+      const clientX = 'clientX' in ev ? ev.clientX : (ev as TouchEvent).touches[0]?.clientX || 0;
+      const currentX = clientX - rect.left + scrollLeft;
+      
+      const deltaX = currentX - this.loopRegionDragState.startX;
+      const deltaTime = pxToSeconds(deltaX, this.pxPerSecond());
+      
+      const newStart = Math.max(0, this.loopRegionDragState.originalStart + deltaTime);
+      const newEnd = newStart + this.loopRegionDragState.loopDuration;
+      
+      // Apply grid snapping if enabled
+      const snappedStart = this.editorState.snapLoopMarkerToGrid(newStart);
+      const snappedEnd = snappedStart + this.loopRegionDragState.loopDuration;
+      
+      this.editorState.loopStart.set(snappedStart);
+      this.editorState.loopEnd.set(snappedEnd);
+      return;
+    }
+    
+    // Handle loop marker dragging
+    if (this.loopDragState) {
+      const rect = this.timelineEl.nativeElement.getBoundingClientRect();
+      
+      // Account for timeline horizontal scrolling - use track lanes scrollLeft
+      const trackLanesEl = this.trackLanesEl?.nativeElement;
+      const scrollLeft = trackLanesEl ? trackLanesEl.scrollLeft : 0;
+      
+      // Get clientX from either mouse or touch event
+      const clientX = 'clientX' in ev ? ev.clientX : (ev as TouchEvent).touches[0]?.clientX || 0;
+      const currentX = clientX - rect.left + scrollLeft;
+      
+      const deltaX = currentX - this.loopDragState.startX;
+      const deltaTime = pxToSeconds(deltaX, this.pxPerSecond());
+      const newTime = Math.max(0, this.loopDragState.originalValue + deltaTime);
+      
+      // Apply grid snapping if enabled
+      const snappedTime = this.editorState.snapLoopMarkerToGrid(newTime);
+      
+      if (this.loopDragState.marker === 'start') {
+        // Ensure loop start doesn't exceed loop end
+        const maxTime = this.editorState.loopEnd() - 0.1;
+        this.editorState.loopStart.set(Math.min(snappedTime, maxTime));
+      } else {
+        // Ensure loop end doesn't go below loop start
+        const minTime = this.editorState.loopStart() + 0.1;
+        this.editorState.loopEnd.set(Math.max(snappedTime, minTime));
+      }
+      return;
+    }
+    
     // Early exit if nothing is active - massive performance improvement
     if (!this.seeking) {
       return;
@@ -677,8 +861,8 @@ export class AudioEditorComponent {
       this.seekingRafId = requestAnimationFrame(() => {
         if (!this.seeking) return;
         
-        const target = ev.target as HTMLElement;
-        const timelineEl = target.closest('.ruler') || target.closest('.lane');
+        const target = ('target' in ev ? ev.target : (ev as TouchEvent).touches[0]?.target) as HTMLElement;
+        const timelineEl = target?.closest('.ruler') || target?.closest('.lane');
         if (timelineEl) {
           let rect: DOMRect;
           let clipsEl: Element | null = null;
@@ -692,7 +876,9 @@ export class AudioEditorComponent {
             rect = clipsEl.getBoundingClientRect();
           }
           
-          const x = ev.clientX - rect.left;
+          // Get clientX from either mouse or touch event
+          const clientX = 'clientX' in ev ? ev.clientX : (ev as TouchEvent).touches[0]?.clientX || 0;
+          const x = clientX - rect.left;
           const timePosition = Math.max(0, pxToSeconds(x, this.pxPerSecond()));
           this.seekTo(timePosition);
         }
@@ -745,6 +931,36 @@ export class AudioEditorComponent {
       this.togglePlayback();
       return;
     }
+    
+    // Alt+L for set loop to selected clip (check first!)
+    if (event.altKey && event.code === 'KeyL') {
+      event.preventDefault();
+      this.editorState.setLoopToSelection();
+      return;
+    }
+    
+    // L for toggle loop (only if no modifiers)
+    if (event.code === 'KeyL' && !event.altKey && !event.ctrlKey && !event.shiftKey) {
+      event.preventDefault();
+      this.toggleLoop();
+      return;
+    }
+    
+    // Shift+I for set loop start to playhead (I = In-Point)
+    if (event.shiftKey && event.code === 'KeyI') {
+      event.preventDefault();
+      this.editorState.loopStart.set(this.playhead());
+      this.editorState.loopEnabled.set(true);
+      return;
+    }
+    
+    // Shift+O for set loop end to playhead (O = Out-Point)  
+    if (event.shiftKey && event.code === 'KeyO') {
+      event.preventDefault();
+      this.editorState.loopEnd.set(this.playhead());
+      this.editorState.loopEnabled.set(true);
+      return;
+    }
   }
 
   @HostListener('window:mouseup')
@@ -760,6 +976,12 @@ export class AudioEditorComponent {
       cancelAnimationFrame(this.seekingRafId);
       this.seekingRafId = null;
     }
+    
+    // Clear loop marker dragging
+    this.loopDragState = null;
+    
+    // Clear loop region dragging
+    this.loopRegionDragState = null;
     
     this.trimState = null;
     this.seeking = false;
@@ -865,7 +1087,28 @@ export class AudioEditorComponent {
     const loop = (t: number) => {
       if (!this.isPlaying()) return;
       const sec = (t - start) / 1000;
-      this.playhead.set(origin + sec);
+      const newPlayhead = origin + sec;
+      
+      // Check for loop condition
+      if (this.editorState.loopEnabled() && this.editorState.validLoopRegion()) {
+        const loopStart = this.editorState.loopStart();
+        const loopEnd = this.editorState.loopEnd();
+        
+        if (newPlayhead >= loopEnd) {
+          // Jump back to loop start
+          const overshoot = newPlayhead - loopEnd;
+          const loopDuration = loopEnd - loopStart;
+          const loopedPosition = loopStart + (overshoot % loopDuration);
+          
+          this.playhead.set(loopedPosition);
+          
+          // Restart audio from loop start position to maintain seamless playback
+          this.restartPlaybackFromCurrentPosition();
+          return;
+        }
+      }
+      
+      this.playhead.set(newPlayhead);
       this.tickRAF = requestAnimationFrame(loop);
     };
     this.tickRAF = requestAnimationFrame(loop);
@@ -1278,7 +1521,12 @@ export class AudioEditorComponent {
     ev.preventDefault();
     ev.stopPropagation();
     const rect = (ev.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = ev.clientX - rect.left;
+    
+    // Account for timeline horizontal scrolling - use track lanes scrollLeft
+    const trackLanesEl = this.trackLanesEl?.nativeElement;
+    const scrollLeft = trackLanesEl ? trackLanesEl.scrollLeft : 0;
+    
+    const x = ev.clientX - rect.left + scrollLeft;
     const timePosition = pxToSeconds(x, this.pxPerSecond());
     this.seekTo(timePosition);
     this.seeking = true;

@@ -95,6 +95,13 @@
   pointer-events: none; 
   z-index: 40;
   animation: pulse 1.5s ease-in-out infinite;
+  /* Compensate for lane border-left: 2px vs ruler border-left: 1px */
+  margin-left: -1px;
+}
+
+/* Active lane has border-left: 3px instead of 2px - need extra -1px */
+:host(.active) .lane .playhead {
+  margin-left: -2px;
 }
 
 @keyframes pulse {
