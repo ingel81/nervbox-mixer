@@ -961,6 +961,15 @@ export class AudioEditorComponent {
       this.editorState.loopEnabled.set(true);
       return;
     }
+    
+    // S for split at playhead
+    if (event.code === 'KeyS' && !event.altKey && !event.ctrlKey && !event.shiftKey) {
+      event.preventDefault();
+      this.editorState.splitAtPlayhead();
+      // Force regenerate all waveforms after split
+      setTimeout(() => this.forceRegenerateAllWaveforms(), 100);
+      return;
+    }
   }
 
   @HostListener('window:mouseup')
@@ -1553,6 +1562,48 @@ export class AudioEditorComponent {
     this.seekTo(timePosition);
     this.seeking = true;
     (document.body as HTMLElement).style.userSelect = 'none';
+  }
+
+  private regenerateWaveformsForAllClips(): void {
+    // Regenerate waveforms for all clips
+    this.editorState.tracks.update(tracks => {
+      return tracks.map(track => ({
+        ...track,
+        clips: track.clips.map(clip => {
+          // Only regenerate if waveform is missing or undefined
+          if (!clip.waveform) {
+            const waveform = this.waveformService.generateFromBuffer(clip.buffer, {
+              width: Math.floor(clip.duration * this.pxPerSecond()),
+              height: 44,
+              clipColor: clip.color,
+              trimStart: clip.trimStart,
+              trimEnd: clip.trimEnd
+            });
+            return { ...clip, waveform };
+          }
+          return clip;
+        })
+      }));
+    });
+  }
+
+  private forceRegenerateAllWaveforms(): void {
+    // Force regenerate ALL waveforms, even if they exist
+    this.editorState.tracks.update(tracks => {
+      return tracks.map(track => ({
+        ...track,
+        clips: track.clips.map(clip => {
+          const waveform = this.waveformService.generateFromBuffer(clip.buffer, {
+            width: Math.floor(clip.duration * this.pxPerSecond()),
+            height: 44,
+            clipColor: clip.color,
+            trimStart: clip.trimStart,
+            trimEnd: clip.trimEnd
+          });
+          return { ...clip, waveform };
+        })
+      }));
+    });
   }
 
 }

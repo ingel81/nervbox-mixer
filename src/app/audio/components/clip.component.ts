@@ -78,8 +78,6 @@ export interface ClipDuplicateEvent {
       <img *ngIf="clip.waveform" 
            [src]="clip.waveform" 
            class="clip-waveform-img"
-           [style.width.px]="clip.duration * pxPerSecond"
-           [style.object-fit]="'fill'"
            alt="Waveform">
       
     </div>

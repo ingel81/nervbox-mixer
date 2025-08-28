@@ -425,4 +425,163 @@ export class EditorStateService {
   endClipDrag(): void {
     this.isDraggingClip.set(false);
   }
+
+  // Clip splitting functionality
+  splitClip(clipId: string, splitPosition: number): { leftClip: Clip; rightClip: Clip } | null {
+    // Find the clip and its track
+    let targetClip: Clip | undefined;
+    let targetTrack: Track | undefined;
+    
+    for (const track of this.tracks()) {
+      const clip = track.clips.find(c => c.id === clipId);
+      if (clip) {
+        targetClip = clip;
+        targetTrack = track;
+        break;
+      }
+    }
+    
+    if (!targetClip || !targetTrack) {
+      console.error('Clip not found:', clipId);
+      return null;
+    }
+    
+    // Validate split position
+    const clipStart = targetClip.startTime;
+    const clipEnd = targetClip.startTime + targetClip.duration;
+    
+    if (splitPosition <= clipStart || splitPosition >= clipEnd) {
+      console.error('Split position outside clip bounds:', { splitPosition, clipStart, clipEnd });
+      return null;
+    }
+    
+    // Calculate relative position within the clip
+    const relativePosition = splitPosition - clipStart;
+    
+    // Create left part (keep original clip ID)
+    // Left clip keeps original start time and ends exactly at split position
+    const leftClip: Clip = {
+      ...targetClip,
+      duration: relativePosition,  // New duration is from start to split point
+      // trimEnd needs to account for what we're cutting off
+      trimEnd: targetClip.trimEnd + (targetClip.duration - relativePosition),
+      waveform: undefined // Force regeneration for left clip too
+    };
+    
+    // Create right part (new clip ID)
+    // Right clip starts at split position with remaining duration
+    const rightClip: Clip = {
+      ...targetClip,
+      id: crypto.randomUUID(),
+      startTime: splitPosition,
+      duration: targetClip.duration - relativePosition,
+      trimStart: targetClip.trimStart + relativePosition,
+      // Offset stays the same - trimStart handles the position in buffer
+      offset: targetClip.offset,
+      waveform: undefined // Will need regeneration
+    };
+    
+    // Log for debugging
+    console.log('=== SPLIT CALCULATION DETAILS ===');
+    console.log('Split calculation:', {
+      original: {
+        startTime: targetClip.startTime,
+        duration: targetClip.duration,
+        offset: targetClip.offset,
+        trimStart: targetClip.trimStart,
+        trimEnd: targetClip.trimEnd,
+        originalDuration: targetClip.originalDuration
+      },
+      splitPosition,
+      relativePosition,
+      left: {
+        startTime: leftClip.startTime,
+        duration: leftClip.duration,
+        endTime: leftClip.startTime + leftClip.duration,
+        offset: leftClip.offset,
+        trimStart: leftClip.trimStart,
+        trimEnd: leftClip.trimEnd,
+        effectiveDuration: leftClip.originalDuration - leftClip.trimStart - leftClip.trimEnd
+      },
+      right: {
+        startTime: rightClip.startTime,
+        duration: rightClip.duration,
+        endTime: rightClip.startTime + rightClip.duration,
+        offset: rightClip.offset,
+        trimStart: rightClip.trimStart,
+        trimEnd: rightClip.trimEnd,
+        effectiveDuration: rightClip.originalDuration - rightClip.trimStart - rightClip.trimEnd
+      },
+      validation: {
+        leftEndsAtSplit: (leftClip.startTime + leftClip.duration) === splitPosition,
+        rightStartsAtSplit: rightClip.startTime === splitPosition,
+        totalDurationMatch: (leftClip.duration + rightClip.duration) === targetClip.duration,
+        leftEndExact: Math.abs((leftClip.startTime + leftClip.duration) - splitPosition) < 0.0001,
+        rightStartExact: Math.abs(rightClip.startTime - splitPosition) < 0.0001
+      }
+    });
+    
+    // Update track with split clips
+    this.tracks.update(tracks => {
+      return tracks.map(track => {
+        if (track.id !== targetTrack.id) return track;
+        
+        // Replace original clip with left and right parts
+        const newClips = track.clips.map(clip => {
+          if (clip.id === clipId) {
+            return leftClip;
+          }
+          return clip;
+        });
+        
+        // Add right clip
+        newClips.push(rightClip);
+        
+        // Sort by start time for consistency
+        newClips.sort((a, b) => a.startTime - b.startTime);
+        
+        return {
+          ...track,
+          clips: newClips
+        };
+      });
+    });
+    
+    return { leftClip, rightClip };
+  }
+  
+  splitAllClipsAtPosition(position: number): void {
+    const allClips = this.flattenedClips();
+    const clipsToSplit = allClips.filter(clip => {
+      const clipStart = clip.startTime;
+      const clipEnd = clip.startTime + clip.duration;
+      return position > clipStart && position < clipEnd;
+    });
+    
+    console.log(`Splitting ${clipsToSplit.length} clips at position ${position}`);
+    
+    for (const clip of clipsToSplit) {
+      this.splitClip(clip.id, position);
+    }
+    
+    // Force a complete re-render by creating new track references
+    this.forceTracksRefresh();
+  }
+  
+  splitAtPlayhead(): void {
+    const position = this.playhead();
+    console.log('Splitting at playhead position:', position);
+    this.splitAllClipsAtPosition(position);
+  }
+  
+  // Force UI refresh by creating new object references
+  forceTracksRefresh(): void {
+    this.tracks.update(tracks => {
+      // Create completely new array with new track objects
+      return tracks.map(track => ({
+        ...track,
+        clips: [...track.clips]
+      }));
+    });
+  }
 }

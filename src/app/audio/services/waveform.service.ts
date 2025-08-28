@@ -24,7 +24,9 @@ export class WaveformService {
     const {
       width = 200,
       height = 44,
-      clipColor = ''
+      clipColor = '',
+      trimStart = 0,
+      trimEnd = 0
     } = options;
 
     const canvas = document.createElement('canvas');
@@ -34,7 +36,15 @@ export class WaveformService {
     
     // Get audio data
     const data = buffer.getChannelData(0);
-    const step = Math.ceil(data.length / width);
+    
+    // Calculate the visible portion of the buffer
+    const sampleRate = buffer.sampleRate;
+    const startSample = Math.floor(trimStart * sampleRate);
+    const endSample = Math.floor(data.length - (trimEnd * sampleRate));
+    const visibleSamples = endSample - startSample;
+    
+    // Calculate step based on visible samples
+    const step = Math.ceil(visibleSamples / width);
     const amp = height / 2;
     
     // Clear canvas with slight background
@@ -61,10 +71,14 @@ export class WaveformService {
       let max = -1.0;
       
       for (let j = 0; j < step; j++) {
-        const datum = data[(i * step) + j];
-        if (datum !== undefined) {
-          if (datum < min) min = datum;
-          if (datum > max) max = datum;
+        // Offset by startSample to skip trimmed start
+        const sampleIndex = startSample + (i * step) + j;
+        if (sampleIndex < endSample && sampleIndex < data.length) {
+          const datum = data[sampleIndex];
+          if (datum !== undefined) {
+            if (datum < min) min = datum;
+            if (datum > max) max = datum;
+          }
         }
       }
       
@@ -83,10 +97,14 @@ export class WaveformService {
       let max = -1.0;
       
       for (let j = 0; j < step; j++) {
-        const datum = data[(i * step) + j];
-        if (datum !== undefined) {
-          if (datum < min) min = datum;
-          if (datum > max) max = datum;
+        // Offset by startSample to skip trimmed start
+        const sampleIndex = startSample + (i * step) + j;
+        if (sampleIndex < endSample && sampleIndex < data.length) {
+          const datum = data[sampleIndex];
+          if (datum !== undefined) {
+            if (datum < min) min = datum;
+            if (datum > max) max = datum;
+          }
         }
       }
       

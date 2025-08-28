@@ -11,15 +11,16 @@
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
   cursor: grab;
   user-select: none;
-  overflow: visible;
+  overflow: hidden; /* Changed from visible to hidden */
   transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 6px 8px;
+  padding: 6px 0; /* Remove horizontal padding */
   will-change: transform;
   z-index: 3;
   opacity: 1 !important;
+  box-sizing: border-box; /* Include padding and border in width calculation */
 }
 
 /* Stacking order for overlapping clips */
@@ -131,7 +132,7 @@
 .clip-content {
   position: absolute;
   top: 2px;
-  left: 4px;
+  left: 8px; /* Adjust for removed padding */
   z-index: 10;
   pointer-events: none;
 }
@@ -139,7 +140,7 @@
 .clip-duration-bottom {
   position: absolute;
   bottom: 2px;
-  right: 4px;
+  right: 8px; /* Adjust for removed padding */
   z-index: 10;
   pointer-events: none;
 }
@@ -186,7 +187,7 @@
   pointer-events: none;
   image-rendering: auto;
   z-index: 5;
-  object-fit: fill;
+  object-fit: cover; /* Changed from fill to cover */
   mix-blend-mode: overlay;
   filter: contrast(1.8) brightness(1.4) saturate(0.8);
 }
