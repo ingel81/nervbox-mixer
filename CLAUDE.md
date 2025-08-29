@@ -261,3 +261,5 @@ Currently no tests implemented. When adding tests:
 - Test signal updates and computed values
 - Mock AudioContext for service tests
 - Test timeline utility functions independently
+- alles was mit issues auf github zu tun hat immer mit dem entsprechenden agent machen
+- alles was mit building der app zu tun hat immer mit dem entsprechenden agent machen
