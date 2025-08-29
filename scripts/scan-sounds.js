@@ -2,9 +2,10 @@
 
 const fs = require('fs');
 const path = require('path');
+const { parseFile } = require('music-metadata');
 
 const SOUNDS_DIR = path.join(__dirname, '..', 'src', 'assets', 'sounds');
-const OUTPUT_FILE = path.join(__dirname, '..', 'src', 'app', 'audio', 'utils', 'sound-library.ts');
+const OUTPUT_FILE = path.join(__dirname, '..', 'src', 'app', 'audio', 'shared', 'utils', 'sound-library.ts');
 
 // Category mapping based on folder structure first, then filename patterns
 const getCategoryFromPath = (filepath, filename) => {
@@ -139,21 +140,35 @@ async function scanSounds() {
   console.log(`📁 Found ${audioFiles.length} audio files:`);
   audioFiles.forEach(file => console.log(`   • ${file.relativePath}`));
   
-  // Generate sound library items
-  const soundItems = audioFiles.map(fileInfo => {
+  // Generate sound library items with duration extraction
+  const soundItems = [];
+  
+  for (const fileInfo of audioFiles) {
     const category = getCategoryFromPath(fileInfo.relativePath, fileInfo.filename);
     const tags = getTagsFromFilename(fileInfo.filename, category);
     const id = generateId(fileInfo.filename);
     const name = getDisplayName(fileInfo.filename);
     
-    return {
+    let duration = undefined;
+    try {
+      const metadata = await parseFile(fileInfo.fullPath);
+      if (metadata.format.duration) {
+        // Round to 2 decimal places
+        duration = Math.round(metadata.format.duration * 100) / 100;
+      }
+    } catch (error) {
+      console.warn(`⚠️  Could not extract duration for ${fileInfo.relativePath}: ${error.message}`);
+    }
+    
+    soundItems.push({
       id,
       name,
       category,
       filename: fileInfo.relativePath.replace(/\\/g, '/'), // Use forward slashes for web
+      duration,
       tags
-    };
-  });
+    });
+  }
   
   // Group by categories for output
   const categories = [...new Set(soundItems.map(item => item.category))].sort();
@@ -166,7 +181,7 @@ async function scanSounds() {
   name: string;
   category: string;
   filename: string;
-  duration?: number; // Will be filled after loading
+  duration?: number; // Duration in seconds (extracted by scan-sounds.js)
   tags?: string[];
 }
 
@@ -175,7 +190,8 @@ ${soundItems.map(item => {
   const tagsStr = item.tags.length > 0 
     ? `, tags: [${item.tags.map(tag => `'${tag}'`).join(', ')}]` 
     : '';
-  return `  { id: '${item.id}', name: '${item.name}', category: '${item.category}', filename: '${item.filename}'${tagsStr} },`;
+  const durationStr = item.duration !== undefined ? `, duration: ${item.duration}` : '';
+  return `  { id: '${item.id}', name: '${item.name}', category: '${item.category}', filename: '${item.filename}'${durationStr}${tagsStr} },`;
 }).join('\n')}
 ];
 
