@@ -156,7 +156,7 @@ export class AudioEngineService {
     bitRate?: number;
   }): Promise<Blob> {
     const sampleRate = options.sampleRate ?? 44100; // MP3 prefers 44.1kHz
-    const bitRate = options.bitRate ?? 128;
+    const bitRate = options.bitRate ?? 192;
     const length = Math.ceil(options.duration * sampleRate);
     const off = new OfflineAudioContext({ numberOfChannels: 2, length, sampleRate });
 

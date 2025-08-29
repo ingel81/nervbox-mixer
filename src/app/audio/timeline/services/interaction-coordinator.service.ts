@@ -329,7 +329,7 @@ export class InteractionCoordinatorService {
   }
   
 
-  private handleDragMove(event: MouseEvent | TouchEvent, timelineElement: HTMLElement): void {
+  private handleDragMove(event: MouseEvent | TouchEvent, _timelineElement: HTMLElement): void {
     const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
     
     // Handle loop region dragging (move entire loop) - transform-based like VirtualDragService

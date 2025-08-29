@@ -1,3 +1,5 @@
+import { WaveformService } from '../../audio-engine/services/waveform.service';
+
 export interface Clip {
   id: string;
   name: string;
@@ -18,7 +20,7 @@ export interface Clip {
   soundId?: string; // ID for identifying sound samples
 
   // Waveform generation method
-  generateWaveform?: (pxPerSecond: number, waveformService: any) => void;
+  generateWaveform?: (pxPerSecond: number, waveformService: WaveformService) => void;
 }
 
 export interface Track {

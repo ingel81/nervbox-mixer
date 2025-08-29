@@ -8,13 +8,13 @@ export interface KeyboardShortcutActions {
 }
 
 @Directive({
-  selector: '[keyboardShortcuts]',
+  selector: '[appKeyboardShortcuts]',
   standalone: true,
 })
 export class KeyboardShortcutsDirective {
   private editorState = inject(EditorStateService);
   
-  @Input() keyboardShortcuts!: KeyboardShortcutActions;
+  @Input() appKeyboardShortcuts!: KeyboardShortcutActions;
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent): void {
@@ -63,7 +63,7 @@ export class KeyboardShortcutsDirective {
     // Spacebar for play/pause
     if (event.code === 'Space') {
       event.preventDefault();
-      this.keyboardShortcuts.togglePlayback();
+      this.appKeyboardShortcuts.togglePlayback();
       return;
     }
 

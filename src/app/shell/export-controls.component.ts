@@ -122,8 +122,15 @@ import { AudioEngineService } from '../audio/audio-engine/services/audio-engine.
 export class ExportControlsComponent {
   isMobile = window.innerWidth <= 768;
   
-  // Computed duration based on all clips
+  // Computed duration based on loop region if enabled, otherwise all clips
   duration = computed(() => {
+    const isLoopEnabled = this.editorState.loopEnabled();
+    
+    if (isLoopEnabled) {
+      return this.editorState.loopEnd() - this.editorState.loopStart();
+    }
+    
+    // Original logic for full arrangement - export exactly until last clip ends
     const tracks = this.editorState.tracks();
     let max = 0;
     for (const track of tracks) {
@@ -134,7 +141,7 @@ export class ExportControlsComponent {
         }
       }
     }
-    return Math.max(10, Math.ceil(max) + 5); // Add 5s buffer
+    return Math.max(10, max); // No additional buffer
   });
   
   constructor(
@@ -143,17 +150,54 @@ export class ExportControlsComponent {
   ) {}
   
   async exportMixdown(format: 'wav' | 'mp3' = 'wav'): Promise<void> {
-    const clips = this.flattenClips().map(c => {
+    const isLoopEnabled = this.editorState.loopEnabled();
+    const loopStart = this.editorState.loopStart();
+    const loopEnd = this.editorState.loopEnd();
+    
+    let allClips = this.flattenClips();
+    
+    // Filter and adjust clips for loop region export
+    if (isLoopEnabled) {
+      allClips = allClips.filter(clip => {
+        const clipStart = clip.startTime;
+        const clipEnd = clip.startTime + clip.duration;
+        // Include clips that overlap with the loop region
+        return clipEnd > loopStart && clipStart < loopEnd;
+      });
+    }
+    
+    const clips = allClips.map(c => {
+      let startTime = c.startTime;
+      let duration = c.duration;
+      let offset = c.offset + (c.trimStart || 0);
+      
+      if (isLoopEnabled) {
+        // Adjust start time relative to loop start
+        startTime = Math.max(0, c.startTime - loopStart);
+        
+        // Clip the start if clip begins before loop region
+        if (c.startTime < loopStart) {
+          const clipOffset = loopStart - c.startTime;
+          offset += clipOffset;
+          duration -= clipOffset;
+        }
+        
+        // Clip the end if clip extends beyond loop region
+        if (c.startTime + c.duration > loopEnd) {
+          duration = Math.max(0, loopEnd - Math.max(c.startTime, loopStart));
+        }
+      }
+      
       return {
         buffer: c.buffer,
-        startTime: c.startTime,
-        duration: c.duration,
-        offset: c.offset + (c.trimStart || 0), // Include trim offset
+        startTime,
+        duration: Math.max(0, duration),
+        offset: Math.max(0, offset),
         gain: 1,
         pan: 0,
         muted: false,
       };
-    });
+    }).filter(c => c.duration > 0); // Remove clips with zero duration
     
     try {
       let blob: Blob;
@@ -167,14 +211,17 @@ export class ExportControlsComponent {
       // Download the file using arrangement name
       const arrangementName = this.editorState.currentArrangementName();
       const sanitizedName = arrangementName.replace(/[^a-zA-Z0-9-_]/g, '_');
+      const filename = `${sanitizedName}.${format}`;
+      
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${sanitizedName}.${format}`;
+      a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
       
-      console.log(`Export completed: ${format.toUpperCase()}`);
+      const exportType = isLoopEnabled ? `Loop Region (${loopStart}s - ${loopEnd}s)` : 'Full Arrangement';
+      console.log(`Export completed: ${format.toUpperCase()} - ${exportType}`);
     } catch (error) {
       console.error('Export failed:', error);
       alert(`Export failed: ${error}`);
