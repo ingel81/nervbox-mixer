@@ -5,11 +5,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 
-import { EditorStateService } from '../audio/services/editor-state.service';
-import { AudioEngineService } from '../audio/services/audio-engine.service';
-import { WaveformService } from '../audio/services/waveform.service';
-import { RecordingDialogComponent } from '../audio/components/dialogs/recording-dialog.component';
-import { Clip } from '../audio/models/models';
+import { EditorStateService } from '../audio/editor/services/editor-state.service';
+import { AudioEngineService } from '../audio/audio-engine/services/audio-engine.service';
+import { WaveformService } from '../audio/audio-engine/services/waveform.service';
+import { RecordingDialogComponent } from '../audio/arrangements/components/dialogs/recording-dialog.component';
+import { Clip } from '../audio/shared/models/models';
 
 @Component({
     selector: 'content-creation',

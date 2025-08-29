@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ProjectManagementComponent } from './project-management.component';
 import { ContentCreationComponent } from './content-creation.component';
 import { ExportControlsComponent } from './export-controls.component';
-import { AudioEditorComponent } from '../audio/components/editor/audio-editor.component';
+import { AudioEditorComponent } from '../audio/editor/components/audio-editor.component';
 
 @Component({
     selector: 'app-shell',

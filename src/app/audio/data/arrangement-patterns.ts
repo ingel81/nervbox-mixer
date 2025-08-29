@@ -1,4 +1,4 @@
-import { ArrangementDefinition } from '../models/models';
+import { ArrangementDefinition } from '../shared/models/models';
 
 // Default 90s Hip Hop pattern - clean JSON definition
 export const DEFAULT_HIPHOP_90S: ArrangementDefinition = {

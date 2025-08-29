@@ -8,12 +8,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-import { EditorStateService } from '../audio/services/editor-state.service';
-import { ArrangementStorageService } from '../audio/services/arrangement-storage.service';
-import { DefaultArrangementService } from '../audio/services/default-arrangement.service';
-import { SaveArrangementDialogComponent } from '../audio/components/dialogs/save-arrangement-dialog.component';
-import { LoadArrangementDialogComponent } from '../audio/components/dialogs/load-arrangement-dialog.component';
-import { ConfirmDialogComponent } from '../audio/components/dialogs/confirm-dialog.component';
+import { EditorStateService } from '../audio/editor/services/editor-state.service';
+import { ArrangementStorageService } from '../audio/arrangements/services/arrangement-storage.service';
+import { DefaultArrangementService } from '../audio/arrangements/services/default-arrangement.service';
+import { SaveArrangementDialogComponent } from '../audio/arrangements/components/dialogs/save-arrangement-dialog.component';
+import { LoadArrangementDialogComponent } from '../audio/arrangements/components/dialogs/load-arrangement-dialog.component';
+import { ConfirmDialogComponent } from '../audio/arrangements/components/dialogs/confirm-dialog.component';
 
 @Component({
     selector: 'project-management',
