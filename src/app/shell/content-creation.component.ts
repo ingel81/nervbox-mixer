@@ -36,14 +36,6 @@ import { Clip } from '../audio/shared/models/models';
             class="content-btn record-btn">
       <mat-icon>mic</mat-icon>
     </button>
-    
-    <button mat-icon-button 
-            (click)="toggleSoundBrowser()" 
-            matTooltip="Sound Library"
-            class="content-btn"
-            [class.active]="editorState.showSoundBrowser()">
-      <mat-icon>library_music</mat-icon>
-    </button>
   `,
     styles: [`
     :host {
@@ -141,9 +133,6 @@ export class ContentCreationComponent {
     this.fileInput.nativeElement.click();
   }
   
-  toggleSoundBrowser(): void {
-    this.editorState.toggleSoundBrowser('toolbar');
-  }
   
   openRecordingDialog(): void {
     const dialogRef = this.dialog.open(RecordingDialogComponent, {

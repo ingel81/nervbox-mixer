@@ -21,7 +21,7 @@ export class BottomPanelService {
 
   // Tab configurations
   readonly tabs: TabConfig[] = [
-    { id: 'sounds', label: 'Sounds', icon: 'library_music', description: 'Browse and add sounds to your project' }
+    { id: 'sounds', label: 'Sound Library', icon: 'library_music', description: 'Browse and add sounds to your project' }
   ];
 
   // Public readonly signals
