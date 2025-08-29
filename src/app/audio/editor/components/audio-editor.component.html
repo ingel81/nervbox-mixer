@@ -1,5 +1,7 @@
 
-<div class="editor" (wheel)="onWheel($event)">
+<div class="editor" 
+     (wheel)="onWheel($event)"
+     [keyboardShortcuts]="keyboardActions">
   <div class="tracks">
     <!-- Header with fixed width columns -->
     <div class="tracks-header">

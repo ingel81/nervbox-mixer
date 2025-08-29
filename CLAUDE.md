@@ -326,3 +326,58 @@ Currently no tests implemented. When adding tests:
 - **GitHub Issues**: Use github-issue-manager agent for all issue-related operations
 - **Build Operations**: Use build-checker agent for all build verification tasks
 - **Architecture Analysis**: Use angular-architecture-auditor for comprehensive code reviews
+
+## Component Refactoring Plan
+
+### AudioEditorComponent Decomposition Strategy
+Current size: 1246 lines - Target: Reduce to ~400-500 lines through extraction
+
+### Extraction Candidates (Priority Order)
+
+#### 1. KeyboardShortcutsDirective (Lines 573-669) - **HIGH PRIORITY**
+- **Responsibility**: All keyboard event handling (@HostListener keydown)
+- **Lines to extract**: ~100 lines
+- **Functionality**: Copy/Paste/Delete/Split/Loop shortcuts, Space for play/pause
+- **Extraction method**: Angular Directive with @HostListener
+- **Dependencies**: EditorStateService for actions
+
+#### 2. TrackManagerComponent (Lines 178-234, 251-285) - **HIGH PRIORITY**
+- **Responsibility**: Track operations (add, remove, mute, solo, rename)
+- **Lines to extract**: ~80 lines  
+- **Functionality**: Track CRUD operations and state management
+- **Extraction method**: Standalone Component
+- **Dependencies**: EditorStateService
+
+#### 3. TimelineControlsComponent (Lines 307-345, 814-838) - **HIGH PRIORITY**
+- **Responsibility**: Playback controls and timeline seeking
+- **Lines to extract**: ~80 lines
+- **Functionality**: play(), pause(), stop(), seekTo(), playhead ticker
+- **Extraction method**: Standalone Component
+- **Dependencies**: AudioEngineService, EditorStateService
+
+#### 4. DragDropManagerComponent (Lines 1034-1194) - **MEDIUM PRIORITY**
+- **Responsibility**: Sound library and file drag & drop operations
+- **Lines to extract**: ~160 lines
+- **Functionality**: Sound drops, file imports, drag preview management
+- **Extraction method**: Standalone Component
+- **Dependencies**: SoundLibraryService, FileImportService
+
+#### 5. ZoomPanHandlerComponent (Lines 509-774) - **LOW PRIORITY**
+- **Responsibility**: Zoom and pan interactions (wheel, touch, mouse)
+- **Lines to extract**: ~265 lines
+- **Functionality**: Ctrl+scroll zoom, pinch-to-zoom, timeline navigation
+- **Extraction method**: Standalone Component or Directive
+- **Dependencies**: TimelineService
+
+#### 6. ClipOperationsService (Lines 847-914, 463-483) - **MEDIUM PRIORITY**
+- **Responsibility**: Clipboard operations for clips
+- **Lines to extract**: ~80 lines
+- **Functionality**: Copy, paste, duplicate, delete clip operations
+- **Extraction method**: Injectable Service
+- **Dependencies**: EditorStateService
+
+### Expected Results
+- **Total lines to extract**: ~765 lines (61% reduction)
+- **Remaining AudioEditorComponent size**: ~480 lines
+- **Improved maintainability**: Each component has single responsibility
+- **Better testability**: Smaller, focused components and services
