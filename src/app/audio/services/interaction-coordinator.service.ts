@@ -99,21 +99,15 @@ export class InteractionCoordinatorService {
       this.rafId = null;
     }
     
-    // Cancel pending loop updates
+    // Cancel pending loop updates (no longer used with transform approach)
     if (this.loopUpdateRafId) {
       cancelAnimationFrame(this.loopUpdateRafId);
       this.loopUpdateRafId = null;
     }
     
-    // Apply any pending loop updates immediately
-    if (this.pendingLoopUpdate) {
-      if (this.pendingLoopUpdate.start !== undefined) {
-        this.editorState.loopStart.set(this.pendingLoopUpdate.start);
-      }
-      if (this.pendingLoopUpdate.end !== undefined) {
-        this.editorState.loopEnd.set(this.pendingLoopUpdate.end);
-      }
-      this.pendingLoopUpdate = null;
+    // Calculate and update final values, then restore transforms
+    if (this.loopDragState || this.loopRegionDragState) {
+      this.commitLoopDragState();
     }
 
     // Clear drag states
@@ -124,7 +118,106 @@ export class InteractionCoordinatorService {
     this.editorState.isDraggingClip.set(false);
     
     // Clear cached DOM elements
-    this.cachedTrackLanesEl = null;
+    this.clearLoopElementCache();
+  }
+  
+  private commitLoopDragState(): void {
+    // Calculate final values from current drag state
+    let finalStartTime = this.editorState.loopStart();
+    let finalEndTime = this.editorState.loopEnd();
+    
+    if (this.loopRegionDragState) {
+      // For region drag, calculate new position based on accumulated deltaX
+      if (this.loopBackgroundEl) {
+        const transform = this.loopBackgroundEl.style.transform;
+        const deltaX = this.extractTranslateX(transform);
+        const deltaTime = this.timeline.pxToSeconds(deltaX);
+        
+        console.log('Region drag commit:', { deltaX, deltaTime, originalStart: this.loopRegionDragState.originalStart });
+        
+        const newStart = Math.max(0, this.loopRegionDragState.originalStart + deltaTime);
+        const snappedStart = this.editorState.snapLoopMarkerToGrid(newStart);
+        const snappedEnd = snappedStart + this.loopRegionDragState.loopDuration;
+        
+        // Always apply the changes - remove maxEnd check that might be causing resets
+        finalStartTime = snappedStart;
+        finalEndTime = snappedEnd;
+      }
+    } else if (this.loopDragState) {
+      // For marker drag, calculate new position
+      const targetEl = this.loopDragState.marker === 'start' ? this.loopStartEl : this.loopEndEl;
+      
+      if (targetEl) {
+        const transform = targetEl.style.transform;
+        const deltaX = this.extractTranslateX(transform);
+        const deltaTime = this.timeline.pxToSeconds(deltaX);
+        const newValue = Math.max(0, this.loopDragState.originalValue + deltaTime);
+        const snappedValue = this.editorState.snapLoopMarkerToGrid(newValue);
+        
+        console.log('Marker drag commit:', { 
+          marker: this.loopDragState.marker, 
+          deltaX, 
+          deltaTime, 
+          originalValue: this.loopDragState.originalValue, 
+          newValue,
+          snappedValue
+        });
+        
+        if (this.loopDragState.marker === 'start') {
+          const maxStart = this.editorState.loopEnd() - 0.1;
+          finalStartTime = Math.min(snappedValue, maxStart);
+        } else {
+          const minEnd = this.editorState.loopStart() + 0.1;
+          finalEndTime = Math.max(minEnd, snappedValue);
+        }
+      }
+    }
+    
+    console.log('Final commit values:', { finalStartTime, finalEndTime });
+    
+    // Restore all transforms to original state (like VirtualDragService)
+    this.restoreLoopTransforms();
+    
+    // Update signals with final values - only once at the end
+    this.editorState.loopStart.set(finalStartTime);
+    this.editorState.loopEnd.set(finalEndTime);
+  }
+  
+  private extractTranslateX(transform: string): number {
+    if (!transform) return 0;
+    const match = transform.match(/translateX\(([^)]+)\)/);
+    if (match) {
+      return parseFloat(match[1]) || 0;
+    }
+    return 0;
+  }
+  
+  private restoreLoopTransforms(): void {
+    // Restore all transforms like VirtualDragService.restoreVisualState()
+    [this.loopBackgroundEl, this.loopStartEl, this.loopEndEl, this.loopDurationEl].forEach(el => {
+      if (el) {
+        const originalTransform = el.dataset.originalTransform || '';
+        el.style.transform = originalTransform;
+        el.style.transformOrigin = '';
+        el.style.willChange = '';
+        el.style.transition = 'none';
+        delete el.dataset.originalTransform;
+        
+        // Re-enable transitions after a short delay
+        setTimeout(() => {
+          if (el) {
+            el.style.transition = '';
+          }
+        }, 50);
+      }
+    });
+  }
+  
+  private clearLoopElementCache(): void {
+    this.loopBackgroundEl = null;
+    this.loopStartEl = null;
+    this.loopEndEl = null;
+    this.loopDurationEl = null;
   }
 
   // Touch event handling
@@ -186,120 +279,122 @@ export class InteractionCoordinatorService {
   }
 
   // Loop region drag handling
-  startLoopMarkerDrag(marker: 'start' | 'end', startX: number): void {
+  startLoopMarkerDrag(marker: 'start' | 'end', clientX: number): void {
     const originalValue = marker === 'start' 
       ? this.editorState.loopStart() 
       : this.editorState.loopEnd();
       
-    this.loopDragState = { marker, startX, originalValue };
+    this.loopDragState = { marker, startX: clientX, originalValue };
     
-    // Clear any cached DOM references when starting a new drag
-    this.cachedTrackLanesEl = null;
+    // Cache DOM elements and prepare for transform-based dragging
+    this.prepareLoopElementsForDrag();
   }
 
-  startLoopRegionDrag(startX: number): void {
+  startLoopRegionDrag(clientX: number): void {
     this.loopRegionDragState = {
-      startX,
+      startX: clientX,
       originalStart: this.editorState.loopStart(),
       originalEnd: this.editorState.loopEnd(),
       loopDuration: this.editorState.loopEnd() - this.editorState.loopStart()
     };
     
-    // Clear any cached DOM references when starting a new drag
-    this.cachedTrackLanesEl = null;
+    // Cache DOM elements and prepare for transform-based dragging
+    this.prepareLoopElementsForDrag();
   }
   
-  // Cache for DOM elements to avoid repeated queries
-  private cachedTrackLanesEl: HTMLElement | null = null;
+  // Cache DOM elements for performance
+  private loopBackgroundEl: HTMLElement | null = null;
+  private loopStartEl: HTMLElement | null = null;
+  private loopEndEl: HTMLElement | null = null;
+  private loopDurationEl: HTMLElement | null = null;
+  
+  private prepareLoopElementsForDrag(): void {
+    const loopRegion = document.querySelector('.loop-region') as HTMLElement;
+    if (loopRegion) {
+      this.loopBackgroundEl = loopRegion.querySelector('.loop-background');
+      this.loopStartEl = loopRegion.querySelector('.loop-start');
+      this.loopEndEl = loopRegion.querySelector('.loop-end');
+      this.loopDurationEl = loopRegion.querySelector('.loop-duration');
+      
+      // Optimize elements for transform-based dragging (like VirtualDragService)
+      [this.loopBackgroundEl, this.loopStartEl, this.loopEndEl, this.loopDurationEl].forEach(el => {
+        if (el) {
+          el.style.willChange = 'transform';
+          el.style.transition = 'none';
+          // Store original transform for restoration
+          el.dataset.originalTransform = el.style.transform || '';
+        }
+      });
+    }
+  }
+  
 
   private handleDragMove(event: MouseEvent | TouchEvent, timelineElement: HTMLElement): void {
     const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
     
-    // Cache track lanes element to avoid repeated DOM queries
-    if (!this.cachedTrackLanesEl) {
-      this.cachedTrackLanesEl = timelineElement.closest('.timeline-wrapper')?.querySelector('.track-lanes') as HTMLElement;
-    }
-    const scrollLeft = this.cachedTrackLanesEl ? this.cachedTrackLanesEl.scrollLeft : 0;
-    
-    // Handle loop region dragging (move entire loop)
+    // Handle loop region dragging (move entire loop) - transform-based like VirtualDragService
     if (this.loopRegionDragState) {
-      const rect = timelineElement.getBoundingClientRect();
-      const currentX = clientX - rect.left + scrollLeft;
-      const deltaX = currentX - this.loopRegionDragState.startX;
-      const deltaTime = this.timeline.pxToSeconds(deltaX);
+      // Use simple clientX difference like VirtualDragService
+      const deltaX = clientX - this.loopRegionDragState.startX;
       
-      const newStart = Math.max(0, this.loopRegionDragState.originalStart + deltaTime);
-      
-      // Apply grid snapping if enabled
-      const snappedStart = this.editorState.snapLoopMarkerToGrid(newStart);
-      const snappedEnd = snappedStart + this.loopRegionDragState.loopDuration;
-      
-      const maxEnd = this.timeline.duration();
-      if (snappedEnd <= maxEnd) {
-        // Store pending update
-        this.pendingLoopUpdate = { start: snappedStart, end: snappedEnd };
-        
-        // Schedule RAF update if not already scheduled
-        if (!this.loopUpdateRafId) {
-          this.loopUpdateRafId = requestAnimationFrame(() => {
-            if (this.pendingLoopUpdate) {
-              this.editorState.loopStart.set(this.pendingLoopUpdate.start!);
-              this.editorState.loopEnd.set(this.pendingLoopUpdate.end!);
-              this.pendingLoopUpdate = null;
-            }
-            this.loopUpdateRafId = null;
-          });
-        }
-      }
+      // Apply transform immediately for smooth movement
+      this.applyLoopTransform(deltaX, 'region');
       return;
     }
     
-    // Handle loop marker dragging
+    // Handle loop marker dragging - transform-based
     if (this.loopDragState) {
-      const rect = timelineElement.getBoundingClientRect();
-      const currentX = clientX - rect.left + scrollLeft;
-      const deltaX = currentX - this.loopDragState.startX;
-      const deltaTime = this.timeline.pxToSeconds(deltaX);
-      const newValue = Math.max(0, this.loopDragState.originalValue + deltaTime);
+      // Use simple clientX difference like VirtualDragService
+      const deltaX = clientX - this.loopDragState.startX;
       
-      // Apply grid snapping if enabled
-      const snappedValue = this.editorState.snapLoopMarkerToGrid(newValue);
-      
-      if (this.loopDragState.marker === 'start') {
-        const maxStart = this.editorState.loopEnd() - 0.1;
-        const finalValue = Math.min(snappedValue, maxStart);
-        
-        // Store pending update
-        this.pendingLoopUpdate = { start: finalValue };
-        
-        // Schedule RAF update
-        if (!this.loopUpdateRafId) {
-          this.loopUpdateRafId = requestAnimationFrame(() => {
-            if (this.pendingLoopUpdate?.start !== undefined) {
-              this.editorState.loopStart.set(this.pendingLoopUpdate.start);
-            }
-            this.pendingLoopUpdate = null;
-            this.loopUpdateRafId = null;
-          });
-        }
-      } else {
-        const minEnd = this.editorState.loopStart() + 0.1;
-        const maxEnd = this.timeline.duration();
-        const finalValue = Math.max(minEnd, Math.min(snappedValue, maxEnd));
-        
-        // Store pending update
-        this.pendingLoopUpdate = { end: finalValue };
-        
-        // Schedule RAF update
-        if (!this.loopUpdateRafId) {
-          this.loopUpdateRafId = requestAnimationFrame(() => {
-            if (this.pendingLoopUpdate?.end !== undefined) {
-              this.editorState.loopEnd.set(this.pendingLoopUpdate.end);
-            }
-            this.pendingLoopUpdate = null;
-            this.loopUpdateRafId = null;
-          });
-        }
+      // Apply transform immediately for smooth movement
+      this.applyLoopTransform(deltaX, this.loopDragState.marker);
+    }
+  }
+  
+  private applyLoopTransform(deltaX: number, dragType: 'start' | 'end' | 'region'): void {
+    // Apply smooth transform-based updates like VirtualDragService
+    if (dragType === 'region' && this.loopRegionDragState) {
+      // Move entire loop region
+      if (this.loopBackgroundEl) {
+        this.loopBackgroundEl.style.transform = `translateX(${deltaX}px)`;
+      }
+      if (this.loopStartEl) {
+        this.loopStartEl.style.transform = `translateX(${deltaX}px)`;
+      }
+      if (this.loopEndEl) {
+        this.loopEndEl.style.transform = `translateX(${deltaX}px)`;
+      }
+      if (this.loopDurationEl) {
+        this.loopDurationEl.style.transform = `translateX(${deltaX}px)`;
+      }
+    } else if (dragType === 'start' && this.loopDragState) {
+      // Move start marker and resize background
+      if (this.loopStartEl) {
+        this.loopStartEl.style.transform = `translateX(${deltaX}px)`;
+      }
+      if (this.loopBackgroundEl) {
+        // Adjust background: move left edge and adjust width
+        this.loopBackgroundEl.style.transform = `translateX(${deltaX}px) scaleX(${1 - deltaX / (this.loopBackgroundEl.offsetWidth || 1)})`;
+        this.loopBackgroundEl.style.transformOrigin = 'left center';
+      }
+      if (this.loopDurationEl) {
+        this.loopDurationEl.style.transform = `translateX(${deltaX}px) scaleX(${1 - deltaX / (this.loopDurationEl.offsetWidth || 1)})`;
+        this.loopDurationEl.style.transformOrigin = 'left center';
+      }
+    } else if (dragType === 'end' && this.loopDragState) {
+      // Move end marker and resize background
+      if (this.loopEndEl) {
+        this.loopEndEl.style.transform = `translateX(${deltaX}px)`;
+      }
+      if (this.loopBackgroundEl) {
+        // Adjust background: extend width
+        this.loopBackgroundEl.style.transform = `scaleX(${1 + deltaX / (this.loopBackgroundEl.offsetWidth || 1)})`;
+        this.loopBackgroundEl.style.transformOrigin = 'left center';
+      }
+      if (this.loopDurationEl) {
+        this.loopDurationEl.style.transform = `scaleX(${1 + deltaX / (this.loopDurationEl.offsetWidth || 1)})`;
+        this.loopDurationEl.style.transformOrigin = 'left center';
       }
     }
   }

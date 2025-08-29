@@ -293,6 +293,8 @@ export class AudioEditorComponent {
     if (this.timelineEl) {
       this.timelineEl.nativeElement.scrollLeft = lanesEl.scrollLeft;
     }
+    // Synchronize scrollX signal for loop region positioning
+    this.scrollX.set(lanesEl.scrollLeft);
   }
 
   private restartPlaybackFromCurrentPosition() {

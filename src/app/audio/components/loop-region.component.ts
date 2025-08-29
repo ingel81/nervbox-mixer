@@ -8,13 +8,12 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
   selector: 'loop-region',
   imports: [CommonModule],
   template: `
-    <div class="loop-region" #loopRegion>
+    <div class="loop-region" #loopRegion *ngIf="editorState.loopEnabled()">
       <!-- Loop Region Background -->
       <div 
         class="loop-background"
         [style.left.px]="loopStartPx()"
         [style.width.px]="loopWidthPx()"
-        [style.opacity]="editorState.loopEnabled() ? 0.2 : 0"
         (mousedown)="onLoopRegionMouseDown($event)"
       ></div>
       
@@ -22,7 +21,6 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
       <div 
         class="loop-marker loop-start"
         [style.left.px]="loopStartPx()"
-        [style.opacity]="editorState.loopEnabled() ? 1 : 0.3"
         (mousedown)="onLoopMarkerMouseDown($event, 'start')"
         title="Loop Start: {{editorState.loopStart()}}s"
       >
@@ -36,7 +34,6 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
       <div 
         class="loop-marker loop-end"
         [style.left.px]="loopEndPx()"
-        [style.opacity]="editorState.loopEnabled() ? 1 : 0.3"
         (mousedown)="onLoopMarkerMouseDown($event, 'end')"
         title="Loop End: {{editorState.loopEnd()}}s"
       >
@@ -51,7 +48,6 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
         class="loop-duration"
         [style.left.px]="loopStartPx()"
         [style.width.px]="loopWidthPx()"
-        [style.opacity]="editorState.loopEnabled() ? 1 : 0"
       >
         {{formatDuration(loopDuration())}}
       </div>
@@ -72,17 +68,19 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
       position: absolute;
       top: 0;
       height: 100%;
-      background: rgba(147, 51, 234, 0.15);
-      border: 1px solid rgba(147, 51, 234, 0.3);
-      border-radius: 2px;
+      background: rgba(147, 51, 234, 0.25);
+      border: 2px solid rgba(147, 51, 234, 0.6);
+      border-radius: 4px;
       pointer-events: auto;
       cursor: grab;
       transition: all 0.2s ease;
+      box-shadow: 0 0 8px rgba(147, 51, 234, 0.3);
     }
     
     .loop-background:hover {
-      background: rgba(147, 51, 234, 0.25);
-      border-color: rgba(147, 51, 234, 0.5);
+      background: rgba(147, 51, 234, 0.35);
+      border-color: rgba(147, 51, 234, 0.8);
+      box-shadow: 0 0 12px rgba(147, 51, 234, 0.4);
     }
     
     .loop-background:active {
@@ -93,7 +91,8 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
       position: absolute;
       top: 0;
       height: 100%;
-      width: 2px;
+      width: 12px;
+      margin-left: -6px;
       pointer-events: auto;
       cursor: ew-resize;
       z-index: 15;
@@ -101,8 +100,8 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
     }
     
     .loop-marker:hover {
-      width: 3px;
-      margin-left: -0.5px;
+      width: 14px;
+      margin-left: -7px;
     }
     
     .loop-marker.loop-start .loop-marker-line {
@@ -131,26 +130,23 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
     
     .loop-marker-line {
       position: absolute;
-      left: 50%;
+      left: 6px;
       top: 0;
       bottom: 0;
       width: 2px;
-      margin-left: -1px;
       transition: all 0.15s ease;
     }
     
     .loop-marker-grip {
       position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 10px;
-      height: 10px;
-      margin-left: -5px;
-      margin-top: -5px;
-      background: rgba(255, 255, 255, 0.9);
+      left: 0;
+      top: calc(50% - 6px);
+      width: 12px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.95);
       border: 2px solid currentColor;
       border-radius: 50%;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
     }
     
     .loop-marker.loop-start .loop-marker-grip {
@@ -166,27 +162,32 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
     /* Mobile specific styles */
     @media (hover: none) and (pointer: coarse) {
       .loop-marker {
-        width: 4px;
+        width: 16px;
+        margin-left: -8px;
         cursor: pointer;
         touch-action: pan-x;
       }
       
       .loop-marker .loop-marker-grip {
-        width: 12px;
-        height: 12px;
+        width: 16px;
+        height: 16px;
+        margin-left: -8px;
+        margin-top: -8px;
         border: 2px solid rgba(255, 255, 255, 0.9);
       }
       
       .loop-marker:hover,
       .loop-marker:active {
-        width: 6px;
-        margin-left: -1px;
+        width: 20px;
+        margin-left: -10px;
       }
       
       .loop-marker:hover .loop-marker-grip,
       .loop-marker:active .loop-marker-grip {
-        width: 16px;
-        height: 16px;
+        width: 20px;
+        height: 20px;
+        margin-left: -10px;
+        margin-top: -10px;
         border: 2px solid rgba(255, 255, 255, 1);
       }
     }
@@ -222,13 +223,13 @@ export class LoopRegionComponent {
     private interactionCoordinator: InteractionCoordinatorService
   ) {}
   
-  // Computed positions
+  // Computed positions - DOM manipulation during drag bypasses these
   loopStartPx = computed(() => 
-    this.timelineService.secondsToPx(this.editorState.loopStart()) - this.scrollX()
+    this.timelineService.secondsToPx(this.editorState.loopStart())
   );
   
   loopEndPx = computed(() => 
-    this.timelineService.secondsToPx(this.editorState.loopEnd()) - this.scrollX()
+    this.timelineService.secondsToPx(this.editorState.loopEnd())
   );
   
   loopWidthPx = computed(() => 
@@ -244,20 +245,14 @@ export class LoopRegionComponent {
     event.preventDefault();
     event.stopPropagation();
     
-    const rect = this.loopRegionEl.nativeElement.getBoundingClientRect();
-    const startX = event.clientX - rect.left + this.scrollX();
-    
-    this.interactionCoordinator.startLoopMarkerDrag(marker, startX);
+    this.interactionCoordinator.startLoopMarkerDrag(marker, event.clientX);
   }
   
   onLoopRegionMouseDown(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
     
-    const rect = this.loopRegionEl.nativeElement.getBoundingClientRect();
-    const startX = event.clientX - rect.left + this.scrollX();
-    
-    this.interactionCoordinator.startLoopRegionDrag(startX);
+    this.interactionCoordinator.startLoopRegionDrag(event.clientX);
   }
   
   // Helper methods

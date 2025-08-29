@@ -85,7 +85,7 @@ export class TimelineService {
     
     const newZoom = factor > 1 
       ? Math.min(currentZoom * factor, 1000)
-      : Math.max(currentZoom / Math.abs(factor), 10);
+      : Math.max(currentZoom * factor, 10);
     
     this.editorState.pxPerSecond.set(newZoom);
     
