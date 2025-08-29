@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Track, Clip, ArrangementDefinition, TrackDefinition, ClipDefinition } from '../../shared/models/models';
 import { SoundLibraryService } from '../../sound-browser/services/sound-library.service';
 import { WaveformService } from '../../audio-engine/services/waveform.service';
+import { EditorStateService } from '../../editor/services/editor-state.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +11,7 @@ export class ArrangementService {
   
   private soundLibrary = inject(SoundLibraryService);
   private waveformService = inject(WaveformService);
+  private editorState = inject(EditorStateService);
   
   /**
    * Creates tracks from an arrangement definition (JSON-based pattern)
@@ -78,7 +80,7 @@ export class ArrangementService {
       } as Clip;
       
       // Generate waveform after model is applied from JSON
-      const pxPerSecond = 120; // Default px per second
+      const pxPerSecond = this.editorState.pxPerSecond(); // Use actual px per second from editor state
       const width = Math.floor(clip.duration * pxPerSecond);
       clip.waveform = this.waveformService.generateFromBuffer(buffer, {
         width: Math.max(1, width),

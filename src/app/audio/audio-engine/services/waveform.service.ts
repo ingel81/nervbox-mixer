@@ -13,11 +13,37 @@ export interface WaveformOptions {
   providedIn: 'root'
 })
 export class WaveformService {
+  private waveformCache = new Map<string, string>();
 
   /**
-   * Generate waveform from AudioBuffer - Primary method
+   * Generate waveform from AudioBuffer - Primary method with caching
    */
   generateFromBuffer(
+    buffer: AudioBuffer, 
+    options: WaveformOptions = {}
+  ): string {
+    // Create cache key based on all parameters that affect the waveform
+    const cacheKey = this.createCacheKey(buffer, options);
+    
+    // Check cache first
+    const cached = this.waveformCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+    
+    // Generate new waveform
+    const waveform = this.generateWaveformInternal(buffer, options);
+    
+    // Cache the result
+    this.waveformCache.set(cacheKey, waveform);
+    
+    return waveform;
+  }
+
+  /**
+   * Internal waveform generation - actual implementation
+   */
+  private generateWaveformInternal(
     buffer: AudioBuffer, 
     options: WaveformOptions = {}
   ): string {
@@ -289,5 +315,24 @@ export class WaveformService {
            clipColor.includes('f093fb') || clipColor.includes('f5576c') || 
            clipColor.includes('fa709a') || clipColor.includes('ff9a9e') ||
            clipColor.includes('ff6e7f');
+  }
+
+  /**
+   * Create cache key based on all parameters that affect waveform output
+   */
+  private createCacheKey(buffer: AudioBuffer, options: WaveformOptions): string {
+    const {
+      width = 200,
+      height = 44,
+      clipColor = '',
+      trimStart = 0,
+      trimEnd = 0
+    } = options;
+    
+    // Use buffer properties and options to create unique key
+    // Note: We can't use buffer directly as key, so we use its properties
+    const bufferKey = `${buffer.duration}_${buffer.sampleRate}_${buffer.length}_${buffer.numberOfChannels}`;
+    
+    return `${bufferKey}_${width}_${height}_${clipColor}_${trimStart}_${trimEnd}`;
   }
 }

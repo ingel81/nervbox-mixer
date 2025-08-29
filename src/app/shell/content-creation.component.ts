@@ -164,8 +164,9 @@ export class ContentCreationComponent {
     const color = 'linear-gradient(45deg, #ef4444, #dc2626)';
     
     // Generate waveform for the recording
+    const pxPerSecond = this.editorState.pxPerSecond();
     const waveformData = this.waveform.generateFromBuffer(buffer, {
-      width: Math.max(200, Math.floor(buffer.duration * 100)),
+      width: Math.max(200, Math.floor(buffer.duration * pxPerSecond)),
       height: 44,
       clipColor: color
     });

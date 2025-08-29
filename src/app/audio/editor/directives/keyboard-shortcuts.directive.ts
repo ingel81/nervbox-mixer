@@ -111,8 +111,7 @@ export class KeyboardShortcutsDirective {
     ) {
       event.preventDefault();
       this.editorState.splitAtPlayhead();
-      // Force regenerate all waveforms after split
-      setTimeout(() => this.keyboardShortcuts.forceRegenerateAllWaveforms(), 100);
+      // Split already generates correct waveforms, no need to regenerate
       return;
     }
   }

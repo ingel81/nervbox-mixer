@@ -16,6 +16,9 @@ export interface Clip {
   trimEnd: number;   // seconds trimmed from end
   originalDuration: number; // original duration before trimming
   soundId?: string; // ID for identifying sound samples
+
+  // Waveform generation method
+  generateWaveform?: (pxPerSecond: number, waveformService: any) => void;
 }
 
 export interface Track {

@@ -1,5 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Track, Clip } from '../../shared/models/models';
+import { WaveformService } from '../../audio-engine/services/waveform.service';
+import { enhanceClipWithWaveformGeneration } from '../../shared/utils/clip.util';
 
 // Callback type for seeking during playback
 export type SeekCallback = (seconds: number) => void;
@@ -8,6 +10,8 @@ export type SeekCallback = (seconds: number) => void;
   providedIn: 'root'
 })
 export class EditorStateService {
+  private waveformService = inject(WaveformService);
+  
   // === TIMELINE & PLAYBACK STATE ===
   
   // Callback for handling seek operations during playback
@@ -488,9 +492,12 @@ export class EditorStateService {
       ...targetClip,
       duration: relativePosition,  // New duration is from start to split point
       // trimEnd needs to account for what we're cutting off
-      trimEnd: targetClip.trimEnd + (targetClip.duration - relativePosition),
-      waveform: undefined // Force regeneration for left clip too
+      trimEnd: targetClip.trimEnd + (targetClip.duration - relativePosition)
     };
+    
+    // Enhance left clip with waveform generation capability
+    enhanceClipWithWaveformGeneration(leftClip);
+    leftClip.generateWaveform!(this.pxPerSecond(), this.waveformService);
     
     // Create right part (new clip ID)
     // Right clip starts at split position with remaining duration
@@ -501,9 +508,12 @@ export class EditorStateService {
       duration: targetClip.duration - relativePosition,
       trimStart: targetClip.trimStart + relativePosition,
       // Offset stays the same - trimStart handles the position in buffer
-      offset: targetClip.offset,
-      waveform: undefined // Will need regeneration
+      offset: targetClip.offset
     };
+    
+    // Enhance right clip with waveform generation capability
+    enhanceClipWithWaveformGeneration(rightClip);
+    rightClip.generateWaveform!(this.pxPerSecond(), this.waveformService);
     
     // Log for debugging
     console.log('=== SPLIT CALCULATION DETAILS ===');
