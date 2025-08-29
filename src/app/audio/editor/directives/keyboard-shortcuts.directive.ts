@@ -53,7 +53,10 @@ export class KeyboardShortcutsDirective {
     // Delete (Del)
     if (event.key === 'Delete' && selectedClip) {
       event.preventDefault();
-      this.editorState.removeClip(selectedClip.id);
+      // Add small delay to ensure drag state has settled
+      setTimeout(() => {
+        this.editorState.removeClip(selectedClip.id);
+      }, 10);
       return;
     }
 
