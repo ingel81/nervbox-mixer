@@ -15,6 +15,7 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
         [style.left.px]="loopStartPx()"
         [style.width.px]="loopWidthPx()"
         (mousedown)="onLoopRegionMouseDown($event)"
+        (touchstart)="onLoopRegionTouchStart($event)"
       ></div>
       
       <!-- Loop Start Marker -->
@@ -22,6 +23,7 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
         class="loop-marker loop-start"
         [style.left.px]="loopStartPx()"
         (mousedown)="onLoopMarkerMouseDown($event, 'start')"
+        (touchstart)="onLoopMarkerTouchStart($event, 'start')"
         title="Loop Start: {{editorState.loopStart()}}s"
       >
         <div class="loop-marker-handle">
@@ -35,6 +37,7 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
         class="loop-marker loop-end"
         [style.left.px]="loopEndPx()"
         (mousedown)="onLoopMarkerMouseDown($event, 'end')"
+        (touchstart)="onLoopMarkerTouchStart($event, 'end')"
         title="Loop End: {{editorState.loopEnd()}}s"
       >
         <div class="loop-marker-handle">
@@ -134,6 +137,7 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
       top: 0;
       bottom: 0;
       width: 2px;
+      margin-left: 0;
       transition: all 0.15s ease;
     }
     
@@ -162,32 +166,30 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
     /* Mobile specific styles */
     @media (hover: none) and (pointer: coarse) {
       .loop-marker {
-        width: 16px;
-        margin-left: -8px;
+        width: 20px;
+        margin-left: -10px;
         cursor: pointer;
         touch-action: pan-x;
       }
       
+      .loop-marker .loop-marker-line {
+        left: 10px;
+        width: 2px;
+        margin-left: 0;
+      }
+      
       .loop-marker .loop-marker-grip {
-        width: 16px;
-        height: 16px;
-        margin-left: -8px;
-        margin-top: -8px;
+        left: 4px;
+        top: calc(50% - 6px);
+        width: 12px;
+        height: 12px;
+        margin-top: 0;
+        margin-left: 0;
         border: 2px solid rgba(255, 255, 255, 0.9);
       }
       
-      .loop-marker:hover,
-      .loop-marker:active {
-        width: 20px;
-        margin-left: -10px;
-      }
-      
-      .loop-marker:hover .loop-marker-grip,
       .loop-marker:active .loop-marker-grip {
-        width: 20px;
-        height: 20px;
-        margin-left: -10px;
-        margin-top: -10px;
+        transform: scale(1.1);
         border: 2px solid rgba(255, 255, 255, 1);
       }
     }
@@ -253,6 +255,22 @@ export class LoopRegionComponent {
     event.stopPropagation();
     
     this.interactionCoordinator.startLoopRegionDrag(event.clientX);
+  }
+
+  onLoopMarkerTouchStart(event: TouchEvent, marker: 'start' | 'end'): void {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const touch = event.touches[0];
+    this.interactionCoordinator.startLoopMarkerDrag(marker, touch.clientX);
+  }
+
+  onLoopRegionTouchStart(event: TouchEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const touch = event.touches[0];
+    this.interactionCoordinator.startLoopRegionDrag(touch.clientX);
   }
   
   // Helper methods
