@@ -1,11 +1,17 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { Track, Clip } from '../../shared/models/models';
 
+// Callback type for seeking during playback
+export type SeekCallback = (seconds: number) => void;
+
 @Injectable({
   providedIn: 'root'
 })
 export class EditorStateService {
   // === TIMELINE & PLAYBACK STATE ===
+  
+  // Callback for handling seek operations during playback
+  private seekCallback: SeekCallback | null = null;
   tracks = signal<Track[]>([]);
   playhead = signal(0);
   isPlaying = signal(false);
@@ -261,8 +267,19 @@ export class EditorStateService {
     this.playhead.set(0);
   }
   
+  // Register a callback for seek operations
+  registerSeekCallback(callback: SeekCallback): void {
+    this.seekCallback = callback;
+  }
+  
   seekTo(seconds: number): void {
-    this.playhead.set(Math.max(0, Math.min(seconds, this.duration())));
+    const clampedSeconds = Math.max(0, Math.min(seconds, this.duration()));
+    this.playhead.set(clampedSeconds);
+    
+    // If we have a seek callback registered (from AudioEditor), use it
+    if (this.seekCallback) {
+      this.seekCallback(clampedSeconds);
+    }
   }
   
   // Loop control methods

@@ -140,6 +140,11 @@ export class AudioEditorComponent {
     private clipFactory: ClipFactoryService,
     private mobileInteraction: MobileInteractionService
   ) {
+    // Register seek callback for timeline scrubbing during playback
+    this.editorState.registerSeekCallback((seconds: number) => {
+      this.seekTo(seconds);
+    });
+    
     this.addDefaultHipHopTrack();
 
     // Initialize sound library

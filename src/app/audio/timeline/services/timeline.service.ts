@@ -104,7 +104,8 @@ export class TimelineService {
     const maxTime = this.duration() - 0.1;
     const clampedTime = Math.max(0, Math.min(newTime, maxTime));
     
-    this.editorState.playhead.set(clampedTime);
+    // Use seekTo to properly handle playback during scrubbing
+    this.editorState.seekTo(clampedTime);
   }
 
   // Snap-to-grid functionality
