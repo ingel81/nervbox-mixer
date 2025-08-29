@@ -149,7 +149,7 @@ export class ProjectManagementComponent {
     const currentName = this.editorState.currentArrangementName();
     
     const dialogRef = this.dialog.open(SaveArrangementDialogComponent, {
-      width: '500px',
+      width: '700px',
       data: { currentName: currentName === 'Untitled' ? '' : currentName }
     });
 
@@ -168,7 +168,7 @@ export class ProjectManagementComponent {
   
   loadArrangement(): void {
     const dialogRef = this.dialog.open(LoadArrangementDialogComponent, {
-      width: '600px',
+      width: '700px',
       maxHeight: '80vh'
     });
 

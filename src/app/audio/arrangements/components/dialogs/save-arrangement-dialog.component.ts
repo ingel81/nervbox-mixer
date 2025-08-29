@@ -5,6 +5,7 @@ import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { ArrangementStorageService, SavedArrangement } from '../../services/arrangement-storage.service';
+import { TrackDefinition } from '../../../shared/models/models';
 
 export interface SaveArrangementDialogData {
   currentName?: string;
@@ -52,7 +53,15 @@ export interface SaveArrangementDialogData {
               <div class="item-info">
                 <div class="item-title">{{ arr.arrangement.name }}</div>
                 <div class="item-meta">
-                  {{ formatDate(arr.updatedAt) }} • {{ arr.arrangement.tracks.length }} tracks • {{ arr.arrangement.bpm || 120 }} BPM
+                  <span>{{ formatDate(arr.updatedAt) }}</span>
+                  <span class="separator">•</span>
+                  <span>{{ arr.arrangement.tracks.length }} tracks</span>
+                  <span class="separator">•</span>
+                  <span>{{ arr.arrangement.bpm || 120 }} BPM</span>
+                  <span class="track-names" *ngIf="arr.arrangement.tracks.length > 0">
+                    <span class="separator">•</span>
+                    {{ getTrackNames(arr.arrangement.tracks) }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -71,15 +80,8 @@ export interface SaveArrangementDialogData {
       </button>
     </mat-dialog-actions>
   `,
+    styleUrls: ['./dialog-shared.styles.scss'],
     styles: [`
-    .dialog-icon {
-      vertical-align: middle;
-      margin-right: 8px;
-      background: linear-gradient(135deg, #9333ea, #ec4899);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
 
     .custom-input-container {
       width: 100%;
@@ -157,103 +159,7 @@ export interface SaveArrangementDialogData {
       color: rgba(255, 255, 255, 0.7);
     }
 
-    .arrangement-list {
-      max-height: 240px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      border: 1px solid rgba(147, 51, 234, 0.2);
-      border-radius: 8px;
-      background: rgba(20, 20, 25, 0.4);
-      padding: 8px;
-      box-sizing: border-box;
-      width: 100%;
-    }
-
-    .arrangement-item {
-      cursor: pointer;
-      transition: all 0.2s;
-      padding: 12px;
-      margin-bottom: 6px;
-      border-radius: 6px;
-      border: 1px solid transparent;
-      background: rgba(255, 255, 255, 0.02);
-      box-sizing: border-box;
-      width: 100%;
-    }
-
-    .arrangement-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .arrangement-item:hover {
-      background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(236, 72, 153, 0.05));
-      border-color: rgba(147, 51, 234, 0.2);
-    }
-
-    .arrangement-item.selected {
-      background: linear-gradient(135deg, rgba(147, 51, 234, 0.15), rgba(236, 72, 153, 0.1));
-      border-color: rgba(147, 51, 234, 0.4);
-      border-left-width: 3px;
-    }
-
-    .item-content {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .item-icon {
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
-      color: #9333ea;
-      opacity: 0.8;
-    }
-
-    .item-info {
-      flex: 1;
-    }
-
-    .item-title {
-      font-size: 14px;
-      font-weight: 500;
-      color: rgba(255, 255, 255, 0.95);
-      margin-bottom: 4px;
-    }
-
-    .item-meta {
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.5);
-    }
-
-    mat-dialog-content {
-      min-width: 400px;
-      box-sizing: border-box;
-      overflow-x: hidden;
-    }
-
-    ::ng-deep .mat-mdc-dialog-actions .mat-mdc-button:not(.mat-mdc-unelevated-button) {
-      color: rgba(255, 255, 255, 0.7) !important;
-    }
-
-    ::ng-deep .mat-mdc-dialog-actions .mat-mdc-button:not(.mat-mdc-unelevated-button):hover {
-      background: rgba(255, 255, 255, 0.1) !important;
-      color: rgba(255, 255, 255, 0.9) !important;
-    }
-
-    ::ng-deep .mat-mdc-dialog-actions .mat-mdc-unelevated-button.mat-primary {
-      background-color: #9333ea !important;
-      color: #ffffff !important;
-    }
-
-    ::ng-deep .mat-mdc-dialog-actions .mat-mdc-unelevated-button.mat-primary:hover {
-      background-color: #a855f7 !important;
-    }
-
-    ::ng-deep .mat-mdc-dialog-actions .mat-mdc-unelevated-button.mat-primary:disabled {
-      background-color: rgba(147, 51, 234, 0.3) !important;
-      color: rgba(255, 255, 255, 0.5) !important;
-    }
+    /* Shared styles imported via styleUrls */
   `]
 })
 export class SaveArrangementDialogComponent {
@@ -284,11 +190,37 @@ export class SaveArrangementDialogComponent {
 
   formatDate(dateStr: string): string {
     const date = new Date(dateStr);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      if (diffHours === 0) {
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        return diffMinutes <= 1 ? 'Just now' : `${diffMinutes} min ago`;
+      }
+      return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
   }
 
   onCancel(): void {
     this.dialogRef.close();
+  }
+
+  getTrackNames(tracks: TrackDefinition[]): string {
+    if (tracks.length === 0) return '';
+    const names = tracks.slice(0, 3).map(t => t.name).join(', ');
+    if (tracks.length > 3) {
+      return `${names}, +${tracks.length - 3} more`;
+    }
+    return names;
   }
 
   onSave(): void {

@@ -84,15 +84,8 @@ import { TrackDefinition } from '../../../shared/models/models';
       </button>
     </mat-dialog-actions>
   `,
+    styleUrls: ['./dialog-shared.styles.scss'],
     styles: [`
-    .dialog-icon {
-      vertical-align: middle;
-      margin-right: 8px;
-      background: linear-gradient(135deg, #9333ea, #ec4899);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
 
     .search-container {
       position: relative;
@@ -137,147 +130,11 @@ import { TrackDefinition } from '../../../shared/models/models';
       justify-content: center;
     }
 
-    mat-dialog-content {
-      min-width: 500px;
-      max-width: 600px;
-      box-sizing: border-box;
-      overflow-x: hidden;
-    }
-
-    .arrangements-container {
-      max-height: 400px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 4px;
-      box-sizing: border-box;
-    }
-
-    .arrangement-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .arrangement-item {
-      padding: 12px;
-      border: 1px solid rgba(147, 51, 234, 0.2);
-      border-radius: 6px;
-      background: rgba(20, 20, 25, 0.6);
-      backdrop-filter: blur(10px);
-      transition: all 0.2s;
-      cursor: pointer;
-      box-sizing: border-box;
-      width: 100%;
-    }
-
-    .arrangement-item:hover {
-      background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(236, 72, 153, 0.1));
-      border-color: rgba(147, 51, 234, 0.4);
-      transform: translateX(4px);
-    }
-
-    .arrangement-item.selected {
-      background: linear-gradient(135deg, rgba(147, 51, 234, 0.15), rgba(236, 72, 153, 0.15));
-      border-color: rgba(147, 51, 234, 0.6);
-      border-left-width: 3px;
-    }
-
     .arrangement-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
       margin-bottom: 8px;
     }
 
-    .arrangement-icon {
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #9333ea, #ec4899);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .arrangement-info {
-      flex: 1;
-    }
-
-    .arrangement-name {
-      font-size: 16px;
-      font-weight: 500;
-      margin-bottom: 4px;
-    }
-
-    .arrangement-meta {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.5);
-      line-height: 1.5;
-    }
-
-    .separator {
-      margin: 0 6px;
-      color: rgba(255, 255, 255, 0.3);
-    }
-
-    .track-names {
-      color: rgba(147, 51, 234, 0.7);
-      font-style: italic;
-    }
-
-    .delete-btn {
-      opacity: 0.3;
-      transition: all 0.2s;
-    }
-
-    .delete-btn:hover {
-      opacity: 1;
-      color: #ef4444;
-      transform: scale(1.1);
-    }
-
-
-    .empty-state {
-      padding: 48px;
-      text-align: center;
-      color: rgba(255, 255, 255, 0.5);
-    }
-
-    .empty-state mat-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-      margin: 0 auto 16px;
-      opacity: 0.3;
-    }
-
-    ::ng-deep .mat-mdc-dialog-actions .mat-mdc-button:not(.mat-mdc-unelevated-button) {
-      color: rgba(255, 255, 255, 0.7) !important;
-    }
-
-    ::ng-deep .mat-mdc-dialog-actions .mat-mdc-button:not(.mat-mdc-unelevated-button):hover {
-      background: rgba(255, 255, 255, 0.1) !important;
-      color: rgba(255, 255, 255, 0.9) !important;
-    }
-
-    ::ng-deep .mat-mdc-dialog-actions .mat-mdc-unelevated-button.mat-primary {
-      background-color: #9333ea !important;
-      color: #ffffff !important;
-    }
-
-    ::ng-deep .mat-mdc-dialog-actions .mat-mdc-unelevated-button.mat-primary:hover {
-      background-color: #a855f7 !important;
-    }
-
-    ::ng-deep .mat-mdc-dialog-actions .mat-mdc-unelevated-button.mat-primary:disabled {
-      background-color: rgba(147, 51, 234, 0.3) !important;
-      color: rgba(255, 255, 255, 0.5) !important;
-    }
+    /* Shared styles imported via styleUrls */
   `]
 })
 export class LoadArrangementDialogComponent {
