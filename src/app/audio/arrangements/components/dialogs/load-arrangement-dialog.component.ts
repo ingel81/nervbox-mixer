@@ -34,7 +34,7 @@ import { TrackDefinition } from '../../../shared/models/models';
         <mat-icon class="search-icon">search</mat-icon>
       </div>
 
-      <div class="arrangements-container" *ngIf="filteredArrangements().length > 0">
+      <div class="arrangements-container nervbox-scrollbar" *ngIf="filteredArrangements().length > 0">
         <div class="arrangement-list">
           <div *ngFor="let arr of filteredArrangements()" 
                class="arrangement-item"
@@ -287,11 +287,16 @@ export class LoadArrangementDialogComponent {
 
   filteredArrangements = computed(() => {
     const term = this.searchTerm.toLowerCase();
-    if (!term) return this.savedArrangements();
+    const arrangements = !term 
+      ? this.savedArrangements() 
+      : this.savedArrangements().filter(arr => 
+          arr.arrangement.name.toLowerCase().includes(term) ||
+          arr.arrangement.tracks.some(t => t.name.toLowerCase().includes(term))
+        );
     
-    return this.savedArrangements().filter(arr => 
-      arr.arrangement.name.toLowerCase().includes(term) ||
-      arr.arrangement.tracks.some(t => t.name.toLowerCase().includes(term))
+    // Sort by updatedAt, newest first
+    return arrangements.sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
   });
 

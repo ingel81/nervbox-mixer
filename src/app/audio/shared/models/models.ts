@@ -35,6 +35,7 @@ export interface ClipDefinition {
   soundId: string;        // Reference to sound library
   startTime: number;      // seconds
   duration?: number;      // optional - uses full sound if omitted
+  offset?: number;        // offset into the AudioBuffer where playback begins (seconds)
   trimStart?: number;     // seconds to trim from start
   trimEnd?: number;       // seconds to trim from end
   volume?: number;        // clip-specific volume (0-1)

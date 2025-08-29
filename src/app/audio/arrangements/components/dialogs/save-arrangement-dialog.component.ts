@@ -42,7 +42,7 @@ export interface SaveArrangementDialogData {
 
       <div class="existing-arrangements" *ngIf="savedArrangements().length > 0">
         <h3>Existing Arrangements</h3>
-        <div class="arrangement-list">
+        <div class="arrangement-list nervbox-scrollbar">
           <div *ngFor="let arr of savedArrangements()" 
                class="arrangement-item"
                [class.selected]="arr.arrangement.name === arrangementName"
@@ -267,7 +267,11 @@ export class SaveArrangementDialogComponent {
     private storage: ArrangementStorageService
   ) {
     this.arrangementName = data.currentName || '';
-    this.savedArrangements.set(storage.savedArrangements());
+    // Sort arrangements by date, newest first
+    const sortedArrangements = storage.savedArrangements().sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+    this.savedArrangements.set(sortedArrangements);
     this.checkExisting();
   }
 

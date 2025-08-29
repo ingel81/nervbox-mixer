@@ -68,7 +68,7 @@ export class ArrangementService {
         name: clipDef.soundId,
         startTime: clipDef.startTime,
         duration: Math.max(0.01, duration), // Ensure minimum duration
-        offset: clipDef.trimStart || 0,
+        offset: clipDef.offset !== undefined ? clipDef.offset : (clipDef.trimStart || 0),
         trimStart: clipDef.trimStart || 0,
         trimEnd: clipDef.trimEnd || 0,
         originalDuration: buffer.duration,
@@ -114,6 +114,7 @@ export class ArrangementService {
         soundId: clip.soundId || crypto.randomUUID(),
         startTime: clip.startTime,
         duration: clip.duration !== clip.originalDuration ? clip.duration : undefined,
+        offset: clip.offset !== clip.trimStart ? clip.offset : undefined,
         trimStart: clip.trimStart > 0 ? clip.trimStart : undefined,
         trimEnd: clip.trimEnd > 0 ? clip.trimEnd : undefined,
         color: clip.color
