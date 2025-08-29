@@ -7,27 +7,27 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AudioEngineService } from '../services/audio-engine.service';
-import { SoundLibraryService } from '../services/sound-library.service';
-import { EditorStateService } from '../services/editor-state.service';
-import { DefaultArrangementService } from '../services/default-arrangement.service';
-import { WaveformService } from '../services/waveform.service';
-import { TimelineService } from '../services/timeline.service';
-import { InteractionCoordinatorService } from '../services/interaction-coordinator.service';
-import { FileImportService } from '../services/file-import.service';
-import { ClipFactoryService } from '../services/clip-factory.service';
-import { MobileInteractionService } from '../services/mobile-interaction.service';
+import { AudioEngineService } from '../../services/audio-engine.service';
+import { SoundLibraryService } from '../../services/sound-library.service';
+import { EditorStateService } from '../../services/editor-state.service';
+import { DefaultArrangementService } from '../../services/default-arrangement.service';
+import { WaveformService } from '../../services/waveform.service';
+import { TimelineService } from '../../services/timeline.service';
+import { InteractionCoordinatorService } from '../../services/interaction-coordinator.service';
+import { FileImportService } from '../../services/file-import.service';
+import { ClipFactoryService } from '../../services/clip-factory.service';
+import { MobileInteractionService } from '../../services/mobile-interaction.service';
 import { LoopRegionComponent } from './loop-region.component';
-import { SoundBrowserComponent } from './sound-browser.component';
+import { SoundBrowserComponent } from '../browser/sound-browser.component';
 import { BottomPanelComponent } from './bottom-panel.component';
-import { PreviewClipComponent } from './preview-clip.component';
+import { PreviewClipComponent } from '../browser/preview-clip.component';
 import {
   ClipDragEvent,
   ClipTrimEvent,
   ClipSelectEvent,
   ClipDeleteEvent,
   ClipDuplicateEvent,
-} from './clip.component';
+} from '../timeline/clip.component';
 import {
   TrackMuteEvent,
   TrackSoloEvent,
@@ -35,16 +35,16 @@ import {
   TrackRenameEvent,
   TrackDropEvent,
   TrackDragEvent,
-} from './track.component';
-import { TrackHeaderComponent } from './track-header.component';
-import { TrackLaneComponent } from './track-lane.component';
-import { Clip, Track } from '../models/models';
+} from '../timeline/track.component';
+import { TrackHeaderComponent } from '../timeline/track-header.component';
+import { TrackLaneComponent } from '../timeline/track-lane.component';
+import { Clip, Track } from '../../models/models';
 
 import { MatSliderModule } from '@angular/material/slider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'audio-editor',

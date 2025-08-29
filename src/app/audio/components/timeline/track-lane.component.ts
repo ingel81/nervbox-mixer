@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent, ClipDeleteEvent, ClipDuplicateEvent } from './clip.component';
-import { Track } from '../models/models';
+import { Track } from '../../models/models';
 
 export interface TrackDropEvent {
   track: Track;

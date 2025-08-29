@@ -1,8 +1,8 @@
 import { Component, ElementRef, ViewChild, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EditorStateService } from '../services/editor-state.service';
-import { TimelineService } from '../services/timeline.service';
-import { InteractionCoordinatorService } from '../services/interaction-coordinator.service';
+import { EditorStateService } from '../../services/editor-state.service';
+import { TimelineService } from '../../services/timeline.service';
+import { InteractionCoordinatorService } from '../../services/interaction-coordinator.service';
 
 @Component({
   selector: 'loop-region',

@@ -1,12 +1,12 @@
 import { Component, Input, Output, EventEmitter, HostListener, computed, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { Clip, Track } from '../models/models';
-import { EditorStateService } from '../services/editor-state.service';
-import { WaveformService } from '../services/waveform.service';
-import { UnifiedDragService } from '../services/unified-drag.service';
-import { DragResult } from '../services/virtual-drag.service';
-import { pxToSeconds } from '../utils/timeline.util';
+import { Clip, Track } from '../../models/models';
+import { EditorStateService } from '../../services/editor-state.service';
+import { WaveformService } from '../../services/waveform.service';
+import { UnifiedDragService } from '../../services/unified-drag.service';
+import { DragResult } from '../../services/virtual-drag.service';
+import { pxToSeconds } from '../../utils/timeline.util';
 
 export interface ClipDragEvent {
   clip: Clip;

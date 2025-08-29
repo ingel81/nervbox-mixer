@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { BottomPanelService } from '../services/bottom-panel.service';
-import { SoundBrowserComponent } from './sound-browser.component';
+import { BottomPanelService } from '../../services/bottom-panel.service';
+import { SoundBrowserComponent } from '../browser/sound-browser.component';
 
 @Component({
   selector: 'bottom-panel',

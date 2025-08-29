@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TrackHeaderComponent, TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackRenameEvent } from './track-header.component';
 import { TrackLaneComponent, TrackDropEvent, TrackDragEvent } from './track-lane.component';
 import { ClipDragEvent, ClipTrimEvent, ClipSelectEvent } from './clip.component';
-import { Track } from '../models/models';
+import { Track } from '../../models/models';
 
 // Re-export interfaces from child components for backward compatibility
 export { TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackRenameEvent } from './track-header.component';

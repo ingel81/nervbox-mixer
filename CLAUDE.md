@@ -31,6 +31,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run format` - Format code with Prettier
 - `npm run format:check` - Check code formatting without making changes
 - `npm test` - Run unit tests (no tests implemented)
+- `npm run e2e` - Run end-to-end tests with Playwright
+- `npm run e2e:ui` - Run e2e tests with UI mode
+- `npm run e2e:debug` - Run e2e tests in debug mode
 
 ## Architecture
 
@@ -59,7 +62,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Waveform generation cached per clip
 - Support for `originalDuration` property
 
-**Timeline Coordinates** (timeline.util.ts):
+**Timeline Coordinates** (timeline.service.ts):
 - Pixel-to-time conversion via pxPerSecond signal
 - Supports zoom via Ctrl+scroll wheel
 - Critical for drag/drop and playhead positioning
@@ -74,19 +77,32 @@ src/app/audio/
 │   ├── track.component.*           # Track UI
 │   ├── track-header.component.*    # Track controls
 │   ├── track-lane.component.*      # Track clip container
+│   ├── loop-region.component.*     # Loop region visualization
+│   ├── bottom-panel.component.*    # Bottom control panel
+│   ├── preview-clip.component.*    # Audio preview component
 │   └── dialogs/                    # Material dialogs for save/load
 ├── services/          # Business logic services with index.ts
 │   ├── audio-engine.service.ts     # Web Audio API operations
 │   ├── sound-library.service.ts    # Audio asset management
 │   ├── editor-state.service.ts     # Centralized state
 │   ├── arrangement-storage.service.ts  # Save/load arrangements
+│   ├── arrangement.service.ts      # Arrangement management
 │   ├── default-arrangement.service.ts  # Default pattern generation
-│   └── waveform.service.ts         # Waveform generation
+│   ├── waveform.service.ts         # Waveform generation
+│   ├── timeline.service.ts         # Timeline coordinate conversion
+│   ├── interaction-coordinator.service.ts  # Drag & interaction coordination
+│   ├── recording.service.ts        # Audio recording functionality
+│   ├── bottom-panel.service.ts     # Bottom panel state
+│   ├── file-import.service.ts      # File import handling
+│   ├── clip-factory.service.ts     # Clip creation
+│   ├── mobile-interaction.service.ts  # Mobile touch interactions
+│   ├── virtual-drag.service.ts     # Virtual drag operations
+│   ├── unified-drag.service.ts     # Unified drag handling
+│   └── drag-handlers.ts            # Drag event handlers
 ├── models/            # TypeScript interfaces with index.ts
 │   ├── models.ts                   # Core interfaces
 │   └── lamejs.d.ts                 # MP3 encoder types
 ├── utils/             # Helper utilities with index.ts
-│   ├── timeline.util.ts            # Pixel/time conversion
 │   └── sound-library.ts            # Generated catalog
 └── data/              
     └── arrangement-patterns.ts      # Predefined patterns
@@ -125,6 +141,7 @@ scripts/
 - **prettier**: v3.6.2 - Code formatting
 - **typescript-eslint**: v8.34.1 - TypeScript ESLint integration  
 - **typescript**: v5.8.3 - Latest TypeScript with enhanced type checking
+- **@playwright/test**: v1.54.2 - End-to-end testing framework
 - **Web Audio API**: Native browser API
 - **HTML5 Canvas**: Waveform visualization
 

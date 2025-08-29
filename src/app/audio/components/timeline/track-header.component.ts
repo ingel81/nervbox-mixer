@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Track } from '../models/models';
+import { Track } from '../../models/models';
 
 export interface TrackMuteEvent {
   track: Track;

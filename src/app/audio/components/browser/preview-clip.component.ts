@@ -1,6 +1,6 @@
 import { Component, Input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { WaveformService } from '../services/waveform.service';
+import { WaveformService } from '../../services/waveform.service';
 
 @Component({
   selector: 'preview-clip',
