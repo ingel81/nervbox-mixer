@@ -350,17 +350,4 @@ export class ContentCreationComponent {
     return colors[Math.abs(hash) % colors.length];
   }
 
-  private randomColor(): string {
-    const colors = [
-      'linear-gradient(45deg, #dc2626, #b91c1c)',
-      'linear-gradient(45deg, #f59e0b, #d97706)',
-      'linear-gradient(45deg, #10b981, #059669)',
-      'linear-gradient(45deg, #3b82f6, #1d4ed8)',
-      'linear-gradient(45deg, #8b5cf6, #7c3aed)',
-      'linear-gradient(45deg, #ec4899, #be185d)',
-      'linear-gradient(45deg, #06b6d4, #0891b2)',
-      'linear-gradient(45deg, #84cc16, #65a30d)'
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
-  }
 }

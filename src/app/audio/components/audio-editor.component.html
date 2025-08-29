@@ -50,36 +50,8 @@
             </ng-container>
           </div>
           
-          <!-- Loop Region -->
-          <div class="loop-region" 
-               *ngIf="editorState.loopEnabled()"
-               [style.left.px]="editorState.loopStart() * pxPerSecond()"
-               [style.width.px]="(editorState.loopEnd() - editorState.loopStart()) * pxPerSecond()"
-               (mousedown)="loopRegionMouseDown($event)"
-               (touchstart)="loopRegionTouchStart($event)"
-               matTooltip="Drag to move loop region">
-          </div>
-          
-          <!-- Loop Markers -->
-          <div class="loop-marker loop-start" 
-               *ngIf="editorState.loopEnabled()"
-               [style.left.px]="editorState.loopStart() * pxPerSecond()"
-               (mousedown)="loopMarkerMouseDown($event, 'start')"
-               (touchstart)="loopMarkerTouchStart($event, 'start')"
-               [class.mobile-marker]="isTouchDevice()"
-               matTooltip="Loop Start">
-            <div class="marker-handle"></div>
-          </div>
-          
-          <div class="loop-marker loop-end" 
-               *ngIf="editorState.loopEnabled()"
-               [style.left.px]="editorState.loopEnd() * pxPerSecond()"
-               (mousedown)="loopMarkerMouseDown($event, 'end')"
-               (touchstart)="loopMarkerTouchStart($event, 'end')"
-               [class.mobile-marker]="isTouchDevice()"
-               matTooltip="Loop End">
-            <div class="marker-handle"></div>
-          </div>
+          <!-- Loop Region Component -->
+          <loop-region [scrollX]="scrollX()"></loop-region>
           
           <div class="playhead-ruler" [style.left.px]="(playhead() * pxPerSecond())"></div>
         </div>

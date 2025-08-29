@@ -5,23 +5,36 @@ import { Track, Clip } from '../models/models';
   providedIn: 'root'
 })
 export class EditorStateService {
-  // Core state signals
+  // === TIMELINE & PLAYBACK STATE ===
   tracks = signal<Track[]>([]);
   playhead = signal(0);
-  selectedClipId = signal<string | null>(null);
   isPlaying = signal(false);
-  currentArrangementName = signal<string>('Untitled');
-  
-  // UI state
   pxPerSecond = signal(100);
   duration = signal(30);
+  
+  // Loop region state (grouped with timeline)
+  loopEnabled = signal(false);
+  loopStart = signal(0);
+  loopEnd = signal(4);
+  snapToGrid = signal(false);
+  gridResolution = signal(0.25);
+  
+  // === SELECTION STATE ===
+  selectedClipId = signal<string | null>(null);
+  activeTrackId = signal<string | null>(null);
+  activeTrack = computed(() => {
+    const id = this.activeTrackId();
+    if (!id) return null;
+    return this.tracks().find(t => t.id === id) || null;
+  });
+  
+  // === UI STATE ===
   showSoundBrowser = signal(false);
   soundBrowserOpenedFromCta = signal(false);
+  currentArrangementName = signal<string>('Untitled');
   
-  // Legacy drag state removed - using Virtual Drag System
+  // === DRAG & INTERACTION STATE ===
   dragOverTrack: Track | null = null;
-  
-  // Drag preview state for Sound Browser
   dragPreview = signal<{
     sound: { id: string; name: string; category: string };
     buffer: AudioBuffer;
@@ -34,25 +47,19 @@ export class EditorStateService {
   isDraggingClip = signal(false);
   
   // Trim state
-  trimState: { id: string; side: 'start' | 'end'; startX: number; originalTrimStart: number; originalTrimEnd: number; originalDuration: number; originalStartTime: number; clipRef: Clip } | null = null;
+  trimState: { 
+    id: string; 
+    side: 'start' | 'end'; 
+    startX: number; 
+    originalTrimStart: number; 
+    originalTrimEnd: number; 
+    originalDuration: number; 
+    originalStartTime: number; 
+    clipRef: Clip 
+  } | null = null;
   
-  // Clipboard
+  // === CLIPBOARD ===
   clipboardClip: Clip | null = null;
-  
-  // Active track management
-  activeTrackId = signal<string | null>(null);
-  activeTrack = computed(() => {
-    const id = this.activeTrackId();
-    if (!id) return null;
-    return this.tracks().find(t => t.id === id) || null;
-  });
-  
-  // Loop region state
-  loopEnabled = signal(false);
-  loopStart = signal(0); // in seconds
-  loopEnd = signal(4); // in seconds
-  snapToGrid = signal(false);
-  gridResolution = signal(0.25); // 1/4 beat at 120 BPM
   
   // Computed loop region validation
   validLoopRegion = computed(() => {
