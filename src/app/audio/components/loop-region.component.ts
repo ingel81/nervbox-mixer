@@ -76,7 +76,6 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
       border-radius: 4px;
       pointer-events: auto;
       cursor: grab;
-      transition: all 0.2s ease;
       box-shadow: 0 0 8px rgba(147, 51, 234, 0.3);
     }
     
@@ -99,7 +98,6 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
       pointer-events: auto;
       cursor: ew-resize;
       z-index: 15;
-      transition: all 0.15s ease;
     }
     
     .loop-marker:hover {
@@ -138,7 +136,6 @@ import { InteractionCoordinatorService } from '../services/interaction-coordinat
       bottom: 0;
       width: 2px;
       margin-left: 0;
-      transition: all 0.15s ease;
     }
     
     .loop-marker-grip {
