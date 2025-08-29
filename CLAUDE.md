@@ -69,43 +69,68 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### File Structure
 ```
-src/app/audio/
-├── components/         # UI components with index.ts for clean imports
-│   ├── audio-editor.component.*     # Main UI and state management
-│   ├── sound-browser.component.*    # Sound library UI
-│   ├── clip.component.*            # Individual clip UI
-│   ├── track.component.*           # Track UI
-│   ├── track-header.component.*    # Track controls
-│   ├── track-lane.component.*      # Track clip container
-│   ├── loop-region.component.*     # Loop region visualization
-│   ├── bottom-panel.component.*    # Bottom control panel
-│   ├── preview-clip.component.*    # Audio preview component
-│   └── dialogs/                    # Material dialogs for save/load
-├── services/          # Business logic services with index.ts
-│   ├── audio-engine.service.ts     # Web Audio API operations
-│   ├── sound-library.service.ts    # Audio asset management
-│   ├── editor-state.service.ts     # Centralized state
-│   ├── arrangement-storage.service.ts  # Save/load arrangements
-│   ├── arrangement.service.ts      # Arrangement management
-│   ├── default-arrangement.service.ts  # Default pattern generation
-│   ├── waveform.service.ts         # Waveform generation
-│   ├── timeline.service.ts         # Timeline coordinate conversion
-│   ├── interaction-coordinator.service.ts  # Drag & interaction coordination
-│   ├── recording.service.ts        # Audio recording functionality
-│   ├── bottom-panel.service.ts     # Bottom panel state
-│   ├── file-import.service.ts      # File import handling
-│   ├── clip-factory.service.ts     # Clip creation
-│   ├── mobile-interaction.service.ts  # Mobile touch interactions
-│   ├── virtual-drag.service.ts     # Virtual drag operations
-│   ├── unified-drag.service.ts     # Unified drag handling
-│   └── drag-handlers.ts            # Drag event handlers
-├── models/            # TypeScript interfaces with index.ts
-│   ├── models.ts                   # Core interfaces
-│   └── lamejs.d.ts                 # MP3 encoder types
-├── utils/             # Helper utilities with index.ts
-│   └── sound-library.ts            # Generated catalog
-└── data/              
-    └── arrangement-patterns.ts      # Predefined patterns
+src/app/
+├── app.component.ts                 # Root application component
+├── shell/                          # Application shell components
+│   ├── shell.component.*           # Main shell layout
+│   ├── project-management.component.ts  # Project management UI
+│   ├── content-creation.component.ts    # Content creation UI
+│   └── export-controls.component.ts     # Export functionality UI
+└── audio/                          # Audio-specific modules
+    ├── arrangements/               # Arrangement management
+    │   ├── components/
+    │   │   └── dialogs/           # Save/load/confirmation dialogs
+    │   │       ├── confirm-dialog.component.ts
+    │   │       ├── load-arrangement-dialog.component.ts
+    │   │       ├── recording-dialog.component.ts
+    │   │       └── save-arrangement-dialog.component.ts
+    │   └── services/              # Arrangement business logic
+    │       ├── arrangement-storage.service.ts  # Local storage management
+    │       ├── arrangement.service.ts          # Arrangement operations
+    │       └── default-arrangement.service.ts  # Default pattern generation
+    ├── audio-engine/              # Core audio processing
+    │   └── services/              # Audio-related services
+    │       ├── audio-engine.service.ts     # Web Audio API operations
+    │       ├── clip-factory.service.ts     # Clip creation logic
+    │       ├── file-import.service.ts      # File import handling
+    │       ├── recording.service.ts        # Audio recording
+    │       └── waveform.service.ts         # Waveform visualization
+    ├── data/                      # Static data and patterns
+    │   └── arrangement-patterns.ts         # Predefined arrangement patterns
+    ├── editor/                    # Main editor components and state
+    │   ├── components/            # Editor UI components
+    │   │   ├── audio-editor.component.*   # Main editor component (1246 lines)
+    │   │   ├── bottom-panel.component.*   # Bottom control panel
+    │   │   └── loop-region.component.ts   # Loop region visualization
+    │   └── services/              # Editor state management
+    │       ├── bottom-panel.service.ts    # Bottom panel state
+    │       └── editor-state.service.ts    # Centralized editor state
+    ├── shared/                    # Shared models and utilities
+    │   ├── models/                # TypeScript interfaces
+    │   │   ├── models.ts          # Core data models
+    │   │   └── lamejs.d.ts        # MP3 encoder type definitions
+    │   └── utils/                 # Utility functions
+    │       ├── sound-library.ts   # Generated sound catalog
+    │       └── timeline.util.ts   # Timeline utility functions
+    ├── sound-browser/             # Sound library and browser
+    │   ├── components/            # Sound browser UI
+    │   │   ├── preview-clip.component.ts   # Audio preview component
+    │   │   └── sound-browser.component.*  # Main sound browser
+    │   └── services/              # Sound library management
+    │       └── sound-library.service.ts   # Sound asset management
+    └── timeline/                  # Timeline and track components
+        ├── components/            # Timeline UI components
+        │   ├── clip.component.*           # Individual clip rendering
+        │   ├── track.component.*          # Track container component
+        │   ├── track-header.component.*   # Track controls and info
+        │   └── track-lane.component.*     # Track clip container
+        └── services/              # Timeline services
+            ├── drag-handlers.ts           # Drag event handling
+            ├── interaction-coordinator.service.ts  # Drag coordination
+            ├── mobile-interaction.service.ts       # Mobile touch support
+            ├── timeline.service.ts                 # Timeline coordinate system
+            ├── unified-drag.service.ts             # Unified drag operations
+            └── virtual-drag.service.ts             # Virtual drag handling
 
 src/assets/sounds/     # Audio files (excluded from Git)
 ├── drums/            # Drum samples
@@ -278,5 +303,26 @@ Currently no tests implemented. When adding tests:
 - Test signal updates and computed values
 - Mock AudioContext for service tests
 - Test timeline utility functions independently
-- alles was mit issues auf github zu tun hat immer mit dem entsprechenden agent machen
-- alles was mit building der app zu tun hat immer mit dem entsprechenden agent machen
+
+## Architecture Issues Identified
+
+### Critical Issues
+- **AudioEditorComponent God Component**: 1246 lines violating Single Responsibility Principle
+- **Memory Leaks**: DOM event listeners without cleanup in ngOnDestroy
+- **Direct DOM Manipulation**: Bypassing Angular's change detection system
+- **Missing OnPush Strategy**: No change detection optimization despite signal-based architecture
+
+### Service Architecture Concerns
+- **Circular Dependencies**: Services injecting each other creating tight coupling
+- **Inconsistent Import Patterns**: Mixed relative/absolute import strategies
+- **Missing Facade Pattern**: Direct service access from components creates tight coupling
+
+### Performance Issues
+- **Unbatched Signal Updates**: Multiple signal updates triggering excessive change detection
+- **Bundle Size**: 2-3MB without lazy loading for web audio application
+- **Missing Virtual Scrolling**: Performance bottleneck with 900+ audio files
+
+### Agent Usage Guidelines
+- **GitHub Issues**: Use github-issue-manager agent for all issue-related operations
+- **Build Operations**: Use build-checker agent for all build verification tasks
+- **Architecture Analysis**: Use angular-architecture-auditor for comprehensive code reviews
