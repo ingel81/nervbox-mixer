@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,13 +6,14 @@ import { MatCardModule } from '@angular/material/card';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { animate, style, transition, trigger } from '@angular/animations';
 
-interface ShortcutCategory {
-  title: string;
-  shortcuts: {
-    keys: string[];
-    description: string;
-  }[];
-}
+// Interface für zukünftige Erweiterung der Shortcut-Kategorisierung
+// interface ShortcutCategory {
+//   title: string;
+//   shortcuts: {
+//     keys: string[];
+//     description: string;
+//   }[];
+// }
 
 @Component({
   selector: 'app-keyboard-shortcuts-help',
@@ -58,7 +59,7 @@ interface ShortcutCategory {
   styles: [`
     .shortcuts-container {
       position: fixed;
-      bottom: 16px;
+      bottom: 32px;
       right: 16px;
       z-index: 1000;
       max-width: 380px;

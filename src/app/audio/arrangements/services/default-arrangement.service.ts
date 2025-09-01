@@ -3,8 +3,8 @@ import { Track } from '../../shared/models/models';
 import { ArrangementService } from './arrangement.service';
 import { 
   DEFAULT_HIPHOP_90S, 
-  HOUSE_TECHNO_128, 
-  ROCK_POP_110, 
+  // HOUSE_TECHNO_128, 
+  // ROCK_POP_110, 
   ARRANGEMENT_PATTERNS,
   PatternKey 
 } from '../../data/arrangement-patterns';
