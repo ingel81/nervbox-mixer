@@ -117,3 +117,26 @@
     min-width: 4px;
   }
 }
+
+/* Help Button */
+.help-button {
+  margin-left: 8px;
+  color: rgba(156, 39, 176, 0.8) !important;
+  
+  &:hover {
+    color: #ba68c8 !important;
+    background: rgba(156, 39, 176, 0.1);
+  }
+  
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .help-button {
+    display: none;
+  }
+}
