@@ -1,0 +1,260 @@
+/* Clip styling - Futuristic tech look */
+.clip { 
+  position: absolute; 
+  top: 50%;
+  transform: translateY(-50%);
+  height: 44px;
+  border-radius: 2px;
+  box-shadow: 
+    0 2px 10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  cursor: grab;
+  user-select: none;
+  overflow: hidden; /* Changed from visible to hidden */
+  transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px 0; /* Remove horizontal padding */
+  will-change: transform;
+  z-index: 3;
+  opacity: 1 !important;
+  box-sizing: border-box; /* Include padding and border in width calculation */
+}
+
+/* Stacking order for overlapping clips */
+.clip:hover {
+  z-index: 4;
+}
+
+.clip.dragging {
+  z-index: 5;
+}
+
+.clip.selected {
+  z-index: 6;
+}
+
+/* Resize handles for trimming */
+.resize-handle {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 6px;
+  cursor: ew-resize;
+  background: rgba(236, 72, 153, 0.3);
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  z-index: 10;
+}
+
+.resize-handle.left {
+  left: 0;
+  border-radius: 2px 0 0 2px;
+}
+
+.resize-handle.right {
+  right: 0;
+  border-radius: 0 2px 2px 0;
+}
+
+.clip.selected .resize-handle,
+.clip:hover .resize-handle {
+  opacity: 1;
+}
+
+.resize-handle:hover {
+  background: rgba(236, 72, 153, 0.6);
+  box-shadow: 0 0 8px rgba(236, 72, 153, 0.4);
+}
+
+.clip.trimming {
+  cursor: ew-resize;
+}
+
+
+/* Tech border animation */
+.clip::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 1px solid transparent;
+  border-image: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent) 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.clip:hover::before {
+  opacity: 1;
+}
+
+.clip:hover {
+  transform: translateY(-52%);
+  box-shadow: 
+    0 6px 25px rgba(0, 0, 0, 0.7),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    0 0 40px rgba(147, 51, 234, 0.3);
+  border-color: rgba(147, 51, 234, 0.6);
+  filter: brightness(1.1) saturate(1.2);
+}
+
+.clip:active, .clip.dragging {
+  cursor: grabbing;
+  transform: translateY(-50%) scale(1);
+  transition: none !important;
+  will-change: left, transform;
+}
+
+.clip.selected { 
+  border: 6px solid #ffffff;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.clip.selected::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border: 4px solid #ffffff;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+/* Clip content */
+.clip-content {
+  position: absolute;
+  top: 2px;
+  left: 8px; /* Adjust for removed padding */
+  z-index: 10;
+  pointer-events: none;
+}
+
+.clip-duration-bottom {
+  position: absolute;
+  bottom: 2px;
+  right: 8px; /* Adjust for removed padding */
+  z-index: 10;
+  pointer-events: none;
+}
+
+.clip-name { 
+  font-size: 8px !important; 
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 1) !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 1px 4px;
+  border-radius: 2px;
+  max-width: 80px;
+}
+
+.clip-duration {
+  font-size: 7px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8) !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  padding: 1px 3px;
+  border-radius: 2px;
+  display: inline-block;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 1) !important;
+  font-family: 'JetBrains Mono', monospace;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  opacity: 0.9;
+}
+
+/* Elegant gray waveforms - stronger visibility */
+.clip-waveform-img {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  opacity: 0.85;
+  pointer-events: none;
+  image-rendering: auto;
+  z-index: 5;
+  object-fit: cover; /* Changed from fill to cover */
+  mix-blend-mode: overlay;
+  filter: contrast(1.8) brightness(1.4) saturate(0.8);
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  .clip {
+    min-height: 36px;
+    height: 36px;
+    padding: 4px 6px;
+  }
+
+  /* Larger resize handles for touch */
+  .resize-handle {
+    width: 12px;
+  }
+
+  .clip-name {
+    font-size: 7px !important;
+    max-width: 60px;
+  }
+
+  .clip-duration {
+    font-size: 6px;
+  }
+}
+
+
+/* Touch-specific styles */
+@media (pointer: coarse) {
+  .clip {
+    touch-action: pan-x pan-y; /* Allow touch but don't interfere with button touches */
+  }
+
+  /* Always show resize handles on touch devices */
+  .resize-handle {
+    opacity: 0.5;
+    width: 16px; /* Even larger for touch */
+  }
+
+  .clip.selected .resize-handle {
+    opacity: 1;
+    background: rgba(236, 72, 153, 0.5);
+  }
+
+  /* Remove hover effects on touch devices */
+  .clip:hover {
+    transform: translateY(-50%);
+    box-shadow: 
+      0 2px 10px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .clip:hover::before {
+    opacity: 0;
+  }
+
+  /* Visual feedback for touch */
+  .clip:active {
+    opacity: 0.9;
+    transform: translateY(-50%) scale(0.98);
+  }
+}

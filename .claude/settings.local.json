@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run scan-sounds:*)",
+      "Bash(find:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(true)",
+      "Bash(npm start)",
+      "Bash(npm run build:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)",
+      "Bash(gh:*)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git restore:*)",
+      "Bash(npx ng add:*)",
+      "Bash(npx ng update:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run lint:*)",
+      "Bash(npx ng:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_evaluate",
+      "Bash(npm run e2e:*)",
+      "Bash(npx playwright test:*)",
+      "WebFetch(domain:material.angular.dev)",
+      "Bash(npm version:*)"
+    ],
+    "deny": []
+  }
+}

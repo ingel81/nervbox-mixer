@@ -1,0 +1,174 @@
+
+<div class="editor" 
+     (wheel)="onWheel($event)"
+     [appKeyboardShortcuts]="keyboardActions">
+  <div class="tracks">
+    <!-- Header with fixed width columns -->
+    <div class="tracks-header">
+      <div class="head-spacer">
+        <div class="transport-controls">
+          <button mat-icon-button 
+                  (click)="togglePlayback()" 
+                  matTooltip="Play/Pause"
+                  class="transport-btn">
+            <mat-icon>{{ isPlaying() ? 'pause' : 'play_arrow' }}</mat-icon>
+          </button>
+          
+          <button mat-icon-button 
+                  (click)="stop()" 
+                  matTooltip="Stop"
+                  class="transport-btn stop-btn">
+            <mat-icon>stop</mat-icon>
+          </button>
+          
+          <!-- Desktop Loop Button -->
+          <button mat-icon-button
+                  *ngIf="!isTouchDevice()"
+                  (click)="toggleLoop()"
+                  [matTooltip]="editorState.loopEnabled() ? 'Disable Loop' : 'Enable Loop'"
+                  [class.active]="editorState.loopEnabled()"
+                  class="transport-btn loop-btn">
+            <mat-icon>repeat</mat-icon>
+          </button>
+          
+          <!-- Mobile Loop Button - Larger -->
+          <button mat-icon-button
+                  *ngIf="isTouchDevice()"
+                  (click)="toggleLoop()"
+                  [class.active]="editorState.loopEnabled()"
+                  class="transport-btn mobile-loop-btn">
+            <mat-icon>repeat</mat-icon>
+          </button>
+        </div>
+        <span class="time-display" (click)="stop()" matTooltip="Click to stop">{{ formatDuration(playhead()) }}</span>
+      </div>
+      <div class="ruler-container">
+        <div class="ruler" #timeline (mousedown)="rulerMouseDown($event)">
+          <div class="ticks" [style.width.px]="duration() * pxPerSecond()">
+            <ng-container *ngFor="let i of getTimelineMarkers()">
+              <div class="tick" [style.left.px]="i * pxPerSecond()">
+                <span class="tick-label">{{ i }}s</span>
+              </div>
+            </ng-container>
+          </div>
+          
+          <!-- Loop Region Component -->
+          <loop-region [scrollX]="scrollX()"></loop-region>
+          
+          <div class="playhead-ruler" [style.left.px]="(playhead() * pxPerSecond())"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tracks body with separate scrollable columns -->
+    <div class="tracks-body">
+      <!-- Track headers (left column) -->
+      <div class="track-headers" #trackHeaders>
+        <ng-container *ngFor="let track of tracks(); trackBy: trackByFn">
+          <track-header [track]="track"
+                        [class.active]="editorState.activeTrackId() === track.id"
+                        (muteToggled)="onTrackMuteToggled($event)"
+                        (soloToggled)="onTrackSoloToggled($event)"
+                        (trackDeleted)="onTrackDeleted($event)"
+                        (trackRenamed)="onTrackRenamed($event)"
+                        (trackClicked)="onTrackHeaderClicked($event)">
+          </track-header>
+        </ng-container>
+      </div>
+
+      <!-- Track lanes (right column) -->
+      <div class="track-lanes" #trackLanes (scroll)="onTrackScroll($event)">
+        <ng-container *ngFor="let track of tracks(); let i = index; trackBy: trackByFn">
+          <track-lane [track]="track"
+                      [tracks]="tracks()"
+                      [trackIndex]="i"
+                      [class.active]="editorState.activeTrackId() === track.id"
+                      [pxPerSecond]="pxPerSecond()"
+                      [duration]="duration()"
+                      [playhead]="playhead()"
+                      [isDragOver]="dragOverTrack?.id === track.id"
+                      [dragPreview]="editorState.dragPreview()"
+                      (trackDrop)="onTrackDrop($event)"
+                      (trackDragEnter)="onTrackDragEnter($event)"
+                      (trackDragLeave)="onTrackDragLeave($event)"
+                      (trackHover)="onTrackHover($event)"
+                      (laneMouseDown)="laneMouseDown($event, track)"
+                      (laneTouchStart)="laneTouchStart($event, track)"
+                      (clipSelected)="onClipSelected($event)"
+                      (clipDragStarted)="onClipDragStarted($event)"
+                      (clipTrimStarted)="onClipTrimStarted($event)"
+                      (clipDeleted)="onClipDeleted($event)"
+                      (clipDuplicated)="onClipDuplicated($event)">
+          </track-lane>
+        </ng-container>
+      </div>
+
+      <!-- Add Track Button inside tracks-body -->
+      <div class="add-track-container">
+        <button class="add-track-btn" 
+                (click)="addTrack()" 
+                mat-stroked-button>
+          <mat-icon>add</mat-icon>
+          Add Track
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Button Layer using CSS Subgrid -->
+    <div class="mobile-button-layer" *ngIf="isTouchDevice()">
+      <div class="mobile-button-container">
+        <!-- Mobile Delete Button -->
+        <button class="mobile-clip-btn delete"
+                [style.top.px]="getMobileButtonTop(selectedClipId())"
+                [style.left.px]="getMobileDeleteButtonLeft(selectedClipId())"
+                (click)="deleteSelectedClip()"
+                (touchstart)="deleteSelectedClip()"
+                *ngIf="selectedClipId() && !editorState.isDraggingClip()">
+          <mat-icon>delete_outline</mat-icon>
+        </button>
+        
+        <!-- Mobile Duplicate Button -->
+        <button class="mobile-clip-btn duplicate"
+                [style.top.px]="getMobileButtonTop(selectedClipId())"
+                [style.left.px]="getMobileDuplicateButtonLeft(selectedClipId())"
+                (click)="duplicateSelectedClip()"
+                (touchstart)="duplicateSelectedClip()"
+                *ngIf="selectedClipId() && !editorState.isDraggingClip()">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sound Browser -->
+  <sound-browser *ngIf="showSoundBrowser()"
+                 [openedFromCta]="soundBrowserOpenedFromCta()"
+                 (soundSelected)="onSoundSelected($event)"
+                 (soundDragStarted)="onSoundDragStarted($event)"
+                 (browserToggled)="toggleSoundBrowser()">
+  </sound-browser>
+
+  <!-- Drag Preview Overlay -->
+  <preview-clip *ngIf="editorState.dragPreview()"
+                [soundName]="editorState.dragPreview()!.sound.name"
+                [audioBuffer]="editorState.dragPreview()!.buffer"
+                [position]="editorState.dragPreview()!.position"
+                [pxPerSecond]="pxPerSecond()"
+                [isValidDrop]="editorState.dragPreview()!.isValidDrop">
+  </preview-clip>
+
+
+
+  <!-- Version Info -->
+  <div class="version-info">
+    <a [href]="repository" target="_blank" rel="noopener noreferrer">
+      {{ version }} | {{ author }}
+      <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+      </svg>
+    </a>
+  </div>
+
+  <!-- Bottom Panel -->
+  <bottom-panel></bottom-panel>
+</div>

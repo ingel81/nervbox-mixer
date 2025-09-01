@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+dist/
+
+# Audio files (too large)
+src/assets/sounds/
+
+# Generated files
+*.log
+*.tgz
+.angular/
+coverage/
+
+# IDE files
+.vscode/
+.idea/
+
+# Git
+.git/

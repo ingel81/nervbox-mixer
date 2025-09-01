@@ -1,0 +1,931 @@
+:host { 
+  display: block; 
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  background: #000;
+}
+
+/* Editor - Dark tech aesthetic */
+.editor { 
+  background: 
+    radial-gradient(ellipse at top, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
+    linear-gradient(180deg, #0a0a0a 0%, #000 100%);
+  min-height: calc(100vh - 48px); 
+  overflow: visible;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sound Library Call to Action */
+.sound-cta {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 200;
+}
+
+.sound-cta-btn {
+  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%) !important;
+  color: white !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(147, 51, 234, 0.3) !important;
+  border: none !important;
+  outline: none !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: none !important;
+  letter-spacing: 0.5px;
+  font-family: 'JetBrains Mono', monospace !important;
+  animation: pulse-glow 2s infinite;
+}
+
+.sound-cta-btn:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+  box-shadow: 0 8px 30px rgba(147, 51, 234, 0.4) !important;
+  background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%) !important;
+  animation: none;
+}
+
+.sound-cta-btn:focus {
+  outline: none !important;
+  box-shadow: 0 4px 20px rgba(147, 51, 234, 0.3) !important;
+}
+
+.sound-cta-btn mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 4px 20px rgba(147, 51, 234, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(147, 51, 234, 0.5);
+  }
+}
+
+
+/* Version Info */
+.version-info {
+  position: fixed;
+  bottom: 8px;
+  right: 12px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  z-index: 100;
+  user-select: none;
+}
+
+.version-info a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.version-info a:hover {
+  color: rgba(147, 51, 234, 0.8);
+  text-decoration: none;
+}
+
+.github-icon {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+
+/* Grid overlay effect */
+.editor::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    repeating-linear-gradient(0deg, 
+      transparent, 
+      transparent 39px, 
+      rgba(147, 51, 234, 0.03) 39px, 
+      rgba(147, 51, 234, 0.03) 40px),
+    repeating-linear-gradient(90deg, 
+      transparent, 
+      transparent 39px, 
+      rgba(147, 51, 234, 0.03) 39px, 
+      rgba(147, 51, 234, 0.03) 40px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Futuristic scrollbar */
+.tracks::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.tracks::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+}
+
+.tracks::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  box-shadow: none;
+}
+
+.tracks::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Tracks container - Flex layout for better scrolling */
+.tracks { 
+  position: relative;
+  flex: 1;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  max-height: calc(100vh - 48px - 36px);
+}
+
+/* Tracks header - Grid layout */
+.tracks-header { 
+  z-index: 50;
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.2);
+}
+
+.head-spacer { 
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(147, 51, 234, 0.2);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.2);
+  height: 36px;
+  position: sticky;
+  top: 0;
+  z-index: 51;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.head-spacer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(147, 51, 234, 0.3), transparent);
+  animation: scan 3s linear infinite;
+}
+
+.transport-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+}
+
+.transport-btn {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  background: rgba(147, 51, 234, 0.1) !important;
+  border: 1px solid rgba(147, 51, 234, 0.3) !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+
+.transport-btn:hover {
+  color: #fff !important;
+  background: rgba(147, 51, 234, 0.2) !important;
+  border-color: rgba(147, 51, 234, 0.5) !important;
+  transform: scale(1.05);
+}
+
+.transport-btn mat-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  line-height: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.transport-btn.loop-btn.active {
+  background: rgba(147, 51, 234, 0.3) !important;
+  border-color: rgba(147, 51, 234, 0.6) !important;
+  color: rgba(147, 51, 234, 1) !important;
+  box-shadow: 0 0 8px rgba(147, 51, 234, 0.3) !important;
+}
+
+.transport-btn.loop-btn.active:hover {
+  background: rgba(147, 51, 234, 0.4) !important;
+  border-color: rgba(147, 51, 234, 0.8) !important;
+}
+
+/* Mobile Loop Button - Larger and more touch-friendly */
+.mobile-loop-btn {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  background: rgba(147, 51, 234, 0.1) !important;
+  border: 1px solid rgba(147, 51, 234, 0.3) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.mobile-loop-btn mat-icon {
+  font-size: 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.mobile-loop-btn.active {
+  background: rgba(147, 51, 234, 0.3) !important;
+  border-color: rgba(147, 51, 234, 0.6) !important;
+  color: rgba(147, 51, 234, 1) !important;
+  box-shadow: 0 0 8px rgba(147, 51, 234, 0.3) !important;
+}
+
+.mobile-loop-btn:hover,
+.mobile-loop-btn.active:hover {
+  background: rgba(147, 51, 234, 0.4) !important;
+  border-color: rgba(147, 51, 234, 0.8) !important;
+  transform: scale(1.05) !important;
+}
+
+@keyframes scan {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.time-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #f97316;
+  text-shadow: 0 0 10px rgba(147, 51, 234, 0.8);
+  z-index: 2;
+  position: relative;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.time-display:hover {
+  color: #fbbf24;
+  text-shadow: 0 0 15px rgba(147, 51, 234, 1);
+  transform: scale(1.05);
+}
+
+/* Mobile time display - much smaller */
+@media (max-width: 768px) {
+  .time-display {
+    font-size: 8px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+  
+  /* Mobile transport controls - better spacing */
+  .head-spacer {
+    padding: 0 4px;
+    gap: 2px;
+  }
+  
+  .transport-controls {
+    gap: 2px;
+    margin-right: 4px;
+  }
+  
+  .transport-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+  }
+  
+  .mobile-loop-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+  }
+  
+  .mobile-loop-btn mat-icon {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+  }
+}
+
+/* Ruler - Tech style */
+.ruler-container {
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.ruler { 
+  background: linear-gradient(90deg, rgba(10, 10, 10, 0.8) 0%, rgba(20, 10, 25, 0.8) 100%);
+  height: 36px;
+  overflow: hidden;
+  position: relative;
+  border-left: 1px solid rgba(147, 51, 234, 0.1);
+}
+
+.ticks { 
+  position: relative; 
+  height: 100%;
+  min-width: 100%;
+}
+
+.tick { 
+  position: absolute; 
+  top: 0; 
+  width: 1px; 
+  height: 100%; 
+  background: linear-gradient(180deg, rgba(147, 51, 234, 0.3) 0%, transparent 100%);
+}
+
+.tick-label { 
+  position: absolute; 
+  top: 50%;
+  left: 6px;
+  transform: translateY(-50%);
+  font-size: 11px; 
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-shadow: 0 0 3px rgba(147, 51, 234, 0.3);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+/* Loop region styles now in LoopRegionComponent */
+
+/* Playhead in ruler */
+.playhead-ruler {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(180deg, #f97316 0%, #fbbf24 100%);
+  box-shadow: 
+    0 0 20px rgba(249, 115, 22, 0.8),
+    0 0 40px rgba(249, 115, 22, 0.4);
+  pointer-events: none;
+  z-index: 20;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Playhead pulse animation */
+@keyframes pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+.tracks-heads {
+  display: flex;
+  flex-direction: column;
+}
+
+.tracks-lanes {
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* TrackComponent handles both head and lane now */
+}
+
+/* Tech-style scrollbar for timeline */
+.tracks-lanes::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.tracks-lanes::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+}
+
+.tracks-lanes::-webkit-scrollbar-thumb {
+  background: rgba(147, 51, 234, 0.4);
+  border-radius: 3px;
+  box-shadow: 0 0 5px rgba(147, 51, 234, 0.3);
+}
+
+.tracks-lanes::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 51, 234, 0.6);
+  box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
+}
+
+/* Tracks body - Grid layout */
+.tracks-body {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  grid-template-rows: auto auto; /* tracks content, add button */
+  overflow: visible;
+  flex: 0 0 auto; /* Don't grow, just take needed space */
+}
+
+.track-headers {
+  grid-column: 1;
+  grid-row: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 48px - 36px - 60px); /* Same as track-lanes */
+}
+
+.track-lanes {
+  grid-column: 2;
+  grid-row: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  max-height: calc(100vh - 48px - 36px - 60px); /* Reserve space for add button */
+  padding-bottom: 8px; /* Subtle spacing from bottom */
+}
+
+/* Synchronized scrolling */
+.track-headers::-webkit-scrollbar {
+  width: 0;
+  display: none;
+}
+
+.track-lanes::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.track-lanes::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  border: 1px solid rgba(147, 51, 234, 0.1);
+}
+
+.track-lanes::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.6) 0%, rgba(236, 72, 153, 0.5) 100%);
+  border-radius: 4px;
+  border: 1px solid rgba(147, 51, 234, 0.3);
+  box-shadow: 0 0 8px rgba(147, 51, 234, 0.4);
+}
+
+.track-lanes::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.8) 0%, rgba(236, 72, 153, 0.7) 100%);
+  box-shadow: 0 0 15px rgba(147, 51, 234, 0.6);
+  border-color: rgba(147, 51, 234, 0.5);
+}
+
+
+/* Add Track Button - Grid positioned */
+.add-track-container {
+  grid-column: 1 / -1; /* Span both columns */
+  grid-row: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px;
+  border-top: 1px solid rgba(147, 51, 234, 0.2);
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+.add-track-btn {
+  color: rgba(255, 255, 255, 0.4) !important;
+  border-color: rgba(147, 51, 234, 0.15) !important;
+  font-size: 12px !important;
+  padding: 6px 16px !important;
+  height: 32px;
+  min-width: 120px;
+  transition: all 0.2s ease !important;
+  background: rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(2px);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.add-track-btn:hover {
+  background: rgba(147, 51, 234, 0.08) !important;
+  border-color: rgba(147, 51, 234, 0.3) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 0 5px rgba(147, 51, 234, 0.2);
+}
+
+.add-track-btn mat-icon {
+  margin-right: 6px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+}
+
+/* Mobile Button Layer - Positioned over tracks-body */
+.mobile-button-layer {
+  position: absolute;
+  top: 36px; /* Start after tracks-header (36px height) */
+  left: 180px; /* Start at track-lanes column (180px offset) */
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Button container covers the track-lanes area */
+.mobile-button-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Individual mobile buttons */
+.mobile-clip-btn {
+  position: absolute;
+  pointer-events: auto; /* Allow button clicks */
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.95);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  transition: none; /* Remove position animation - buttons should appear instantly */
+  opacity: 0.95;
+  backdrop-filter: blur(4px);
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.mobile-clip-btn.delete {
+  background: rgba(220, 38, 38, 0.9);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 8px rgba(220, 38, 38, 0.4);
+}
+
+.mobile-clip-btn.duplicate {
+  background: rgba(34, 197, 94, 0.9);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+.mobile-clip-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  font-weight: bold;
+}
+
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.3; }
+}
+
+.playhead, .playhead-ruler {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Material overrides - Tech style */
+.mat-mdc-button, .mat-mdc-icon-button {
+  color: rgba(147, 51, 234, 0.9) !important;
+  transition: all 0.15s ease !important;
+}
+
+.mat-mdc-button:hover, .mat-mdc-icon-button:hover {
+  color: rgba(236, 72, 153, 1) !important;
+  background: rgba(147, 51, 234, 0.1) !important;
+}
+
+.mat-mdc-icon-button.active {
+  background: rgba(147, 51, 234, 0.2) !important;
+  color: rgba(236, 72, 153, 1) !important;
+}
+
+.export-btn {
+  background: linear-gradient(45deg, #9333ea 0%, #ec4899 100%) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  box-shadow: 
+    0 2px 10px rgba(147, 51, 234, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(236, 72, 153, 0.3) !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  padding: 0 12px !important;
+  height: 36px !important;
+  margin-left: 8px !important;
+}
+
+.export-btn:hover {
+  box-shadow: 
+    0 4px 20px rgba(236, 72, 153, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-1px);
+  background: linear-gradient(45deg, #a855f7 0%, #f472b6 100%) !important;
+}
+
+.export-btn mat-icon {
+  margin-right: 4px !important;
+}
+
+/* Tooltip tech style */
+.mat-mdc-tooltip {
+  background: rgba(147, 51, 234, 0.95) !important;
+  font-size: 10px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Arrangements button */
+.arrangement-btn {
+  background: rgba(147, 51, 234, 0.1) !important;
+  color: rgba(147, 51, 234, 0.9) !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  padding: 0 12px !important;
+  height: 36px !important;
+  margin-left: 8px !important;
+  border: 1px solid rgba(147, 51, 234, 0.2) !important;
+  transition: all 0.15s ease !important;
+}
+
+.arrangement-btn:hover {
+  background: rgba(147, 51, 234, 0.2) !important;
+  color: rgba(236, 72, 153, 1) !important;
+  border-color: rgba(147, 51, 234, 0.5) !important;
+  transform: translateY(-1px);
+}
+
+.arrangement-btn mat-icon {
+  margin-right: 4px !important;
+}
+
+/* Menu item styling */
+.delete-menu-item {
+  color: #ef4444 !important;
+}
+
+.delete-menu-item mat-icon {
+  color: #ef4444 !important;
+}
+
+.delete-menu-item:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  /* Adjust editor height for mobile viewport */
+  .editor {
+    height: calc(100vh - 48px);
+    height: calc(100dvh - 48px); /* Dynamic viewport height for mobile */
+  }
+
+  /* Smaller track headers on mobile */
+  .tracks-header {
+    grid-template-columns: 120px 1fr;
+  }
+  
+  .tracks-body {
+    grid-template-columns: 120px 1fr;
+  }
+  
+  /* Adjust mobile button layer for smaller track headers */
+  .mobile-button-layer {
+    left: 120px; /* Match mobile track header width */
+  }
+
+  /* Hide stop button on mobile for better UX */
+  .stop-btn {
+    display: none !important;
+  }
+
+  /* Smaller play button on mobile to fit time display */
+  .transport-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    border-radius: 50% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Larger touch targets for other mobile buttons */
+  .mat-mdc-icon-button:not(.transport-btn) {
+    width: 44px !important;
+    height: 44px !important;
+    touch-action: manipulation;
+  }
+
+  /* Bigger resize handles for touch */
+  .resize-handle {
+    width: 20px !important;
+    min-width: 20px !important;
+  }
+
+  /* Adjust font sizes for mobile readability */
+  .tick-label {
+    font-size: 10px;
+  }
+
+  .time-display {
+    font-size: 11px;
+    min-width: 50px;
+    text-align: center;
+    margin-left: -6px;
+  }
+
+  /* Simplify visual effects for performance */
+  .editor::before {
+    display: none; /* Remove grid overlay on mobile */
+  }
+
+  @keyframes scan {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
+  /* Adjust button sizes for touch */
+  .export-btn,
+  .arrangement-btn {
+    height: 40px !important;
+    padding: 0 16px !important;
+    font-size: 12px !important;
+  }
+
+  /* Improve scrollbar visibility on mobile */
+  .tracks-lanes::-webkit-scrollbar,
+  .track-lanes::-webkit-scrollbar {
+    height: 10px;
+  }
+
+  /* Version info adjustment - Override global mobile dialog margins */
+  .version-info {
+    font-size: 9px;
+    bottom: 0px;
+    right: 0px;
+    margin: 2px 4px 2px 0;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  /* Even smaller track headers */
+  .tracks {
+    grid-template-columns: 100px 1fr;
+  }
+
+  /* Hide less important UI elements */
+  .head-spacer::before {
+    display: none; /* Remove scan animation */
+  }
+
+  /* Simplified ruler */
+  .ruler {
+    height: 32px;
+  }
+
+  /* Larger clip touch targets */
+  .clip {
+    min-height: 36px !important;
+  }
+
+  /* Adjust version info for very small screens but keep visible */
+  .version-info {
+    font-size: 8px;
+    bottom: 2px;
+    right: 2px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 2px 4px;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+  }
+}
+
+/* Touch-specific adjustments */
+@media (pointer: coarse) {
+  /* Ensure all interactive elements are touch-friendly */
+  button,
+  .clip,
+  .resize-handle,
+  .playhead {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  /* Much larger scrollbars for touch devices */
+  .track-lanes::-webkit-scrollbar {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .track-lanes::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.6) !important;
+    border-radius: 10px !important;
+    border: 2px solid rgba(147, 51, 234, 0.2) !important;
+  }
+
+  .track-lanes::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.8) 0%, rgba(236, 72, 153, 0.7) 100%) !important;
+    border-radius: 10px !important;
+    border: 2px solid rgba(147, 51, 234, 0.4) !important;
+    box-shadow: 0 0 12px rgba(147, 51, 234, 0.6) !important;
+    min-height: 40px !important;
+    min-width: 40px !important;
+  }
+
+  .track-lanes::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(135deg, rgba(147, 51, 234, 1) 0%, rgba(236, 72, 153, 0.9) 100%) !important;
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.8) !important;
+    border-color: rgba(147, 51, 234, 0.6) !important;
+  }
+
+  /* Also apply to general tracks scrollbar */
+  .tracks::-webkit-scrollbar {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .tracks::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.6) !important;
+    border-radius: 10px !important;
+    border: 2px solid rgba(147, 51, 234, 0.2) !important;
+  }
+
+  .tracks::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.4) !important;
+    border-radius: 10px !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3) !important;
+    min-height: 40px !important;
+    min-width: 40px !important;
+  }
+
+  .tracks::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.5) !important;
+  }
+
+  /* Disable hover effects on touch devices */
+  .mat-mdc-button:hover,
+  .mat-mdc-icon-button:hover {
+    background: transparent !important;
+  }
+
+  /* Larger drop zones for touch drag */
+  .lane {
+    min-height: 48px;
+  }
+
+  /* Better touch feedback */
+  .clip:active {
+    opacity: 0.8;
+  }
+
+  /* Prevent text selection during drag */
+  * {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+}

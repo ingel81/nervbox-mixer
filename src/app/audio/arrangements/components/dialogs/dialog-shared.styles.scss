@@ -1,0 +1,189 @@
+// Shared styles for arrangement dialogs
+// This file centralizes common styling for load-arrangement-dialog and save-arrangement-dialog components
+
+// Dialog icon styling
+.dialog-icon {
+  vertical-align: middle;
+  margin-right: 8px;
+  background: linear-gradient(135deg, #9333ea, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Dialog content sizing
+mat-dialog-content {
+  box-sizing: border-box;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+// Scrollable container styles (unified for both dialogs)
+.arrangements-container,
+.arrangement-list {
+  max-height: 350px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  border-radius: 8px;
+  background: rgba(20, 20, 25, 0.4);
+}
+
+// Inner arrangement list container
+.arrangement-list > *,
+.arrangements-container > .arrangement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+// Remove any borders/backgrounds from nested lists
+.arrangements-container .arrangement-list {
+  border: none;
+  background: none;
+  padding: 0;
+  max-height: none;
+}
+
+// Individual arrangement item
+.arrangement-item {
+  padding: 12px;
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  border-radius: 6px;
+  background: rgba(20, 20, 25, 0.6);
+  backdrop-filter: blur(10px);
+  transition: all 0.2s;
+  cursor: pointer;
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.arrangement-item:last-child {
+  margin-bottom: 0;
+}
+
+.arrangement-item:hover {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(236, 72, 153, 0.1));
+  border-color: rgba(147, 51, 234, 0.4);
+  transform: translateX(4px);
+}
+
+.arrangement-item.selected {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.15), rgba(236, 72, 153, 0.15));
+  border-color: rgba(147, 51, 234, 0.6);
+  border-left-width: 3px;
+}
+
+// Arrangement item content
+.arrangement-header,
+.item-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.arrangement-icon,
+.item-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #9333ea, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.arrangement-info,
+.item-info {
+  flex: 1;
+}
+
+.arrangement-name,
+.item-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.arrangement-meta,
+.item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.5;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.separator {
+  margin: 0 6px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.track-names {
+  color: rgba(147, 51, 234, 0.7);
+  font-style: italic;
+  flex-shrink: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+// Delete button styling (for load dialog)
+.delete-btn {
+  opacity: 0.3;
+  transition: all 0.2s;
+}
+
+.delete-btn:hover {
+  opacity: 1;
+  color: #ef4444;
+  transform: scale(1.1);
+}
+
+// Empty state styling
+.empty-state {
+  padding: 48px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.empty-state mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  opacity: 0.3;
+}
+
+// Button styling overrides for Material Dialog
+::ng-deep .mat-mdc-dialog-actions .mat-mdc-button:not(.mat-mdc-unelevated-button) {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+::ng-deep .mat-mdc-dialog-actions .mat-mdc-button:not(.mat-mdc-unelevated-button):hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+::ng-deep .mat-mdc-dialog-actions .mat-mdc-unelevated-button.mat-primary {
+  background-color: #9333ea !important;
+  color: #ffffff !important;
+}
+
+::ng-deep .mat-mdc-dialog-actions .mat-mdc-unelevated-button.mat-primary:hover {
+  background-color: #a855f7 !important;
+}
+
+::ng-deep .mat-mdc-dialog-actions .mat-mdc-unelevated-button.mat-primary:disabled {
+  background-color: rgba(147, 51, 234, 0.3) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+}
