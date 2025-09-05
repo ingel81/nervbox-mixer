@@ -133,20 +133,17 @@ import { EditorStateService } from '../services/editor-state.service';
   `,
   styles: [`
     .grid-controls {
-      padding: 20px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 12px;
       max-width: 600px;
-      background: rgba(10, 0, 15, 0.6);
-      border-radius: 8px;
-      border: 1px solid rgba(147, 51, 234, 0.2);
     }
     
     .control-group {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
     }
     
     /* BPM Preset Buttons - NervBox Style */
@@ -208,8 +205,8 @@ import { EditorStateService } from '../services/editor-state.service';
     .grid-info {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      padding: 16px;
+      gap: 12px;
+      padding: 10px;
       background: linear-gradient(135deg, 
         rgba(147, 51, 234, 0.08) 0%, 
         rgba(236, 72, 153, 0.08) 100%);
@@ -245,6 +242,8 @@ import { EditorStateService } from '../services/editor-state.service';
       --mdc-outlined-text-field-focus-outline-color: #9333ea;
       --mdc-theme-primary: #9333ea;
       --mat-form-field-focus-select-arrow-color: #9333ea;
+      --mat-form-field-container-height: 48px;
+      --mat-form-field-container-vertical-padding: 8px;
     }
     
     ::ng-deep .mat-mdc-form-field .mdc-text-field--outlined .mdc-notched-outline__leading,
@@ -267,11 +266,6 @@ import { EditorStateService } from '../services/editor-state.service';
     
     ::ng-deep .mat-mdc-form-field .mdc-text-field {
       background: rgba(10, 0, 15, 0.5);
-    }
-    
-    ::ng-deep .mat-mdc-form-field input,
-    ::ng-deep .mat-mdc-form-field .mat-mdc-select-value {
-      color: rgba(255, 255, 255, 0.9);
     }
     
     ::ng-deep .mat-mdc-form-field .mdc-floating-label {
