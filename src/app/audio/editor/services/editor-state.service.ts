@@ -26,7 +26,8 @@ export class EditorStateService {
   loopEnabled = signal(false);
   loopStart = signal(0);
   loopEnd = signal(4);
-  snapToGrid = signal(true); // Grid standardmäßig aktiviert
+  snapToGrid = signal(true); // Snap to Grid standardmäßig aktiviert
+  showGrid = signal(true); // Grid-Sichtbarkeit standardmäßig aktiviert
   gridResolution = signal(0.25);
   
   // BPM & Musical Grid Configuration

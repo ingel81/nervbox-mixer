@@ -22,7 +22,7 @@ import { GridControlsComponent } from './grid-controls.component';
     <div class="panel-tabs" [class.panel-open]="panelService.isOpen()">
       <div class="tab-container">
         <button 
-          *ngFor="let tab of panelService.tabs" 
+          *ngFor="let tab of panelService.tabs()" 
           class="panel-tab"
           [class.active]="panelService.activeTab() === tab.id"
           [class.raised]="panelService.isOpen() && panelService.activeTab() === tab.id"

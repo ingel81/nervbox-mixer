@@ -215,7 +215,7 @@ export class AudioEditorComponent {
   
   // Grid Lines für visuelle Darstellung
   gridLines = computed(() => {
-    if (!this.editorState.snapToGrid()) return [];
+    if (!this.editorState.showGrid()) return [];
     return this.timelineService.getGridLines();
   });
   
@@ -243,6 +243,24 @@ export class AudioEditorComponent {
     };
     return labels[subdivision] || '1/4 Noten';
   });
+  
+  // Helper methods for grid info display
+  getTimeSignatureString(): string {
+    const sig = this.editorState.timeSignature();
+    return `${sig.numerator}/${sig.denominator}`;
+  }
+  
+  getGridResolutionString(): string {
+    const subdivision = this.editorState.gridSubdivision();
+    const labels: Record<string, string> = {
+      'bar': 'Bars',
+      '1/2': '1/2',
+      '1/4': '1/4',
+      '1/8': '1/8',
+      '1/16': '1/16'
+    };
+    return labels[subdivision] || '1/4';
+  }
 
   private removeTrack(track: Track) {
     const trackIndex = this.tracks().findIndex(t => t.id === track.id);

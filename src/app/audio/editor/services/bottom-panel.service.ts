@@ -1,4 +1,5 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { EditorStateService } from '../services/editor-state.service';
 
 export type TabType = 'sounds' | 'grid' | 'mixer' | 'effects' | 'piano' | 'analysis' | 'settings';
 
@@ -13,17 +14,22 @@ export interface TabConfig {
   providedIn: 'root'
 })
 export class BottomPanelService {
+  private editorState = inject(EditorStateService);
+  
   // Panel state
   private _isOpen = signal(false);
   private _activeTab = signal<TabType>('sounds');
   private _height = signal(this.getInitialHeight()); // Default height based on screen size
   private _isResizing = signal(false);
 
-  // Tab configurations
-  readonly tabs: TabConfig[] = [
-    { id: 'sounds', label: 'Sound Library', icon: 'library_music', description: 'Browse and add sounds to your project' },
-    { id: 'grid', label: 'Grid', icon: 'grid_on', description: 'Grid & BPM Settings' }
-  ];
+  // Tab configurations - now computed to include grid info
+  readonly tabs = computed<TabConfig[]>(() => {
+    const gridInfo = this.getGridInfoString();
+    return [
+      { id: 'sounds', label: 'Sound Library', icon: 'library_music', description: 'Browse and add sounds to your project' },
+      { id: 'grid', label: `Grid ${gridInfo}`, icon: 'grid_on', description: 'Grid & BPM Settings' }
+    ];
+  });
 
   // Public readonly signals
   readonly isOpen = this._isOpen.asReadonly();
@@ -33,7 +39,7 @@ export class BottomPanelService {
 
   // Computed signals
   readonly activeTabConfig = computed(() => 
-    this.tabs.find(tab => tab.id === this._activeTab()) || this.tabs[0]
+    this.tabs().find(tab => tab.id === this._activeTab()) || this.tabs()[0]
   );
 
   readonly maxHeight = computed(() => {
@@ -98,6 +104,22 @@ export class BottomPanelService {
   }
 
   getTabConfig(tabId: TabType): TabConfig | undefined {
-    return this.tabs.find(tab => tab.id === tabId);
+    return this.tabs().find(tab => tab.id === tabId);
+  }
+  
+  // Helper method to get grid info string
+  private getGridInfoString(): string {
+    const bpm = this.editorState.bpm();
+    const sig = this.editorState.timeSignature();
+    const subdivision = this.editorState.gridSubdivision();
+    const gridLabel = subdivision === 'bar' ? 'Bar' : subdivision;
+    
+    // Build compact info string
+    const parts: string[] = [];
+    parts.push(`${bpm}`); // Just the number, no "BPM"
+    parts.push(`${sig.numerator}/${sig.denominator}`);
+    parts.push(gridLabel);
+    
+    return `(${parts.join(' • ')})`;
   }
 }

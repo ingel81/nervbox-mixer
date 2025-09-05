@@ -28,6 +28,58 @@ import { EditorStateService } from '../services/editor-state.service';
     <div class="grid-controls">
       <!-- Main Controls Row -->
       <div class="main-controls">
+        <!-- Grid Toggles - Most Important, First Position -->
+        <div class="control-group grid-toggles">
+          <!-- Show Grid -->
+          <mat-slide-toggle [ngModel]="editorState.showGrid()"
+                            (ngModelChange)="editorState.showGrid.set($event)">
+            <span class="toggle-label">
+              <mat-icon>grid_on</mat-icon>
+              Show Grid
+            </span>
+          </mat-slide-toggle>
+          
+          <!-- Snap to Grid -->
+          <mat-slide-toggle [ngModel]="editorState.snapToGrid()"
+                            (ngModelChange)="editorState.snapToGrid.set($event)">
+            <span class="toggle-label">
+              <mat-icon>straighten</mat-icon>
+              Snap to Grid
+            </span>
+          </mat-slide-toggle>
+        </div>
+        
+        <!-- Grid Resolution -->
+        <div class="control-group">
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>Grid</mat-label>
+            <mat-select [ngModel]="editorState.gridSubdivision()"
+                        (ngModelChange)="editorState.gridSubdivision.set($event)"
+                        matTooltip="{{ getGridSpacingInMs() }}ms spacing">
+              <mat-option value="bar">Bars</mat-option>
+              <mat-option value="1/2">1/2 Notes</mat-option>
+              <mat-option value="1/4">1/4 Notes</mat-option>
+              <mat-option value="1/8">1/8 Notes</mat-option>
+              <mat-option value="1/16">1/16 Notes</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        
+        <!-- Time Signature -->
+        <div class="control-group">
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>Time Signature</mat-label>
+            <mat-select [ngModel]="getTimeSignatureString()" 
+                        (ngModelChange)="setTimeSignature($event)"
+                        matTooltip="Beats per bar">
+              <mat-option value="4/4">4/4</mat-option>
+              <mat-option value="3/4">3/4</mat-option>
+              <mat-option value="6/8">6/8</mat-option>
+              <mat-option value="7/8">7/8</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        
         <!-- BPM Control -->
         <div class="control-group bpm-group">
           <mat-form-field subscriptSizing="dynamic">
@@ -69,51 +121,6 @@ import { EditorStateService } from '../services/editor-state.service';
               174
             </button>
           </div>
-        </div>
-        
-        <!-- Time Signature -->
-        <div class="control-group">
-          <mat-form-field subscriptSizing="dynamic">
-            <mat-label>Time Signature</mat-label>
-            <mat-select [ngModel]="getTimeSignatureString()" 
-                        (ngModelChange)="setTimeSignature($event)"
-                        matTooltip="Beats per bar">
-              <mat-option value="4/4">4/4</mat-option>
-              <mat-option value="3/4">3/4</mat-option>
-              <mat-option value="6/8">6/8</mat-option>
-              <mat-option value="7/8">7/8</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        
-        <!-- Grid Resolution -->
-        <div class="control-group">
-          <mat-form-field subscriptSizing="dynamic">
-            <mat-label>Grid</mat-label>
-            <mat-select [ngModel]="editorState.gridSubdivision()"
-                        (ngModelChange)="editorState.gridSubdivision.set($event)"
-                        matTooltip="{{ getGridSpacingInMs() }}ms spacing">
-              <mat-option value="bar">Bars</mat-option>
-              <mat-option value="1/2">1/2 Notes</mat-option>
-              <mat-option value="1/4">1/4 Notes</mat-option>
-              <mat-option value="1/8">1/8 Notes</mat-option>
-              <mat-option value="1/16">1/16 Notes</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        
-        <!-- Snap Toggle -->
-        <div class="control-group snap-control">
-          <mat-slide-toggle [ngModel]="editorState.snapToGrid()"
-                            (ngModelChange)="editorState.snapToGrid.set($event)">
-            <span class="toggle-label">
-              Snap to Grid
-              <mat-icon class="info-icon" 
-                        matTooltip="Clips automatically snap to grid positions">
-                info_outline
-              </mat-icon>
-            </span>
-          </mat-slide-toggle>
         </div>
       </div>
       
@@ -164,9 +171,15 @@ import { EditorStateService } from '../services/editor-state.service';
       min-width: 300px;
     }
     
-    /* No auto margins - everything packed together */
-    .snap-control {
-      margin-left: 0;
+    /* Grid toggles grouped together */
+    .grid-toggles {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    
+    .grid-toggles mat-slide-toggle {
+      margin: 0;
     }
     
     /* BPM Preset Buttons - NervBox Style */
@@ -204,9 +217,16 @@ import { EditorStateService } from '../services/editor-state.service';
     .toggle-label {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       color: rgba(255, 255, 255, 0.85);
-      font-size: 14px;
+      font-size: 13px;
+    }
+    
+    .toggle-label mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: rgba(147, 51, 234, 0.7);
     }
     
     ::ng-deep .mat-mdc-slide-toggle.mat-accent {
@@ -441,12 +461,15 @@ import { EditorStateService } from '../services/editor-state.service';
         font-size: 11px;
       }
       
-      /* Hide snap toggle on very small screens if needed */
-      .snap-control {
+      /* Grid toggles stack on mobile */
+      .grid-toggles {
+        flex-direction: column;
+        align-items: flex-start;
         width: 100%;
+        gap: 8px;
       }
       
-      .snap-control mat-slide-toggle {
+      .grid-toggles mat-slide-toggle {
         width: 100%;
       }
     }

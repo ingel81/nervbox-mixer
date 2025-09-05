@@ -40,7 +40,7 @@ export interface TrackHoverEvent {
       <!-- Grid Lines for this track -->
       <div class="lane-grid-lines" 
            [style.width.px]="duration * pxPerSecond"
-           *ngIf="editorState.snapToGrid()">
+           *ngIf="editorState.showGrid()">
         @for (line of gridLines(); track line.time) {
           <div class="grid-line"
                [attr.data-type]="line.type"
@@ -103,7 +103,7 @@ export class TrackLaneComponent {
   
   // Grid Lines für visuelle Darstellung
   gridLines = computed(() => {
-    if (!this.editorState.snapToGrid()) return [];
+    if (!this.editorState.showGrid()) return [];
     return this.timelineService.getGridLines();
   });
   
