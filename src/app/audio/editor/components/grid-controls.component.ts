@@ -72,7 +72,7 @@ import { EditorStateService } from '../services/editor-state.service';
       <!-- Time Signature -->
       <div class="control-group">
         <mat-form-field>
-          <mat-label>Taktart</mat-label>
+          <mat-label>Time Signature</mat-label>
           <mat-select [ngModel]="getTimeSignatureString()" 
                       (ngModelChange)="setTimeSignature($event)">
             <mat-option value="4/4">4/4</mat-option>
@@ -86,16 +86,16 @@ import { EditorStateService } from '../services/editor-state.service';
       <!-- Grid Resolution -->
       <div class="control-group">
         <mat-form-field>
-          <mat-label>Grid Auflösung</mat-label>
+          <mat-label>Grid Resolution</mat-label>
           <mat-select [ngModel]="editorState.gridSubdivision()"
                       (ngModelChange)="editorState.gridSubdivision.set($event)">
-            <mat-option value="bar">Takte</mat-option>
-            <mat-option value="1/2">1/2 Noten</mat-option>
-            <mat-option value="1/4">1/4 Noten</mat-option>
-            <mat-option value="1/8">1/8 Noten</mat-option>
-            <mat-option value="1/16">1/16 Noten</mat-option>
+            <mat-option value="bar">Bars</mat-option>
+            <mat-option value="1/2">1/2 Notes</mat-option>
+            <mat-option value="1/4">1/4 Notes</mat-option>
+            <mat-option value="1/8">1/8 Notes</mat-option>
+            <mat-option value="1/16">1/16 Notes</mat-option>
           </mat-select>
-          <mat-hint>{{ getGridSpacingInMs() }}ms Abstand</mat-hint>
+          <mat-hint>{{ getGridSpacingInMs() }}ms spacing</mat-hint>
         </mat-form-field>
       </div>
       
@@ -106,7 +106,7 @@ import { EditorStateService } from '../services/editor-state.service';
           <span class="toggle-label">
             Snap to Grid
             <mat-icon class="info-icon" 
-                      matTooltip="Clips rasten automatisch am Grid ein">
+                      matTooltip="Clips automatically snap to grid positions">
               info_outline
             </mat-icon>
           </span>
