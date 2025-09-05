@@ -394,3 +394,4 @@ Currently no tests implemented. When adding tests:
 1. **TrackManagerComponent** (~80 lines) - Track CRUD operations
 2. **TimelineControlsComponent** (~80 lines) - Playback controls  
 3. **DragDropManagerComponent** (~160 lines) - Drag & drop operations
+- du braucht bei reinen style änderungen nie neu bauen..das kann ich sofort sehen

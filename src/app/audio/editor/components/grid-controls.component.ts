@@ -80,6 +80,7 @@ import { EditorStateService } from '../services/editor-state.service';
             <mat-option value="6/8">6/8</mat-option>
             <mat-option value="7/8">7/8</mat-option>
           </mat-select>
+          <mat-hint>Beats per bar</mat-hint>
         </mat-form-field>
       </div>
       
@@ -116,15 +117,15 @@ import { EditorStateService } from '../services/editor-state.service';
       <!-- Grid Info Display -->
       <div class="grid-info">
         <div class="info-item">
-          <span class="label">Beat Duration:</span>
+          <span class="label">Beat Duration</span>
           <span class="value">{{ getBeatDurationMs() }}ms</span>
         </div>
         <div class="info-item">
-          <span class="label">Bar Duration:</span>
+          <span class="label">Bar Duration</span>
           <span class="value">{{ getBarDurationMs() }}ms</span>
         </div>
         <div class="info-item">
-          <span class="label">Grid Spacing:</span>
+          <span class="label">Grid Spacing</span>
           <span class="value">{{ getGridSpacingInMs() }}ms</span>
         </div>
       </div>
@@ -285,22 +286,32 @@ import { EditorStateService } from '../services/editor-state.service';
       color: rgba(147, 51, 234, 0.5);
     }
     
+    /* Dropdown panel with better visibility */
     ::ng-deep .mat-mdc-select-panel {
-      background: #1a0f1f;
+      background: #0a0012 !important;
       border: 1px solid rgba(147, 51, 234, 0.3);
     }
     
+    ::ng-deep .mat-mdc-option {
+      color: white !important;
+      background: #0a0012 !important;
+    }
+    
     ::ng-deep .mat-mdc-option:hover:not(.mat-mdc-option-disabled) {
-      background: rgba(147, 51, 234, 0.1);
+      background: rgba(147, 51, 234, 0.3) !important;
     }
     
     ::ng-deep .mat-mdc-option.mat-mdc-option-active {
-      background: rgba(147, 51, 234, 0.2);
+      background: rgba(147, 51, 234, 0.4) !important;
+    }
+    
+    ::ng-deep .mat-mdc-option.mdc-list-item--selected {
+      background: rgba(147, 51, 234, 0.35) !important;
     }
     
     @media (max-width: 768px) {
       .grid-controls {
-        padding: 16px;
+        padding: 12px;
       }
       
       .control-group {
