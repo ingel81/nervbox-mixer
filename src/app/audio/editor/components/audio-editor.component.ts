@@ -40,6 +40,7 @@ import { TrackHeaderComponent } from '../../timeline/components/track-header.com
 import { TrackLaneComponent } from '../../timeline/components/track-lane.component';
 import { Clip, Track } from '../../shared/models/models';
 import { KeyboardShortcutsDirective, KeyboardShortcutActions } from '../directives/keyboard-shortcuts.directive';
+import { AnalyticsService } from '../../../services/analytics.service';
 
 import { MatSliderModule } from '@angular/material/slider';
 import { MatIconModule } from '@angular/material/icon';
@@ -138,7 +139,8 @@ export class AudioEditorComponent {
     private interactionCoordinator: InteractionCoordinatorService,
     private fileImport: FileImportService,
     private clipFactory: ClipFactoryService,
-    private mobileInteraction: MobileInteractionService
+    private mobileInteraction: MobileInteractionService,
+    private analytics: AnalyticsService
   ) {
     // Register seek callback for timeline scrubbing during playback
     this.editorState.registerSeekCallback((seconds: number) => {
@@ -190,6 +192,8 @@ export class AudioEditorComponent {
 
   addTrack(): void {
     this.editorState.addTrack();
+    // Track add track event
+    this.analytics.trackTrackAction('add');
   }
 
   async onFilesSelected(files: FileList | null, targetTrack?: Track) {
@@ -209,13 +213,20 @@ export class AudioEditorComponent {
   }
 
   private removeTrack(track: Track) {
+    const trackIndex = this.tracks().findIndex(t => t.id === track.id);
     this.tracks.update(list => list.filter(t => t !== track));
+    // Track remove track event
+    this.analytics.trackTrackAction('delete', trackIndex);
   }
 
   private toggleMute(track: Track) {
+    const trackIndex = this.tracks().findIndex(t => t.id === track.id);
+    const isMuted = track.mute;
     this.tracks.update(list =>
       list.map(t => (t.id === track.id ? { ...t, mute: !t.mute } : t))
     );
+    // Track mute/unmute event
+    this.analytics.trackTrackControl(isMuted ? 'unmute' : 'mute', trackIndex);
 
     // If currently playing, restart playback with new mute states
     if (this.isPlaying()) {
@@ -224,6 +235,9 @@ export class AudioEditorComponent {
   }
 
   private toggleSolo(track: Track) {
+    const trackIndex = this.tracks().findIndex(t => t.id === track.id);
+    const isSolo = track.solo;
+    
     this.tracks.update(list => {
       const hasSoloTracks = list.some(t => t.solo);
       const isTrackCurrentlySolo = track.solo;
@@ -239,6 +253,9 @@ export class AudioEditorComponent {
         return list.map(t => (t.id === track.id ? { ...t, solo: true } : t));
       }
     });
+    
+    // Track solo/unsolo event
+    this.analytics.trackTrackControl(isSolo ? 'unsolo' : 'solo', trackIndex);
 
     // If currently playing, restart playback with new solo states
     if (this.isPlaying()) {
@@ -256,7 +273,14 @@ export class AudioEditorComponent {
 
   // Loop controls
   toggleLoop() {
+    const isEnabled = this.editorState.loopEnabled();
     this.editorState.toggleLoop();
+    // Track loop toggle event
+    this.analytics.trackLoopRegion(isEnabled ? 'disable' : 'enable');
+    if (!isEnabled) {
+      const duration = this.editorState.loopEnd() - this.editorState.loopStart();
+      this.analytics.trackLoopDuration(duration);
+    }
   }
 
   // Loop region event handlers are now handled by LoopRegionComponent directly
@@ -275,7 +299,10 @@ export class AudioEditorComponent {
   }
 
   onTrackRenamed(event: TrackRenameEvent) {
+    const trackIndex = this.tracks().findIndex(t => t.id === event.track.id);
     this.editorState.renameTrack(event.track.id, event.newName);
+    // Track rename event
+    this.analytics.trackTrackAction('rename', trackIndex);
   }
 
   onTrackHeaderClicked(event: { track: Track }) {
@@ -344,9 +371,14 @@ export class AudioEditorComponent {
     this.audio.play(clips, startPosition);
     this.editorState.play();
     this.tickPlayhead();
+    
+    // Track play event
+    this.analytics.trackPlayback('play');
   }
 
   pause(): void {
+    // Track pause event
+    this.analytics.trackPlayback('pause');
     this.audio.pause();
     this.editorState.pause();
   }
@@ -354,6 +386,9 @@ export class AudioEditorComponent {
   stop(): void {
     this.audio.stop();
     this.editorState.stop();
+    
+    // Track stop event
+    this.analytics.trackPlayback('stop');
   }
 
   private getPlayableClips() {
@@ -485,6 +520,8 @@ export class AudioEditorComponent {
     const selectedId = this.selectedClipId();
     if (selectedId) {
       this.editorState.removeClip(selectedId);
+      // Track clip deletion
+      this.analytics.trackClipAction('delete', 'clip');
     }
   }
 
@@ -492,6 +529,8 @@ export class AudioEditorComponent {
     const selectedClip = this.getSelectedClip();
     if (selectedClip) {
       this.duplicateClip(selectedClip);
+      // Track clip duplication
+      this.analytics.trackClipAction('copy', 'clip');
     }
   }
 
@@ -729,6 +768,8 @@ export class AudioEditorComponent {
 
   seekTo(sec: number) {
     this.playhead.set(sec);
+    // Track seek event
+    this.analytics.trackSeek(sec);
 
     // If playing, restart from new position
     if (this.isPlaying()) {
@@ -776,6 +817,7 @@ export class AudioEditorComponent {
 
     if (pastedClip) {
       // Clip successfully pasted by EditorStateService
+      this.analytics.trackClipAction('paste', 'clip');
     }
   }
 
@@ -800,12 +842,18 @@ export class AudioEditorComponent {
 
     // Select the new duplicate
     this.editorState.selectedClipId.set(duplicate.id);
+    
+    // Track duplicate action
+    this.analytics.trackClipAction('duplicate', 'clip');
   }
 
 
   async onSoundSelected(
     buffer: AudioBuffer & { name: string; category: string; id?: string }
   ) {
+    // Track sound selection
+    this.analytics.trackSoundBrowserAction('load');
+    this.analytics.trackAudioPlay(buffer.name, buffer.category);
     // Get or create active track
     const targetTrack = this.editorState.getOrCreateActiveTrack();
 

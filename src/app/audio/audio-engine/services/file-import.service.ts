@@ -3,6 +3,7 @@ import { EditorStateService } from '../../editor/services/editor-state.service';
 import { AudioEngineService } from './audio-engine.service';
 import { WaveformService } from './waveform.service';
 import { Track, Clip } from '../../shared/models/models';
+import { AnalyticsService } from '../../../services/analytics.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,14 +12,18 @@ export class FileImportService {
   constructor(
     private editorState: EditorStateService,
     private audioEngine: AudioEngineService,
-    private waveformService: WaveformService
+    private waveformService: WaveformService,
+    private analytics: AnalyticsService
   ) {}
 
   async importFiles(files: FileList | null, targetTrack?: Track): Promise<void> {
     if (!files || files.length === 0) return;
     
-    // Process files in batches to avoid memory issues
+    // Track file import
     const filesArray = Array.from(files);
+    this.analytics.trackDragDropFile(filesArray.length);
+    
+    // Process files in batches to avoid memory issues
     const batchSize = 10;
     const buffers: AudioBuffer[] = [];
     

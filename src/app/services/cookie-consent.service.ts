@@ -12,7 +12,6 @@ declare global {
 })
 export class CookieConsentService {
   private readonly CONSENT_KEY = 'nervbox-analytics-consent-en';
-  private readonly GA_MEASUREMENT_ID = 'G-901EP95FGV';
   
   private consentGiven = signal(this.getStoredConsent());
   private analyticsLoaded = false;
@@ -46,38 +45,22 @@ export class CookieConsentService {
   }
 
   private loadGoogleAnalytics(): void {
-    if (this.analyticsLoaded || typeof document === 'undefined') {
+    if (this.analyticsLoaded) {
       return;
     }
 
-    // DataLayer und gtag zuerst initialisieren
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = function(...args: unknown[]) {
-      window.dataLayer.push(args);
-    };
-
-    // gtag.js Script laden
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${this.GA_MEASUREMENT_ID}`;
-    
-    // Warten bis Script geladen ist
-    script.onload = () => {
-      // Erst nach dem Laden konfigurieren
-      window.gtag('js', new Date());
-      window.gtag('config', this.GA_MEASUREMENT_ID, {
-        anonymize_ip: true,
-        cookie_expires: 63072000, // 2 Jahre
-        cookie_flags: 'secure;samesite=lax',
-        cookie_domain: 'auto',
-        storage: 'cookies'
-      });
-
-      // Jetzt erst als geladen markieren
+    // Prüfe ob gtag bereits via index.html geladen wurde
+    if (typeof window.gtag === 'function') {
+      // Aktiviere Analytics über die globale Funktion
+      if (typeof (window as any).enableAnalytics === 'function') {
+        (window as any).enableAnalytics();
+      }
+      
       this.analyticsLoaded = true;
-    };
+      return;
+    }
 
-    document.head.appendChild(script);
+    // Fallback: Sollte nicht passieren da Script in index.html ist
   }
 
   private clearAnalyticsCookies(): void {
@@ -87,7 +70,7 @@ export class CookieConsentService {
       '_ga_901EP95FGV',
       '_gid',
       '_gat',
-      '_gat_gtag_' + this.GA_MEASUREMENT_ID
+      '_gat_gtag_G-901EP95FGV'
     ];
 
     cookiesToClear.forEach(cookieName => {
@@ -101,6 +84,8 @@ export class CookieConsentService {
     if (!this.consentGiven() || !this.analyticsLoaded) {
       return;
     }
+    
+    // Sende Event ohne zusätzliche Parameter (keine cookie_domain etc.)
     window.gtag('event', eventName, parameters);
   }
 }

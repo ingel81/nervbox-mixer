@@ -3,6 +3,7 @@ import { Track, Clip, ArrangementDefinition, TrackDefinition, ClipDefinition } f
 import { SoundLibraryService } from '../../sound-browser/services/sound-library.service';
 import { WaveformService } from '../../audio-engine/services/waveform.service';
 import { EditorStateService } from '../../editor/services/editor-state.service';
+import { AnalyticsService } from '../../../services/analytics.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +13,7 @@ export class ArrangementService {
   private soundLibrary = inject(SoundLibraryService);
   private waveformService = inject(WaveformService);
   private editorState = inject(EditorStateService);
+  private analytics = inject(AnalyticsService);
   
   /**
    * Creates tracks from an arrangement definition (JSON-based pattern)
@@ -44,6 +46,9 @@ export class ArrangementService {
     
     console.log(`Arrangement "${definition.name}" created successfully`);
     console.log(`Total clips: ${tracks.reduce((sum, track) => sum + track.clips.length, 0)}`);
+    
+    // Track arrangement load
+    this.analytics.trackArrangementLoad(definition.name, tracks.length);
     
     return tracks;
   }

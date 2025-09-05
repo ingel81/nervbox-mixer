@@ -6,6 +6,7 @@ import { MatMenuModule } from '@angular/material/menu';
 
 import { EditorStateService } from '../audio/editor/services/editor-state.service';
 import { AudioEngineService } from '../audio/audio-engine/services/audio-engine.service';
+import { AnalyticsService } from '../services/analytics.service';
 
 @Component({
     selector: 'export-controls',
@@ -146,7 +147,8 @@ export class ExportControlsComponent {
   
   constructor(
     private editorState: EditorStateService,
-    private audio: AudioEngineService
+    private audio: AudioEngineService,
+    private analytics: AnalyticsService
   ) {}
   
   async exportMixdown(format: 'wav' | 'mp3' = 'wav'): Promise<void> {
@@ -222,6 +224,9 @@ export class ExportControlsComponent {
       
       const exportType = isLoopEnabled ? `Loop Region (${loopStart}s - ${loopEnd}s)` : 'Full Arrangement';
       console.log(`Export completed: ${format.toUpperCase()} - ${exportType}`);
+      
+      // Track export event
+      this.analytics.trackExport(format, this.duration());
     } catch (error) {
       console.error('Export failed:', error);
       alert(`Export failed: ${error}`);

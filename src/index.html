@@ -10,6 +10,38 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#9333ea">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-901EP95FGV"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      
+      // Prüfe ob Cookie-Consent bereits erteilt wurde
+      var hasConsent = localStorage.getItem('nervbox-analytics-consent-en') === 'true';
+      
+      if (hasConsent) {
+        // Wenn Consent vorhanden, sofort initialisieren
+        gtag('js', new Date());
+        gtag('config', 'G-901EP95FGV');
+      } else {
+        // Consent-Mode: Warte auf explizite Zustimmung
+        gtag('consent', 'default', {
+          'analytics_storage': 'denied',
+          'ad_storage': 'denied'
+        });
+      }
+      
+      // Globale Funktion zum Aktivieren nach Consent
+      window.enableAnalytics = function() {
+        gtag('consent', 'update', {
+          'analytics_storage': 'granted',
+          'ad_storage': 'granted'
+        });
+        gtag('js', new Date());
+        gtag('config', 'G-901EP95FGV');
+      };
+    </script>
   </head>
   <body>
     <app-root></app-root>
