@@ -1,6 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 
-export type TabType = 'sounds' | 'mixer' | 'effects' | 'piano' | 'analysis' | 'settings';
+export type TabType = 'sounds' | 'grid' | 'mixer' | 'effects' | 'piano' | 'analysis' | 'settings';
 
 export interface TabConfig {
   id: TabType;
@@ -21,7 +21,8 @@ export class BottomPanelService {
 
   // Tab configurations
   readonly tabs: TabConfig[] = [
-    { id: 'sounds', label: 'Sound Library', icon: 'library_music', description: 'Browse and add sounds to your project' }
+    { id: 'sounds', label: 'Sound Library', icon: 'library_music', description: 'Browse and add sounds to your project' },
+    { id: 'grid', label: 'Grid', icon: 'grid_on', description: 'Grid & BPM Settings' }
   ];
 
   // Public readonly signals

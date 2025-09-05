@@ -26,8 +26,30 @@ export class EditorStateService {
   loopEnabled = signal(false);
   loopStart = signal(0);
   loopEnd = signal(4);
-  snapToGrid = signal(false);
+  snapToGrid = signal(true); // Grid standardmäßig aktiviert
   gridResolution = signal(0.25);
+  
+  // BPM & Musical Grid Configuration
+  bpm = signal(90); // Default Hip-Hop tempo
+  timeSignature = signal({ numerator: 4, denominator: 4 });
+  gridSubdivision = signal<'bar' | '1/2' | '1/4' | '1/8' | '1/16'>('1/4');
+  
+  // Computed values für Grid-Berechnung
+  beatDuration = computed(() => 60 / this.bpm());
+  barDuration = computed(() => this.beatDuration() * this.timeSignature().numerator);
+  
+  gridSpacing = computed(() => {
+    const beat = this.beatDuration();
+    const bar = this.barDuration();
+    const subdivisions = {
+      'bar': bar,           // Ganze Takte (z.B. 4 Beats bei 4/4)
+      '1/2': beat * 2,     // Halbe Noten  
+      '1/4': beat,         // Viertelnoten (Standard)
+      '1/8': beat / 2,     // Achtelnoten
+      '1/16': beat / 4     // Sechzehntelnoten
+    };
+    return subdivisions[this.gridSubdivision()];
+  });
   
   // === SELECTION STATE ===
   selectedClipId = signal<string | null>(null);
@@ -307,11 +329,36 @@ export class EditorStateService {
     }
   }
   
+  // Helper für Beat-Nummer Berechnung
+  getBeatNumber(timePosition: number): number {
+    return Math.floor(timePosition / this.beatDuration());
+  }
+  
+  getBarNumber(timePosition: number): number {
+    return Math.floor(timePosition / this.barDuration());
+  }
+  
+  snapPositionToGrid(position: number): number {
+    if (!this.snapToGrid()) return position;
+    const spacing = this.gridSpacing(); // Nutzt jetzt BPM-basierte Berechnung
+    return Math.round(position / spacing) * spacing;
+  }
+  
+  // Alte snapLoopMarkerToGrid für Kompatibilität behalten
   snapLoopMarkerToGrid(time: number): number {
-    if (!this.snapToGrid()) return time;
+    return this.snapPositionToGrid(time);
+  }
+  
+  // Neue Methode für Snap-Threshold (magnetisches Snapping)
+  snapWithThreshold(position: number, threshold = 0.1): number {
+    if (!this.snapToGrid()) return position;
     
-    const grid = this.gridResolution();
-    return Math.round(time / grid) * grid;
+    const spacing = this.gridSpacing();
+    const snappedPosition = Math.round(position / spacing) * spacing;
+    const distance = Math.abs(position - snappedPosition);
+    
+    // Nur snappen wenn innerhalb des Thresholds
+    return distance < threshold ? snappedPosition : position;
   }
   
   // Selection

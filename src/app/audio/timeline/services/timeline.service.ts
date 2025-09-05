@@ -109,19 +109,45 @@ export class TimelineService {
   }
 
   // Snap-to-grid functionality
-  snapToGrid(timePosition: number, gridSize = 0.25): number {
-    return Math.round(timePosition / gridSize) * gridSize;
+  snapToGrid(timePosition: number, useThreshold = false): number {
+    if (useThreshold) {
+      return this.editorState.snapWithThreshold(timePosition);
+    }
+    return this.editorState.snapPositionToGrid(timePosition);
   }
 
   // Get grid lines for visual display
-  getGridLines(gridSize = 0.25): number[] {
+  getGridLines(): Array<{time: number; type: 'bar' | 'beat' | 'subdivision'}> {
     const duration = this.duration();
-    const lines: number[] = [];
+    const beatDur = this.editorState.beatDuration();
+    const barDur = this.editorState.barDuration();
+    const spacing = this.editorState.gridSpacing();
+    const lines: Array<{time: number; type: 'bar' | 'beat' | 'subdivision'}> = [];
     
-    for (let time = 0; time <= duration; time += gridSize) {
-      lines.push(time);
+    // Start bei 0 und gehe in Grid-Spacing-Schritten
+    for (let time = 0; time <= duration; time += spacing) {
+      let type: 'bar' | 'beat' | 'subdivision' = 'subdivision';
+      
+      // Prüfe ob es eine Takt-Linie ist (z.B. alle 4 Beats bei 4/4)
+      if (Math.abs(time % barDur) < 0.001) {
+        type = 'bar';
+      } 
+      // Prüfe ob es eine Beat-Linie ist
+      else if (Math.abs(time % beatDur) < 0.001) {
+        type = 'beat';
+      }
+      
+      lines.push({ time, type });
     }
     
     return lines;
+  }
+  
+  // Neue Helper-Methode für Grid-Highlighting beim Dragging
+  getNearestGridLine(position: number): number | null {
+    if (!this.editorState.snapToGrid()) return null;
+    
+    const spacing = this.editorState.gridSpacing();
+    return Math.round(position / spacing) * spacing;
   }
 }

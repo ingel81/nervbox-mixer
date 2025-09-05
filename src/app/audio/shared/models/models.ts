@@ -62,4 +62,8 @@ export interface ArrangementDefinition {
   bpm: number;
   duration: number;       // total seconds
   tracks: TrackDefinition[];
+  // Grid settings
+  timeSignature?: { numerator: number; denominator: number };
+  gridSubdivision?: 'bar' | '1/2' | '1/4' | '1/8' | '1/16';
+  snapToGrid?: boolean;
 }

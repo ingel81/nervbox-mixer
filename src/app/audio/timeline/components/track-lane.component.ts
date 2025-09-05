@@ -1,7 +1,9 @@
-import { Component, Input, Output, EventEmitter, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ElementRef, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent, ClipDeleteEvent, ClipDuplicateEvent } from './clip.component';
 import { Track } from '../../shared/models/models';
+import { EditorStateService } from '../../editor/services/editor-state.service';
+import { TimelineService } from '../services/timeline.service';
 
 export interface TrackDropEvent {
   track: Track;
@@ -35,6 +37,21 @@ export interface TrackHoverEvent {
          (dragleave)="onDragLeave($event)"
          [class.drag-over]="isDragOver"
          [class.sound-drag-hover]="isSoundDragTarget()">
+      <!-- Grid Lines for this track -->
+      <div class="lane-grid-lines" 
+           [style.width.px]="duration * pxPerSecond"
+           *ngIf="editorState.snapToGrid()">
+        @for (line of gridLines(); track line.time) {
+          <div class="grid-line"
+               [attr.data-type]="line.type"
+               [attr.data-time]="line.time"
+               [class.bar-line]="line.type === 'bar'"
+               [class.beat-line]="line.type === 'beat'" 
+               [class.subdivision-line]="line.type === 'subdivision'"
+               [style.left.px]="line.time * pxPerSecond">
+          </div>
+        }
+      </div>
       <div class="clips" [style.width.px]="duration * pxPerSecond">
         <audio-clip *ngFor="let clip of track.clips"
                     [clip]="clip"
@@ -81,6 +98,15 @@ export class TrackLaneComponent {
   @Output() clipDeleted = new EventEmitter<ClipDeleteEvent>();
   @Output() clipDuplicated = new EventEmitter<ClipDuplicateEvent>();
 
+  editorState = inject(EditorStateService);
+  timelineService = inject(TimelineService);
+  
+  // Grid Lines für visuelle Darstellung
+  gridLines = computed(() => {
+    if (!this.editorState.snapToGrid()) return [];
+    return this.timelineService.getGridLines();
+  });
+  
   constructor(private elementRef: ElementRef) {}
 
   onDrop(event: DragEvent) {

@@ -285,16 +285,35 @@ export class ClipComponent {
       // Calculate original right edge position
       const originalRightEdge = trimState.originalStartTime + (this.clip.originalDuration - (trimState.originalTrimStart + (trimState.originalTrimEnd || 0)));
       
+      // Calculate new start time
+      let newStartTime = originalRightEdge - (this.clip.originalDuration - newTrimStart - (this.clip.trimEnd || 0));
+      
+      // Apply grid snap if enabled
+      if (this.editorState.snapToGrid()) {
+        const snappedTime = this.editorState.snapPositionToGrid(newStartTime);
+        const snapAdjustment = snappedTime - newStartTime;
+        newStartTime = snappedTime;
+        newTrimStart = Math.max(0, newTrimStart - snapAdjustment);
+      }
+      
       // Set new trim and calculate new start time to maintain right edge position
       this.clip.trimStart = newTrimStart;
       this.clip.duration = this.clip.originalDuration - this.clip.trimStart - (this.clip.trimEnd || 0);
-      this.clip.startTime = originalRightEdge - this.clip.duration; // Right edge stays fixed
+      this.clip.startTime = newStartTime;
       
     } else {
       // Trim from end - only adjust duration
       const maxTrimEnd = this.clip.originalDuration - (this.clip.trimStart || 0) - 0.001; // Min 1ms
       let newTrimEnd = Math.max(0, Math.min(maxTrimEnd,
         trimState.originalTrimEnd - deltaSeconds));
+      
+      // Snap end position to grid if enabled
+      if (this.editorState.snapToGrid()) {
+        const endTime = this.clip.startTime + this.clip.originalDuration - newTrimEnd;
+        const snappedEndTime = this.editorState.snapPositionToGrid(endTime);
+        const snapAdjustment = snappedEndTime - endTime;
+        newTrimEnd = Math.max(0, newTrimEnd - snapAdjustment);
+      }
       
       // Snap to sample boundaries for precision
       const trimSamples = Math.floor(newTrimEnd * samplesPerSecond);

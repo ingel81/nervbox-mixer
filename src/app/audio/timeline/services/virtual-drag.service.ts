@@ -1,5 +1,6 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Clip, Track } from '../../shared/models/models';
+import { EditorStateService } from '../../editor/services/editor-state.service';
 
 export interface DragCoordinates {
   x: number;
@@ -29,6 +30,8 @@ export interface VirtualDragState {
   providedIn: 'root'
 })
 export class VirtualDragService {
+  private editorState = inject(EditorStateService);
+  
   private dragState = signal<VirtualDragState>({
     isDragging: false,
     originalPosition: null,
@@ -92,7 +95,7 @@ export class VirtualDragService {
     element.dataset.originalTransform = element.style.transform || 'translateY(-50%)';
   }
 
-  updateVirtualPosition(coords: DragCoordinates, startX: number): { deltaX: number; deltaY: number; newTime: number; targetTrack: HTMLElement | null } {
+  updateVirtualPosition(coords: DragCoordinates, startX: number, bypassGrid = false): { deltaX: number; deltaY: number; newTime: number; targetTrack: HTMLElement | null } {
     const state = this.dragState();
     if (!state.isDragging || !state.clipElement || !state.originalPosition) {
       return { deltaX: 0, deltaY: 0, newTime: state.startTime, targetTrack: null };
@@ -101,14 +104,32 @@ export class VirtualDragService {
     // Calculate horizontal movement (time)
     const deltaX = coords.clientX - startX;
     const deltaTime = deltaX / state.pxPerSecond;
-    const newTime = Math.max(0, state.startTime + deltaTime);
+    let newTime = state.startTime + deltaTime;
+    
+    // Apply grid snap if enabled AND not bypassed with Shift key
+    if (this.editorState.snapToGrid() && !bypassGrid) {
+      newTime = this.editorState.snapPositionToGrid(newTime);
+      
+      // Visual feedback: Highlight nearest grid line
+      this.highlightNearestGridLine(newTime);
+    } else if (bypassGrid) {
+      // Clear any grid line highlights when bypassing
+      document.querySelectorAll('.grid-line.snap-target').forEach(el => {
+        el.classList.remove('snap-target');
+      });
+    }
+    
+    // Clamp to timeline bounds
+    newTime = Math.max(0, newTime);
+    
+    // Update visual position using transform
+    const visualDeltaX = this.secondsToPx(newTime - state.startTime);
 
     // Find target track
     const trackResult = this.getTrackAtPosition(coords.clientY);
     const targetTrack = trackResult?.element || null;
     const targetTrackIndex = trackResult?.index ?? -1;
     
-
     // Calculate vertical position - always follow mouse vertically
     let deltaY = coords.clientY - (state.originalPosition.top + state.originalPosition.height / 2);
     
@@ -123,12 +144,46 @@ export class VirtualDragService {
     // Apply visual transform using translate instead of position
     // This preserves the original position set by Angular
     // We need to combine with the existing translateY(-50%) for vertical centering
-    state.clipElement.style.transform = `translateY(-50%) translate(${deltaX}px, ${deltaY}px)`;
+    state.clipElement.style.transform = `translateY(-50%) translate(${visualDeltaX}px, ${deltaY}px)`;
 
     // Update visual feedback - show green when over a valid track
     this.updateVisualFeedback(state.clipElement, targetTrackIndex >= 0);
 
-    return { deltaX, deltaY, newTime, targetTrack };
+    return { deltaX: visualDeltaX, deltaY, newTime, targetTrack };
+  }
+  
+  // Neue Helper-Methode für visuelles Feedback
+  private highlightNearestGridLine(time: number): void {
+    // Remove previous highlights
+    document.querySelectorAll('.grid-line.snap-target').forEach(el => {
+      el.classList.remove('snap-target');
+    });
+    
+    // Add highlight to nearest grid line
+    const gridLines = document.querySelectorAll('.grid-line');
+    let nearestLine: Element | null = null;
+    let minDistance = Infinity;
+    
+    gridLines.forEach(line => {
+      const lineTime = parseFloat(line.getAttribute('data-time') || '0');
+      const distance = Math.abs(lineTime - time);
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestLine = line;
+      }
+    });
+    
+    if (nearestLine && minDistance < 0.1) { // Within 100ms
+      (nearestLine as HTMLElement).classList.add('snap-target');
+    }
+  }
+  
+  private secondsToPx(seconds: number): number {
+    return seconds * this.dragState().pxPerSecond;
+  }
+  
+  private pxToSeconds(pixels: number): number {
+    return pixels / this.dragState().pxPerSecond;
   }
 
   updateVisualFeedback(element: HTMLElement, isSnapped: boolean): void {

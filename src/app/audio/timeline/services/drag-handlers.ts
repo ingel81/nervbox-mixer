@@ -47,7 +47,9 @@ export abstract class BaseDragHandler {
     if (!this.config || !this.element) return;
 
     const coords = this.normalizeInput(event);
-    this.virtualDragService.updateVirtualPosition(coords, this.startX);
+    // Check if Shift key is pressed to bypass grid snap
+    const shiftPressed = (event as MouseEvent).shiftKey || (event as KeyboardEvent).shiftKey;
+    this.virtualDragService.updateVirtualPosition(coords, this.startX, shiftPressed);
     
     // Prevent default to avoid scrolling
     event.preventDefault();
@@ -57,7 +59,8 @@ export abstract class BaseDragHandler {
     if (!this.config || !this.element) return;
 
     const coords = this.normalizeInput(event);
-    const { newTime } = this.virtualDragService.updateVirtualPosition(coords, this.startX);
+    const shiftPressed = (event as MouseEvent).shiftKey || (event as KeyboardEvent).shiftKey;
+    const { newTime } = this.virtualDragService.updateVirtualPosition(coords, this.startX, shiftPressed);
 
     // Get the track index directly from the track position
     const trackResult = this.virtualDragService.getTrackAtPosition(coords.clientY);

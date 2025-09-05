@@ -5,6 +5,10 @@ export const DEFAULT_HIPHOP_90S: ArrangementDefinition = {
   name: '90s Hip Hop',
   bpm: 90,
   duration: 20,
+  // Grid settings für Hip Hop
+  timeSignature: { numerator: 4, denominator: 4 },
+  gridSubdivision: '1/4',
+  snapToGrid: true,
   tracks: [
     {
       name: 'Kick',
@@ -178,6 +182,10 @@ export const HOUSE_TECHNO_128: ArrangementDefinition = {
   name: 'House/Techno 128',
   bpm: 128,
   duration: 16,
+  // Grid settings für House/Techno
+  timeSignature: { numerator: 4, denominator: 4 },
+  gridSubdivision: '1/4',
+  snapToGrid: true,
   tracks: [
     {
       name: 'Kick',
@@ -358,6 +366,10 @@ export const ROCK_POP_110: ArrangementDefinition = {
   name: 'Rock/Pop 110',
   bpm: 110,
   duration: 16,
+  // Grid settings für Rock/Pop
+  timeSignature: { numerator: 4, denominator: 4 },
+  gridSubdivision: '1/4',
+  snapToGrid: true,
   tracks: [
     {
       name: 'Kick',
@@ -499,6 +511,10 @@ export const REGGAE_DUB_75: ArrangementDefinition = {
   name: 'Reggae/Dub 75',
   bpm: 75,
   duration: 16,
+  // Grid settings für Reggae/Dub
+  timeSignature: { numerator: 4, denominator: 4 },
+  gridSubdivision: '1/4',
+  snapToGrid: true,
   tracks: [
     {
       name: 'Kick',
@@ -623,6 +639,10 @@ export const POLY_EXPERIMENTAL_95: ArrangementDefinition = {
   name: 'Polyrhythmic Experiment 95',
   bpm: 95,
   duration: 14, // Weird length to mess with expectations
+  // Grid settings für Experimental - könnte auch 7/8 sein für mehr Komplexität
+  timeSignature: { numerator: 4, denominator: 4 },
+  gridSubdivision: '1/8', // Feinere Auflösung für komplexe Patterns
+  snapToGrid: true,
   tracks: [
     {
       name: 'Kick 4/4',

@@ -17,6 +17,79 @@
   flex-direction: column;
 }
 
+/* Grid Lines sind jetzt in den einzelnen Track-Lanes */
+
+/* Grid Line Base Styles */
+.grid-line {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 1px;
+  transition: opacity 0.2s ease;
+}
+
+/* Takt-Linien (Bars) - Deutlichste */
+.grid-line.bar-line {
+  background: rgba(147, 51, 234, 0.6); /* Lila wie Theme */
+  width: 2px;
+  opacity: 0.7;
+  box-shadow: 0 0 2px rgba(147, 51, 234, 0.3);
+}
+
+/* Beat-Linien - Mittel */
+.grid-line.beat-line {
+  background: rgba(255, 255, 255, 0.35);
+  width: 1px;
+  opacity: 0.5;
+}
+
+/* Subdivision-Linien - Subtil aber sichtbar */
+.grid-line.subdivision-line {
+  background: rgba(255, 255, 255, 0.2);
+  width: 1px;
+  opacity: 0.3;
+}
+
+/* Zoom-abhängige Anzeige */
+.editor[data-zoom="low"] .grid-line.subdivision-line {
+  opacity: 0;
+}
+
+.editor[data-zoom="medium"] .grid-line.subdivision-line {
+  opacity: 0.1;
+}
+
+/* Snap-Indikator beim Dragging */
+.grid-line.snap-target {
+  background: #4CAF50 !important;
+  opacity: 0.8 !important;
+  width: 2px !important;
+  animation: pulse 0.5s ease-in-out infinite;
+}
+
+/* Snap-Indicator für Drops */
+.snap-indicator {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background: #4CAF50;
+  opacity: 0.8;
+  animation: fade-out 0.5s ease-out forwards;
+  pointer-events: none;
+  z-index: 100;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes fade-out {
+  0% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+
 /* Sound Library Call to Action */
 .sound-cta {
   position: fixed;

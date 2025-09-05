@@ -22,6 +22,20 @@ export class ArrangementService {
   async createFromDefinition(definition: ArrangementDefinition): Promise<Track[]> {
     const tracks: Track[] = [];
     
+    // Apply grid settings from arrangement
+    if (definition.bpm) {
+      this.editorState.bpm.set(definition.bpm);
+    }
+    if (definition.timeSignature) {
+      this.editorState.timeSignature.set(definition.timeSignature);
+    }
+    if (definition.gridSubdivision) {
+      this.editorState.gridSubdivision.set(definition.gridSubdivision);
+    }
+    if (definition.snapToGrid !== undefined) {
+      this.editorState.snapToGrid.set(definition.snapToGrid);
+    }
+    
     for (const trackDef of definition.tracks) {
       const track: Track = {
         id: crypto.randomUUID(),
@@ -111,6 +125,12 @@ export class ArrangementService {
   tracksToDefinition(tracks: Track[], name: string, bpm = 120): ArrangementDefinition {
     const duration = this.calculateArrangementDuration(tracks);
     
+    // Get current grid settings from EditorState
+    const currentBpm = this.editorState.bpm();
+    const timeSignature = this.editorState.timeSignature();
+    const gridSubdivision = this.editorState.gridSubdivision();
+    const snapToGrid = this.editorState.snapToGrid();
+    
     const trackDefinitions: TrackDefinition[] = tracks.map(track => ({
       name: track.name,
       volume: track.volume,
@@ -130,9 +150,13 @@ export class ArrangementService {
     
     return {
       name,
-      bpm,
+      bpm: currentBpm || bpm, // Use current BPM from editor state
       duration,
-      tracks: trackDefinitions
+      tracks: trackDefinitions,
+      // Include grid settings
+      timeSignature,
+      gridSubdivision,
+      snapToGrid
     };
   }
   

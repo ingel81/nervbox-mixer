@@ -12,6 +12,47 @@
   transition: all 0.15s ease;
 }
 
+/* Grid Lines innerhalb der Lane */
+.lane-grid-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0; /* Unter den Clips */
+}
+
+/* Grid Line Base Styles */
+.grid-line {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 1px;
+  transition: opacity 0.2s ease;
+}
+
+/* Takt-Linien (Bars) - Deutlichste */
+.grid-line.bar-line {
+  background: rgba(147, 51, 234, 0.6); /* Lila wie Theme */
+  width: 2px;
+  opacity: 0.7;
+  box-shadow: 0 0 2px rgba(147, 51, 234, 0.3);
+}
+
+/* Beat-Linien - Mittel */
+.grid-line.beat-line {
+  background: rgba(255, 255, 255, 0.35);
+  width: 1px;
+  opacity: 0.5;
+}
+
+/* Subdivision-Linien - Subtil aber sichtbar */
+.grid-line.subdivision-line {
+  background: rgba(255, 255, 255, 0.2);
+  width: 1px;
+  opacity: 0.3;
+}
+
 /* Mobile - Compact lane */
 @media (max-width: 768px) {
   .lane {

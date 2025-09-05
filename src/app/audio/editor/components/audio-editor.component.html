@@ -78,7 +78,7 @@
 
       <!-- Track lanes (right column) -->
       <div class="track-lanes" #trackLanes (scroll)="onTrackScroll($event)">
-        <ng-container *ngFor="let track of tracks(); let i = index; trackBy: trackByFn">
+<ng-container *ngFor="let track of tracks(); let i = index; trackBy: trackByFn">
           <track-lane [track]="track"
                       [tracks]="tracks()"
                       [trackIndex]="i"

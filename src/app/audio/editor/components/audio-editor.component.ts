@@ -5,6 +5,7 @@ import {
   ViewChild,
   effect,
   signal,
+  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AudioEngineService } from '../../audio-engine/services/audio-engine.service';
@@ -211,6 +212,37 @@ export class AudioEditorComponent {
       this.editorState.setActiveTrack(defaultTracks[0].id);
     }
   }
+  
+  // Grid Lines für visuelle Darstellung
+  gridLines = computed(() => {
+    if (!this.editorState.snapToGrid()) return [];
+    return this.timelineService.getGridLines();
+  });
+  
+  // Computed value für die Gesamthöhe aller Tracks
+  totalTracksHeight = computed(() => {
+    const trackCount = this.tracks().length;
+    const trackHeight = 60; // Tatsächliche Track-Höhe (siehe track-lane.component.css)
+    return trackCount * trackHeight;
+  });
+  
+  // Helper für BPM-Display
+  formattedBPM = computed(() => {
+    return `${this.editorState.bpm()} BPM`;
+  });
+  
+  // Helper für Grid-Resolution-Display  
+  formattedGridResolution = computed(() => {
+    const subdivision = this.editorState.gridSubdivision();
+    const labels: Record<string, string> = {
+      'bar': 'Takte',
+      '1/2': '1/2 Noten',
+      '1/4': '1/4 Noten',
+      '1/8': '1/8 Noten',
+      '1/16': '1/16 Noten'
+    };
+    return labels[subdivision] || '1/4 Noten';
+  });
 
   private removeTrack(track: Track) {
     const trackIndex = this.tracks().findIndex(t => t.id === track.id);
@@ -1077,7 +1109,15 @@ export class AudioEditorComponent {
       // Beim Drop müssen wir das berücksichtigen, um WYSIWYG zu erreichen.
       const clipWidthInPx = buffer.duration * this.pxPerSecond();
       const x = event.clientX - rect.left - clipWidthInPx / 2;
-      const dropTime = Math.max(0, this.timelineService.pxToSeconds(x));
+      let dropTime = Math.max(0, this.timelineService.pxToSeconds(x));
+      
+      // Snap to grid if enabled
+      if (this.editorState.snapToGrid()) {
+        dropTime = this.editorState.snapPositionToGrid(dropTime);
+        
+        // Visual feedback
+        this.showSnapIndicator(dropTime);
+      }
 
       // Create the audio buffer with metadata
       const audioBuffer = Object.assign(buffer, {
@@ -1093,6 +1133,20 @@ export class AudioEditorComponent {
     }
   }
 
+  // Neue Helper-Methode für visuelles Feedback
+  private showSnapIndicator(time: number): void {
+    // Kurzes visuelles Feedback für Snap
+    const indicator = document.createElement('div');
+    indicator.className = 'snap-indicator';
+    indicator.style.left = `${this.timelineService.secondsToPx(time)}px`;
+    
+    const container = this.trackLanesEl?.nativeElement;
+    if (container) {
+      container.appendChild(indicator);
+      setTimeout(() => indicator.remove(), 500);
+    }
+  }
+  
   private addSoundToTrack(
     buffer: AudioBuffer & { name: string; category: string; id?: string },
     track: Track,
