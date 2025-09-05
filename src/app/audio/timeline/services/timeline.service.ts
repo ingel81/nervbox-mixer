@@ -124,16 +124,24 @@ export class TimelineService {
     const spacing = this.editorState.gridSpacing();
     const lines: Array<{time: number; type: 'bar' | 'beat' | 'subdivision'}> = [];
     
+    // Tolerance für Floating-Point-Vergleiche erhöhen
+    const tolerance = 0.01; // War 0.001, jetzt größer
+    
     // Start bei 0 und gehe in Grid-Spacing-Schritten
     for (let time = 0; time <= duration; time += spacing) {
       let type: 'bar' | 'beat' | 'subdivision' = 'subdivision';
       
+      // Runde time für genauere Vergleiche
+      const roundedTime = Math.round(time * 1000) / 1000;
+      
       // Prüfe ob es eine Takt-Linie ist (z.B. alle 4 Beats bei 4/4)
-      if (Math.abs(time % barDur) < 0.001) {
+      if (Math.abs(roundedTime % barDur) < tolerance || 
+          Math.abs((roundedTime % barDur) - barDur) < tolerance) {
         type = 'bar';
       } 
       // Prüfe ob es eine Beat-Linie ist
-      else if (Math.abs(time % beatDur) < 0.001) {
+      else if (Math.abs(roundedTime % beatDur) < tolerance || 
+               Math.abs((roundedTime % beatDur) - beatDur) < tolerance) {
         type = 'beat';
       }
       
