@@ -51,7 +51,7 @@ import { GridControlsComponent } from './grid-controls.component';
       </div>
 
       <!-- Tab Content -->
-      <div class="tab-content">
+      <div class="tab-content nervbox-scrollbar">
         <!-- Sounds Tab -->
         <div *ngIf="panelService.activeTab() === 'sounds'" class="sounds-content">
           <sound-browser 

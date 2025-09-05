@@ -29,7 +29,11 @@
   justify-content: center;
   gap: 6px;
   padding: 8px 14px;
-  background: linear-gradient(135deg, rgba(30, 30, 35, 0.9) 0%, rgba(40, 40, 50, 0.8) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(30, 30, 35, 0.9) 0%,
+    rgba(40, 40, 50, 0.8) 100%
+  );
   border: 1px solid rgba(147, 51, 234, 0.2);
   border-bottom: none;
   border-radius: 12px 12px 0 0;
@@ -49,7 +53,11 @@
 }
 
 .panel-tab:hover {
-  background: linear-gradient(135deg, rgba(50, 50, 60, 0.95) 0%, rgba(60, 60, 75, 0.9) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(50, 50, 60, 0.95) 0%,
+    rgba(60, 60, 75, 0.9) 100%
+  );
   color: rgba(255, 255, 255, 0.9);
   border-color: rgba(147, 51, 234, 0.4);
   transform: translateY(-2px);
@@ -57,7 +65,11 @@
 }
 
 .panel-tab.active {
-  background: linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(236, 72, 153, 0.2) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(147, 51, 234, 0.3) 0%,
+    rgba(236, 72, 153, 0.2) 100%
+  );
   color: rgba(147, 51, 234, 1);
   border-color: rgba(147, 51, 234, 0.6);
   backdrop-filter: blur(20px);
@@ -65,12 +77,16 @@
 }
 
 .panel-tab.raised {
-  transform: translateY(-4px);
-  height: 44px;
+  transform: translateY(0px);
+  height: 48px;
   padding-top: 12px;
   z-index: 1001;
   box-shadow: 0 -4px 24px rgba(147, 51, 234, 0.3);
-  background: linear-gradient(135deg, rgba(147, 51, 234, 0.35) 0%, rgba(236, 72, 153, 0.25) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(147, 51, 234, 0.35) 0%,
+    rgba(236, 72, 153, 0.25) 100%
+  );
 }
 
 .panel-tab mat-icon {
@@ -95,7 +111,11 @@
   bottom: 56px;
   left: 0;
   right: 0;
-  background: linear-gradient(180deg, rgba(10, 10, 10, 0.98) 0%, rgba(0, 0, 0, 0.99) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(10, 10, 10, 0.98) 0%,
+    rgba(0, 0, 0, 0.99) 100%
+  );
   backdrop-filter: blur(20px);
   border-top: 1px solid rgba(147, 51, 234, 0.1);
   transform: translateY(100%);
@@ -159,11 +179,17 @@
 /* Tab Content */
 .tab-content {
   padding: 20px;
-  height: calc(100% - 12px); /* Account for resize handle */
+  height: calc(100% - 36px); /* Account for resize handle */
   overflow: auto;
   opacity: 0;
   visibility: hidden;
   transition: all 0.2s ease;
+}
+
+/* Apply global Nervbox scrollbar theme to all tab contents */
+.tab-content.nervbox-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(147, 51, 234, 0.6) rgba(0, 0, 0, 0.4);
 }
 
 .panel-content.open .tab-content {
@@ -239,23 +265,23 @@
     padding: 0 12px;
     gap: 1px;
   }
-  
+
   .panel-tab {
     padding: 6px 10px;
     font-size: 10px;
     height: 36px;
     justify-content: center;
   }
-  
+
   .panel-tab.raised {
     height: 40px;
     padding-top: 12px;
   }
-  
+
   .tab-label {
     display: none;
   }
-  
+
   .panel-tab mat-icon {
     font-size: 18px;
     width: 18px;
@@ -264,7 +290,7 @@
     align-items: center;
     justify-content: center;
   }
-  
+
   .tab-content {
     padding: 16px;
   }
@@ -274,23 +300,23 @@
   .panel-tabs {
     height: 48px;
   }
-  
+
   .panel-content {
     bottom: 48px;
   }
-  
+
   .panel-tab {
     padding: 4px 8px;
     height: 32px;
     gap: 0;
     justify-content: center;
   }
-  
+
   .panel-tab.raised {
     height: 36px;
     padding-top: 10px;
   }
-  
+
   .panel-tab mat-icon {
     font-size: 16px;
     width: 16px;
