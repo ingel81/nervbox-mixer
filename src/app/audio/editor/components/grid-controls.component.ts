@@ -132,11 +132,14 @@ import { EditorStateService } from '../services/editor-state.service';
   `,
   styles: [`
     .grid-controls {
-      padding: 16px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
       max-width: 600px;
+      background: rgba(10, 0, 15, 0.6);
+      border-radius: 8px;
+      border: 1px solid rgba(147, 51, 234, 0.2);
     }
     
     .control-group {
@@ -145,6 +148,7 @@ import { EditorStateService } from '../services/editor-state.service';
       gap: 16px;
     }
     
+    /* BPM Preset Buttons - NervBox Style */
     .bpm-presets {
       display: flex;
       gap: 8px;
@@ -152,31 +156,66 @@ import { EditorStateService } from '../services/editor-state.service';
     
     .bpm-presets button {
       min-width: 50px;
+      background: rgba(147, 51, 234, 0.1);
+      border: 1px solid rgba(147, 51, 234, 0.3);
+      color: rgba(255, 255, 255, 0.7);
+      transition: all 0.2s ease;
+    }
+    
+    .bpm-presets button:hover {
+      background: rgba(147, 51, 234, 0.2);
+      border-color: rgba(147, 51, 234, 0.5);
+      color: rgba(255, 255, 255, 0.9);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3);
     }
     
     .bpm-presets button.active {
-      background-color: var(--accent-color);
+      background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%);
+      border-color: #9333ea;
       color: white;
+      box-shadow: 0 0 15px rgba(147, 51, 234, 0.5);
     }
     
+    /* Toggle with NervBox purple theme */
     .toggle-label {
       display: flex;
       align-items: center;
       gap: 8px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+    
+    ::ng-deep .mat-mdc-slide-toggle.mat-accent {
+      --mdc-switch-selected-track-color: #9333ea;
+      --mdc-switch-selected-handle-color: #ec4899;
+      --mdc-switch-selected-hover-track-color: #a855f7;
+      --mdc-switch-selected-pressed-track-color: #7c3aed;
     }
     
     .info-icon {
       font-size: 18px;
-      opacity: 0.7;
+      opacity: 0.5;
+      color: #9333ea;
+      transition: opacity 0.2s ease;
     }
     
+    .info-icon:hover {
+      opacity: 0.8;
+    }
+    
+    /* Grid Info Panel - Glassmorphism style */
     .grid-info {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 16px;
       padding: 16px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 4px;
+      background: linear-gradient(135deg, 
+        rgba(147, 51, 234, 0.08) 0%, 
+        rgba(236, 72, 153, 0.08) 100%);
+      border-radius: 6px;
+      border: 1px solid rgba(147, 51, 234, 0.2);
+      backdrop-filter: blur(10px);
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
     }
     
     .info-item {
@@ -186,18 +225,82 @@ import { EditorStateService } from '../services/editor-state.service';
     }
     
     .info-item .label {
-      font-size: 12px;
-      opacity: 0.7;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.5;
+      color: #a855f7;
     }
     
     .info-item .value {
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Material Form Field Overrides for NervBox theme */
+    ::ng-deep .mat-mdc-form-field {
+      --mdc-outlined-text-field-focus-outline-color: #9333ea;
+      --mdc-theme-primary: #9333ea;
+      --mat-form-field-focus-select-arrow-color: #9333ea;
+    }
+    
+    ::ng-deep .mat-mdc-form-field .mdc-text-field--outlined .mdc-notched-outline__leading,
+    ::ng-deep .mat-mdc-form-field .mdc-text-field--outlined .mdc-notched-outline__notch,
+    ::ng-deep .mat-mdc-form-field .mdc-text-field--outlined .mdc-notched-outline__trailing {
+      border-color: rgba(147, 51, 234, 0.3) !important;
+    }
+    
+    ::ng-deep .mat-mdc-form-field:hover .mdc-text-field--outlined .mdc-notched-outline__leading,
+    ::ng-deep .mat-mdc-form-field:hover .mdc-text-field--outlined .mdc-notched-outline__notch,
+    ::ng-deep .mat-mdc-form-field:hover .mdc-text-field--outlined .mdc-notched-outline__trailing {
+      border-color: rgba(147, 51, 234, 0.5) !important;
+    }
+    
+    ::ng-deep .mat-mdc-form-field.mat-focused .mdc-text-field--outlined .mdc-notched-outline__leading,
+    ::ng-deep .mat-mdc-form-field.mat-focused .mdc-text-field--outlined .mdc-notched-outline__notch,
+    ::ng-deep .mat-mdc-form-field.mat-focused .mdc-text-field--outlined .mdc-notched-outline__trailing {
+      border-color: #9333ea !important;
+    }
+    
+    ::ng-deep .mat-mdc-form-field .mdc-text-field {
+      background: rgba(10, 0, 15, 0.5);
+    }
+    
+    ::ng-deep .mat-mdc-form-field input,
+    ::ng-deep .mat-mdc-form-field .mat-mdc-select-value {
+      color: rgba(255, 255, 255, 0.9);
+    }
+    
+    ::ng-deep .mat-mdc-form-field .mdc-floating-label {
+      color: rgba(147, 51, 234, 0.7);
+    }
+    
+    ::ng-deep .mat-mdc-form-field.mat-focused .mdc-floating-label {
+      color: #9333ea;
+    }
+    
+    ::ng-deep .mat-mdc-form-field .mat-mdc-form-field-hint {
+      color: rgba(147, 51, 234, 0.5);
+    }
+    
+    ::ng-deep .mat-mdc-select-panel {
+      background: #1a0f1f;
+      border: 1px solid rgba(147, 51, 234, 0.3);
+    }
+    
+    ::ng-deep .mat-mdc-option:hover:not(.mat-mdc-option-disabled) {
+      background: rgba(147, 51, 234, 0.1);
+    }
+    
+    ::ng-deep .mat-mdc-option.mat-mdc-option-active {
+      background: rgba(147, 51, 234, 0.2);
     }
     
     @media (max-width: 768px) {
       .grid-controls {
-        padding: 12px;
+        padding: 16px;
       }
       
       .control-group {
