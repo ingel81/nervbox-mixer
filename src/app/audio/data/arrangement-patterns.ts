@@ -5,9 +5,9 @@ export const DEFAULT_HIPHOP_90S: ArrangementDefinition = {
   name: '90s Hip Hop',
   bpm: 90,
   duration: 20,
-  // Grid settings für Hip Hop
+  // Grid settings für Hip Hop - 1/8 notes für Hi-Hat pattern
   timeSignature: { numerator: 4, denominator: 4 },
-  gridSubdivision: '1/4',
+  gridSubdivision: '1/8',
   snapToGrid: true,
   tracks: [
     {
@@ -182,9 +182,9 @@ export const HOUSE_TECHNO_128: ArrangementDefinition = {
   name: 'House/Techno 128',
   bpm: 128,
   duration: 16,
-  // Grid settings für House/Techno
+  // Grid settings für House/Techno - 1/8 notes für Hi-Hat offbeats
   timeSignature: { numerator: 4, denominator: 4 },
-  gridSubdivision: '1/4',
+  gridSubdivision: '1/8',
   snapToGrid: true,
   tracks: [
     {
@@ -366,9 +366,9 @@ export const ROCK_POP_110: ArrangementDefinition = {
   name: 'Rock/Pop 110',
   bpm: 110,
   duration: 16,
-  // Grid settings für Rock/Pop
+  // Grid settings für Rock/Pop - 1/8 notes für Hi-Hat pattern
   timeSignature: { numerator: 4, denominator: 4 },
-  gridSubdivision: '1/4',
+  gridSubdivision: '1/8',
   snapToGrid: true,
   tracks: [
     {
@@ -511,9 +511,9 @@ export const REGGAE_DUB_75: ArrangementDefinition = {
   name: 'Reggae/Dub 75',
   bpm: 75,
   duration: 16,
-  // Grid settings für Reggae/Dub
+  // Grid settings für Reggae/Dub - 1/8 notes für off-beat patterns
   timeSignature: { numerator: 4, denominator: 4 },
-  gridSubdivision: '1/4',
+  gridSubdivision: '1/8',
   snapToGrid: true,
   tracks: [
     {
