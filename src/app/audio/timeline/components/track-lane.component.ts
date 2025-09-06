@@ -37,6 +37,16 @@ export interface TrackHoverEvent {
          (dragleave)="onDragLeave($event)"
          [class.drag-over]="isDragOver"
          [class.sound-drag-hover]="isSoundDragTarget()">
+      <!-- Active track background -->
+      <div class="active-track-bg" 
+           [style.width.px]="duration * pxPerSecond"
+           *ngIf="editorState.activeTrackId() === track.id">
+      </div>
+      <!-- Active track highlight line -->
+      <div class="active-highlight" 
+           [style.width.px]="duration * pxPerSecond"
+           *ngIf="editorState.activeTrackId() === track.id">
+      </div>
       <!-- Grid Lines for this track -->
       <div class="lane-grid-lines" 
            [style.width.px]="duration * pxPerSecond"
