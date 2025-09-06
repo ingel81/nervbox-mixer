@@ -26,11 +26,10 @@ import { EditorStateService } from '../services/editor-state.service';
   ],
   template: `
     <div class="grid-controls">
-      <!-- Main Controls Row -->
-      <div class="main-controls">
-        <!-- Grid Toggles - Most Important, First Position -->
-        <div class="control-group grid-toggles">
-          <!-- Show Grid -->
+      <!-- Alle Controls in einem Flow-Container -->
+      <div class="controls-flow">
+        <!-- Grid Toggles Gruppe -->
+        <div class="toggle-group">
           <mat-slide-toggle [ngModel]="editorState.showGrid()"
                             (ngModelChange)="editorState.showGrid.set($event)">
             <span class="toggle-label">
@@ -39,7 +38,6 @@ import { EditorStateService } from '../services/editor-state.service';
             </span>
           </mat-slide-toggle>
           
-          <!-- Snap to Grid -->
           <mat-slide-toggle [ngModel]="editorState.snapToGrid()"
                             (ngModelChange)="editorState.snapToGrid.set($event)">
             <span class="toggle-label">
@@ -49,40 +47,9 @@ import { EditorStateService } from '../services/editor-state.service';
           </mat-slide-toggle>
         </div>
         
-        <!-- Grid Resolution -->
-        <div class="control-group">
-          <mat-form-field subscriptSizing="dynamic">
-            <mat-label>Grid</mat-label>
-            <mat-select [ngModel]="editorState.gridSubdivision()"
-                        (ngModelChange)="editorState.gridSubdivision.set($event)"
-                        matTooltip="{{ getGridSpacingInMs() }}ms spacing">
-              <mat-option value="bar">Bars</mat-option>
-              <mat-option value="1/2">1/2 Notes</mat-option>
-              <mat-option value="1/4">1/4 Notes</mat-option>
-              <mat-option value="1/8">1/8 Notes</mat-option>
-              <mat-option value="1/16">1/16 Notes</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        
-        <!-- Time Signature -->
-        <div class="control-group">
-          <mat-form-field subscriptSizing="dynamic">
-            <mat-label>Time Signature</mat-label>
-            <mat-select [ngModel]="getTimeSignatureString()" 
-                        (ngModelChange)="setTimeSignature($event)"
-                        matTooltip="Beats per bar">
-              <mat-option value="4/4">4/4</mat-option>
-              <mat-option value="3/4">3/4</mat-option>
-              <mat-option value="6/8">6/8</mat-option>
-              <mat-option value="7/8">7/8</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        
-        <!-- BPM Control -->
-        <div class="control-group bpm-group">
-          <mat-form-field subscriptSizing="dynamic">
+        <!-- BPM Gruppe -->
+        <div class="bpm-group">
+          <mat-form-field subscriptSizing="dynamic" class="bpm-field">
             <mat-label>BPM</mat-label>
             <input matInput 
                    type="number" 
@@ -94,111 +61,144 @@ import { EditorStateService } from '../services/editor-state.service';
                    matTooltip="Beats per minute">
           </mat-form-field>
           
-          <!-- BPM Presets -->
-          <div class="bpm-presets">
-            <button mat-button 
-                    (click)="setBPM(90)" 
-                    [class.active]="editorState.bpm() === 90"
-                    matTooltip="Hip-Hop">
-              90
-            </button>
-            <button mat-button 
-                    (click)="setBPM(120)" 
-                    [class.active]="editorState.bpm() === 120"
-                    matTooltip="House">
-              120
-            </button>
-            <button mat-button 
-                    (click)="setBPM(140)" 
-                    [class.active]="editorState.bpm() === 140"
-                    matTooltip="Dubstep">
-              140
-            </button>
-            <button mat-button 
-                    (click)="setBPM(174)" 
-                    [class.active]="editorState.bpm() === 174"
-                    matTooltip="Drum & Bass">
-              174
-            </button>
+          <button mat-button 
+                  class="bpm-preset"
+                  (click)="setBPM(90)" 
+                  [class.active]="editorState.bpm() === 90"
+                  matTooltip="Hip-Hop">
+            90
+          </button>
+          <button mat-button 
+                  class="bpm-preset"
+                  (click)="setBPM(120)" 
+                  [class.active]="editorState.bpm() === 120"
+                  matTooltip="House">
+            120
+          </button>
+          <button mat-button 
+                  class="bpm-preset"
+                  (click)="setBPM(140)" 
+                  [class.active]="editorState.bpm() === 140"
+                  matTooltip="Dubstep">
+            140
+          </button>
+          <button mat-button 
+                  class="bpm-preset"
+                  (click)="setBPM(174)" 
+                  [class.active]="editorState.bpm() === 174"
+                  matTooltip="Drum & Bass">
+            174
+          </button>
+        </div>
+        
+        <!-- Time Signature -->
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Time Signature</mat-label>
+          <mat-select [ngModel]="getTimeSignatureString()" 
+                      (ngModelChange)="setTimeSignature($event)"
+                      matTooltip="Beats per bar">
+            <mat-option value="4/4">4/4</mat-option>
+            <mat-option value="3/4">3/4</mat-option>
+            <mat-option value="6/8">6/8</mat-option>
+            <mat-option value="7/8">7/8</mat-option>
+          </mat-select>
+        </mat-form-field>
+        
+        <!-- Grid Resolution -->
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Grid</mat-label>
+          <mat-select [ngModel]="editorState.gridSubdivision()"
+                      (ngModelChange)="editorState.gridSubdivision.set($event)"
+                      matTooltip="{{ getGridSpacingInMs() }}ms spacing">
+            <mat-option value="bar">Bars</mat-option>
+            <mat-option value="1/2">1/2 Notes</mat-option>
+            <mat-option value="1/4">1/4 Notes</mat-option>
+            <mat-option value="1/8">1/8 Notes</mat-option>
+            <mat-option value="1/16">1/16 Notes</mat-option>
+          </mat-select>
+        </mat-form-field>
+        
+        <!-- Grid Info Gruppe -->
+        <div class="info-group">
+          <div class="info-item">
+            <span class="label">Beat Duration</span>
+            <span class="value">{{ getBeatDurationMs() }}ms</span>
           </div>
-        </div>
-      </div>
-      
-      <!-- Grid Info Display -->
-      <div class="grid-info">
-        <div class="info-item">
-          <span class="label">Beat Duration</span>
-          <span class="value">{{ getBeatDurationMs() }}ms</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Bar Duration</span>
-          <span class="value">{{ getBarDurationMs() }}ms</span>
-        </div>
-        <div class="info-item">
-          <span class="label">Grid Spacing</span>
-          <span class="value">{{ getGridSpacingInMs() }}ms</span>
+          <div class="info-item">
+            <span class="label">Bar Duration</span>
+            <span class="value">{{ getBarDurationMs() }}ms</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Grid Spacing</span>
+            <span class="value">{{ getGridSpacingInMs() }}ms</span>
+          </div>
         </div>
       </div>
     </div>
   `,
   styles: [`
     .grid-controls {
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      padding: 12px;
       width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
     }
     
-    /* Main controls in a responsive row */
-    .main-controls {
+    /* Flow-Layout mit automatischem Umbruch */
+    .controls-flow {
       display: flex;
       flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    /* Alle direkten Kinder als Gruppen */
+    .controls-flow > * {
+      flex: 0 0 auto;
+    }
+    
+    /* Toggle Gruppe */
+    .toggle-group {
+      display: flex;
       gap: 12px;
       align-items: center;
     }
     
-    .control-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 0 0 auto;
-    }
-    
-    /* BPM group takes more space */
+    /* BPM Gruppe */
     .bpm-group {
-      flex: 0 0 auto;
-      min-width: 300px;
-    }
-    
-    /* Grid toggles grouped together */
-    .grid-toggles {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-    }
-    
-    .grid-toggles mat-slide-toggle {
-      margin: 0;
-    }
-    
-    /* BPM Preset Buttons - NervBox Style */
-    .bpm-presets {
       display: flex;
       gap: 6px;
+      align-items: center;
     }
     
-    .bpm-presets button {
-      min-width: 45px;
+    /* BPM Field kompakt */
+    .bpm-field {
+      width: 90px !important;
+    }
+    
+    /* Info Gruppe */
+    .info-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    /* BPM Preset Buttons inline */
+    .bpm-preset {
+      min-width: 38px;
       height: 36px;
       background: rgba(147, 51, 234, 0.1);
       border: 1px solid rgba(147, 51, 234, 0.3);
       color: rgba(255, 255, 255, 0.7);
       transition: all 0.2s ease;
-      padding: 0 8px;
+      padding: 0 6px;
+      font-size: 12px;
     }
     
-    .bpm-presets button:hover {
+    .bpm-preset:hover {
       background: rgba(147, 51, 234, 0.2);
       border-color: rgba(147, 51, 234, 0.5);
       color: rgba(255, 255, 255, 0.9);
@@ -206,7 +206,7 @@ import { EditorStateService } from '../services/editor-state.service';
       box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3);
     }
     
-    .bpm-presets button.active {
+    .bpm-preset.active {
       background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%);
       border-color: #9333ea;
       color: white;
@@ -247,18 +247,7 @@ import { EditorStateService } from '../services/editor-state.service';
       opacity: 0.8;
     }
     
-    /* Grid Info Panel - Match form field style */
-    .grid-info {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      padding: 0;
-      background: transparent;
-      border: none;
-      backdrop-filter: none;
-      box-shadow: none;
-    }
-    
+    /* Info Items direkt im Flow */
     .info-item {
       display: flex;
       flex-direction: column;
@@ -269,7 +258,7 @@ import { EditorStateService } from '../services/editor-state.service';
       border-radius: 4px;
       transition: all 0.2s ease;
       flex: 0 0 auto;
-      min-width: 80px;
+      min-width: 65px;
     }
     
     .info-item:hover {
@@ -326,8 +315,16 @@ import { EditorStateService } from '../services/editor-state.service';
     }
     
     ::ng-deep .mat-mdc-form-field .mdc-text-field {
-      background: rgba(10, 0, 15, 0.5) !important;
+      background: rgba(40, 30, 50, 0.6) !important;
       caret-color: #9333ea !important;
+    }
+    
+    ::ng-deep .mat-mdc-form-field:hover .mdc-text-field {
+      background: rgba(45, 35, 55, 0.7) !important;
+    }
+    
+    ::ng-deep .mat-mdc-form-field.mat-focused .mdc-text-field {
+      background: rgba(50, 40, 60, 0.8) !important;
     }
     
     ::ng-deep .mat-mdc-form-field .mdc-text-field--outlined {
@@ -388,69 +385,33 @@ import { EditorStateService } from '../services/editor-state.service';
       background: rgba(147, 51, 234, 0.35) !important;
     }
     
-    /* Large screens - everything in one row */
-    @media (min-width: 1200px) {
-      .main-controls {
-        flex-wrap: nowrap;
-      }
-    }
-    
-    /* Medium screens - wrap controls nicely */
-    @media (max-width: 1199px) {
-      .bpm-group {
-        flex: 0 0 auto;
-      }
-    }
-    
-    /* Small screens - stack vertically */
+    /* Mobile - Einfaches Flow-Layout bleibt */
     @media (max-width: 768px) {
       .grid-controls {
         padding: 8px;
       }
       
-      .main-controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-      }
-      
-      .control-group {
-        width: 100%;
-      }
-      
-      .bpm-group {
-        min-width: unset;
-        width: 100%;
-        display: grid;
-        grid-template-columns: 120px 1fr;
+      .controls-flow {
         gap: 8px;
-        align-items: center;
       }
       
-      .bpm-group mat-form-field {
-        width: 100%;
+      /* BPM Field noch kompakter auf Mobile */
+      .bpm-field {
+        width: 80px !important;
       }
       
-      .bpm-presets {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
+      /* Preset Buttons kompakter */
+      .bpm-preset {
+        min-width: 32px;
+        padding: 0 4px;
+        font-size: 11px;
+        height: 32px;
       }
       
-      /* Info items in a row on mobile */
-      .grid-info {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
-        width: 100%;
-      }
-      
+      /* Info Items kompakter */
       .info-item {
-        flex: unset;
-        min-width: 0;
-        padding: 6px;
-        text-align: center;
+        min-width: 55px;
+        padding: 4px 6px;
       }
       
       .info-item .label {
@@ -458,50 +419,12 @@ import { EditorStateService } from '../services/editor-state.service';
       }
       
       .info-item .value {
-        font-size: 11px;
+        font-size: 10px;
       }
       
-      /* Grid toggles stack on mobile */
-      .grid-toggles {
-        flex-direction: column;
-        align-items: flex-start;
-        width: 100%;
-        gap: 8px;
-      }
-      
-      .grid-toggles mat-slide-toggle {
-        width: 100%;
-      }
-    }
-    
-    /* Very small screens */
-    @media (max-width: 480px) {
-      .bpm-group {
-        grid-template-columns: 100px 1fr;
-      }
-      
-      .bpm-presets button {
-        min-width: unset;
-        padding: 6px 4px;
-        font-size: 11px;
-        height: 32px;
-      }
-      
+      /* Form Fields kompakter */
       ::ng-deep .mat-mdc-form-field {
         --mat-form-field-container-height: 36px;
-        --mat-form-field-container-vertical-padding: 4px;
-      }
-      
-      ::ng-deep .mat-mdc-form-field .mdc-floating-label {
-        font-size: 10px !important;
-      }
-      
-      .info-item {
-        padding: 4px;
-      }
-      
-      .info-item .value {
-        font-size: 10px;
       }
     }
   `]
