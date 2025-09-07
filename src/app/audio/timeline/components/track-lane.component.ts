@@ -26,6 +26,7 @@ export interface TrackHoverEvent {
     template: `
     <div class="lane" 
          #laneElement
+         [style.width.px]="duration * pxPerSecond"
          [attr.data-track-index]="trackIndex"
          (mousedown)="onLaneMouseDown($event)" 
          (touchstart)="onLaneTouchStart($event)"
