@@ -18,6 +18,7 @@ export abstract class BaseDragHandler {
   protected moveHandler: ((e: Event) => void) | null = null;
   protected endHandler: ((e: Event) => void) | null = null;
   protected initialEvent: Event | null = null;
+  protected hasMoved = false;
 
   abstract normalizeInput(event: Event): DragCoordinates;
   abstract installEventListeners(element: HTMLElement): void;
@@ -47,6 +48,8 @@ export abstract class BaseDragHandler {
     if (!this.config || !this.element) return;
 
     const coords = this.normalizeInput(event);
+    // Mark that movement has occurred
+    this.hasMoved = true;
     // Check if Shift key is pressed to bypass grid snap
     const shiftPressed = (event as MouseEvent).shiftKey || (event as KeyboardEvent).shiftKey;
     this.virtualDragService.updateVirtualPosition(coords, this.startX, shiftPressed);
@@ -59,6 +62,36 @@ export abstract class BaseDragHandler {
     if (!this.config || !this.element) return;
 
     const coords = this.normalizeInput(event);
+    
+    // If no movement occurred, don't apply grid snapping
+    if (!this.hasMoved) {
+      // Restore visual state but keep original position
+      this.virtualDragService.commitFinalState({
+        clip: this.config.clip,
+        finalTime: this.config.clip.startTime, // Keep original time
+        targetTrack: null,
+        targetTrackIndex: -1
+      });
+      
+      // Still need to call onDragComplete to clean up state, but with original position
+      this.config.onDragComplete({
+        clip: this.config.clip,
+        finalTime: this.config.clip.startTime,
+        targetTrack: null,
+        targetTrackIndex: -1
+      });
+      
+      // Cleanup
+      this.removeEventListeners();
+      this.element = null;
+      this.config = null;
+      this.hasMoved = false;
+      
+      event.preventDefault();
+      return;
+    }
+
+    // Movement occurred - apply position update with grid snapping
     const shiftPressed = (event as MouseEvent).shiftKey || (event as KeyboardEvent).shiftKey;
     const { newTime } = this.virtualDragService.updateVirtualPosition(coords, this.startX, shiftPressed);
 
@@ -86,6 +119,7 @@ export abstract class BaseDragHandler {
     this.removeEventListeners();
     this.element = null;
     this.config = null;
+    this.hasMoved = false;
 
     event.preventDefault();
   }

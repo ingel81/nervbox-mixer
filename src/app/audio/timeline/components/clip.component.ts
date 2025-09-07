@@ -123,14 +123,17 @@ export class ClipComponent {
       tracks: this.tracks,
       pxPerSecond: this.pxPerSecond,
       onDragComplete: (result: DragResult) => {
-        // Emit virtual drag completion event
-        this.dragStarted.emit({
-          clip: this.clip,
-          startX: event.clientX,
-          origStartTime: this.clip.startTime,
-          finalTime: result.finalTime,
-          targetTrack: result.targetTrack || undefined
-        });
+        // Only emit drag event if position actually changed
+        if (result.finalTime !== this.clip.startTime || result.targetTrack) {
+          // Emit virtual drag completion event
+          this.dragStarted.emit({
+            clip: this.clip,
+            startX: event.clientX,
+            origStartTime: this.clip.startTime,
+            finalTime: result.finalTime,
+            targetTrack: result.targetTrack || undefined
+          });
+        }
         this.isDragActive.set(false);
         this.editorState.endClipDrag(); // Notify global state
       }
@@ -156,14 +159,17 @@ export class ClipComponent {
       tracks: this.tracks,
       pxPerSecond: this.pxPerSecond,
       onDragComplete: (result: DragResult) => {
-        // Emit virtual drag completion event
-        this.dragStarted.emit({
-          clip: this.clip,
-          startX: touch.clientX,
-          origStartTime: this.clip.startTime,
-          finalTime: result.finalTime,
-          targetTrack: result.targetTrack || undefined
-        });
+        // Only emit drag event if position actually changed
+        if (result.finalTime !== this.clip.startTime || result.targetTrack) {
+          // Emit virtual drag completion event
+          this.dragStarted.emit({
+            clip: this.clip,
+            startX: touch.clientX,
+            origStartTime: this.clip.startTime,
+            finalTime: result.finalTime,
+            targetTrack: result.targetTrack || undefined
+          });
+        }
         this.isDragActive.set(false);
         this.editorState.endClipDrag(); // Notify global state
       }

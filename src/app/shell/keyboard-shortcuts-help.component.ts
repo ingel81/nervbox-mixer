@@ -62,7 +62,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
       bottom: 32px;
       right: 16px;
       z-index: 1000;
-      max-width: 380px;
+      max-width: 480px;
       transition: all 0.3s ease;
     }
     
@@ -122,9 +122,10 @@ import { animate, style, transition, trigger } from '@angular/animations';
       padding: 12px;
       max-height: 320px;
       overflow-y: auto;
+      overflow-x: hidden;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      gap: 20px;
       
       &::-webkit-scrollbar {
         width: 8px;
@@ -169,10 +170,11 @@ import { animate, style, transition, trigger } from '@angular/animations';
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 12px;
       padding: 3px 4px;
       border-radius: 3px;
       transition: background 0.2s;
+      min-width: 0;
       
       &:hover {
         background: rgba(156, 39, 176, 0.1);
@@ -211,7 +213,9 @@ import { animate, style, transition, trigger } from '@angular/animations';
       font-size: 11px;
       line-height: 1.3;
       text-align: right;
-      flex-shrink: 0;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
     }
     
     
@@ -254,7 +258,8 @@ export class KeyboardShortcutsHelpComponent {
         { keys: ['Delete'], description: 'Delete clip' },
         { keys: ['Ctrl', 'C'], description: 'Copy clip' },
         { keys: ['Ctrl', 'V'], description: 'Paste clip' },
-        { keys: ['Ctrl', 'Scroll'], description: 'Zoom timeline' }
+        { keys: ['Ctrl', 'Scroll'], description: 'Zoom timeline' },
+        { keys: ['Shift', 'Drag'], description: 'Bypass grid snap' }
       ]
     }
   ];
