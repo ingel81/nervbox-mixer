@@ -31,7 +31,8 @@
       "Bash(npm run e2e:*)",
       "Bash(npx playwright test:*)",
       "WebFetch(domain:material.angular.dev)",
-      "Bash(npm version:*)"
+      "Bash(npm version:*)",
+      "WebSearch"
     ],
     "deny": []
   }
