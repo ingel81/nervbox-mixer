@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, HostListener, computed, signal, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, HostListener, computed, signal, inject, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Clip, Track } from '../../shared/models/models';
@@ -84,7 +84,7 @@ export interface ClipDuplicateEvent {
   `,
     styleUrls: ['./clip.component.css']
 })
-export class ClipComponent {
+export class ClipComponent implements OnChanges {
   @Input({ required: true }) clip!: Clip;
   @Input({ required: true }) pxPerSecond!: number;
   @Input({ required: true }) tracks!: Track[];
@@ -105,6 +105,31 @@ export class ClipComponent {
     private editorState: EditorStateService,
     private waveformService: WaveformService
   ) {}
+
+  ngOnChanges(changes: SimpleChanges) {
+    // Regenerate waveform when zoom level changes
+    if (changes['pxPerSecond'] && !changes['pxPerSecond'].firstChange) {
+      this.regenerateWaveform();
+    }
+  }
+
+  private regenerateWaveform(): void {
+    const buffer = this.clip.buffer;
+    const trimStart = this.clip.trimStart || 0;
+    const trimEnd = this.clip.trimEnd || 0;
+    
+    // Always pass the clip's display duration to match the visual width
+    // The waveform width should match [style.width.px]="clip.duration * pxPerSecond"
+    if (trimStart === 0 && trimEnd === 0) {
+      this.clip.waveform = this.waveformService.generateFromBuffer(buffer, {
+        width: Math.max(1, Math.floor(this.clip.duration * this.pxPerSecond)),
+        clipColor: this.clip.color
+      });
+    } else {
+      // For trimmed clips, use the existing updateTrimmedWaveform logic
+      this.updateTrimmedWaveform();
+    }
+  }
 
   isSelected = computed(() => this.editorState.selectedClipId() === this.clip.id);
   isDragging = computed(() => this.isDragActive());
@@ -228,12 +253,15 @@ export class ClipComponent {
   private handleTrimTouchMove = (event: TouchEvent) => {
     event.preventDefault();
     const touch = event.touches[0];
-    // Convert to mouse event for existing trim logic
-    const mouseEvent = new MouseEvent('mousemove', {
-      clientX: touch.clientX,
-      clientY: touch.clientY
-    });
-    this.handleTrimMouseMove(mouseEvent);
+    const trimState = this.editorState.trimState;
+    if (trimState && trimState.id === this.clip.id) {
+      // For touch, we don't have a shift key, so use false
+      const mouseEvent = new MouseEvent('mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      });
+      this.handleTrimming(mouseEvent, trimState, false);
+    }
   }
 
   private handleTrimTouchEnd = () => {
@@ -248,7 +276,8 @@ export class ClipComponent {
   private handleTrimMouseMove = (event: MouseEvent) => {
     const trimState = this.editorState.trimState;
     if (trimState && trimState.id === this.clip.id) {
-      this.handleTrimming(event, trimState);
+      // Pass shift key state to handleTrimming
+      this.handleTrimming(event, trimState, event.shiftKey);
     }
   }
   
@@ -269,7 +298,7 @@ export class ClipComponent {
     (document.body as HTMLElement).style.userSelect = '';
   }
 
-  private handleTrimming(event: MouseEvent, trimState: { id: string; side: 'start' | 'end'; startX: number; originalTrimStart: number; originalTrimEnd: number; originalDuration: number; originalStartTime: number; clipRef: Clip }) {
+  private handleTrimming(event: MouseEvent, trimState: { id: string; side: 'start' | 'end'; startX: number; originalTrimStart: number; originalTrimEnd: number; originalDuration: number; originalStartTime: number; clipRef: Clip }, bypassSnap = false) {
     const dx = event.clientX - trimState.startX;
     const deltaSeconds = pxToSeconds(dx, this.pxPerSecond);
     
@@ -294,8 +323,8 @@ export class ClipComponent {
       // Calculate new start time
       let newStartTime = originalRightEdge - (this.clip.originalDuration - newTrimStart - (this.clip.trimEnd || 0));
       
-      // Apply grid snap if enabled
-      if (this.editorState.snapToGrid()) {
+      // Apply grid snap if enabled and not bypassed with Shift key
+      if (this.editorState.snapToGrid() && !bypassSnap) {
         const snappedTime = this.editorState.snapPositionToGrid(newStartTime);
         const snapAdjustment = snappedTime - newStartTime;
         newStartTime = snappedTime;
@@ -313,8 +342,8 @@ export class ClipComponent {
       let newTrimEnd = Math.max(0, Math.min(maxTrimEnd,
         trimState.originalTrimEnd - deltaSeconds));
       
-      // Snap end position to grid if enabled
-      if (this.editorState.snapToGrid()) {
+      // Snap end position to grid if enabled and not bypassed with Shift key
+      if (this.editorState.snapToGrid() && !bypassSnap) {
         const endTime = this.clip.startTime + this.clip.originalDuration - newTrimEnd;
         const snappedEndTime = this.editorState.snapPositionToGrid(endTime);
         const snapAdjustment = snappedEndTime - endTime;
@@ -348,9 +377,12 @@ export class ClipComponent {
     const trimStart = this.clip.trimStart || 0;
     const trimEnd = this.clip.trimEnd || 0;
     
-    // If no trimming, use original waveform
+    // If no trimming, use original waveform with current zoom level
     if (trimStart === 0 && trimEnd === 0) {
-      this.clip.waveform = this.waveformService.generateFromBuffer(buffer);
+      this.clip.waveform = this.waveformService.generateFromBuffer(buffer, {
+        width: Math.max(1, Math.floor(this.clip.duration * this.pxPerSecond)),
+        clipColor: this.clip.color
+      });
       return;
     }
     
@@ -371,7 +403,7 @@ export class ClipComponent {
     if (trimmedData.length === 0) {
       // Fallback: create minimal waveform
       this.clip.waveform = this.waveformService.generateFromData(new Float32Array([0, 0]), 0.1, {
-        pxPerSecond: this.pxPerSecond
+        width: Math.max(1, Math.floor(this.clip.duration * this.pxPerSecond))
       });
       return;
     }
@@ -379,7 +411,7 @@ export class ClipComponent {
     // Generate waveform for the DISPLAY duration (clip.duration), not the buffer duration
     // This ensures waveform matches visual clip width
     this.clip.waveform = this.waveformService.generateFromData(trimmedData, this.clip.duration, {
-      pxPerSecond: this.pxPerSecond
+      width: Math.max(1, Math.floor(this.clip.duration * this.pxPerSecond))
     });
   }
 

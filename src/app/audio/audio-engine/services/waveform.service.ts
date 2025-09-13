@@ -4,7 +4,6 @@ export interface WaveformOptions {
   width?: number;
   height?: number;
   clipColor?: string;
-  pxPerSecond?: number;
   trimStart?: number;
   trimEnd?: number;
 }
@@ -36,6 +35,14 @@ export class WaveformService {
     
     // Cache the result
     this.waveformCache.set(cacheKey, waveform);
+    
+    // Limit cache size to prevent memory issues
+    if (this.waveformCache.size > 100) {
+      const firstKey = this.waveformCache.keys().next().value;
+      if (firstKey) {
+        this.waveformCache.delete(firstKey);
+      }
+    }
     
     return waveform;
   }
@@ -167,15 +174,14 @@ export class WaveformService {
   ): string {
     const {
       height = 44,
-      clipColor = '',
-      pxPerSecond = 120
+      clipColor = ''
     } = options;
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
     
-    // Use exact pixel width to match visual clip width
-    const width = Math.max(50, Math.floor(duration * pxPerSecond));
+    // Use provided width or calculate based on duration with default zoom
+    const width = options.width || Math.max(50, Math.floor(duration * 120));
     
     canvas.width = width;
     canvas.height = height;
@@ -273,8 +279,7 @@ export class WaveformService {
     return this.generateFromBuffer(buffer, {
       width,
       height: 44,
-      clipColor,
-      pxPerSecond
+      clipColor
     });
   }
 
@@ -333,6 +338,7 @@ export class WaveformService {
     // Note: We can't use buffer directly as key, so we use its properties
     const bufferKey = `${buffer.duration}_${buffer.sampleRate}_${buffer.length}_${buffer.numberOfChannels}`;
     
+    // Width is the most important parameter for zoom changes
     return `${bufferKey}_${width}_${height}_${clipColor}_${trimStart}_${trimEnd}`;
   }
 }

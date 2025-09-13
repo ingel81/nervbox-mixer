@@ -259,7 +259,8 @@ export class KeyboardShortcutsHelpComponent {
         { keys: ['Ctrl', 'C'], description: 'Copy clip' },
         { keys: ['Ctrl', 'V'], description: 'Paste clip' },
         { keys: ['Ctrl', 'Scroll'], description: 'Zoom timeline' },
-        { keys: ['Shift', 'Drag'], description: 'Bypass grid snap' }
+        { keys: ['Shift', 'Drag'], description: 'Bypass grid snap' },
+        { keys: ['Shift', 'Trim'], description: 'Bypass snap when trimming' }
       ]
     }
   ];

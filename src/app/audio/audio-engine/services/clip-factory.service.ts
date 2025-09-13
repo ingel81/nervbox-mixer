@@ -42,18 +42,24 @@ export class ClipFactoryService {
   }
 
   generateWaveform(buffer: AudioBuffer, color: string, height = 44): string {
+    // Calculate width based on buffer duration and current zoom level
+    const width = Math.max(1, Math.floor(buffer.duration * this.editorState.pxPerSecond()));
     return this.waveformService.generateFromBuffer(buffer, {
-      width: Math.floor(buffer.duration * this.editorState.pxPerSecond()),
+      width,
       height,
       clipColor: color
     });
   }
 
   regenerateWaveform(clip: Clip, height = 44): string {
+    // Calculate width based on clip's display duration and current zoom level
+    const width = Math.max(1, Math.floor(clip.duration * this.editorState.pxPerSecond()));
     return this.waveformService.generateFromBuffer(clip.buffer, {
-      width: Math.floor(clip.duration * this.editorState.pxPerSecond()),
+      width,
       height,
-      clipColor: clip.color
+      clipColor: clip.color,
+      trimStart: clip.trimStart || 0,
+      trimEnd: clip.trimEnd || 0
     });
   }
 
