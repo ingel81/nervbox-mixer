@@ -35,8 +35,8 @@ export interface TrackClickEvent {
       <div class="track-controls">
         <div class="title" 
              [class.editing]="isEditing">
-          <span *ngIf="!isEditing" class="title-content">
-            {{ track.name }}
+          <span *ngIf="!isEditing" class="title-content" [title]="track.name">
+            <span class="track-name-text">{{ track.name }}</span>
             <mat-icon class="edit-icon" (click)="startEditing()">edit</mat-icon>
           </span>
           <input *ngIf="isEditing" 
