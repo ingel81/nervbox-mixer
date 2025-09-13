@@ -23,6 +23,7 @@ export interface LoopDragState {
   marker: 'start' | 'end';
   startX: number;
   originalValue: number;
+  shiftKey?: boolean;
 }
 
 export interface LoopRegionDragState {
@@ -30,6 +31,7 @@ export interface LoopRegionDragState {
   originalStart: number;
   originalEnd: number;
   loopDuration: number;
+  shiftKey?: boolean;
 }
 
 @Injectable({
@@ -136,7 +138,10 @@ export class InteractionCoordinatorService {
         console.log('Region drag commit:', { deltaX, deltaTime, originalStart: this.loopRegionDragState.originalStart });
         
         const newStart = Math.max(0, this.loopRegionDragState.originalStart + deltaTime);
-        const snappedStart = this.editorState.snapLoopMarkerToGrid(newStart);
+        // Skip grid snapping if shift key was held during drag
+        const snappedStart = this.loopRegionDragState.shiftKey 
+          ? newStart 
+          : this.editorState.snapLoopMarkerToGrid(newStart);
         const snappedEnd = snappedStart + this.loopRegionDragState.loopDuration;
         
         // Always apply the changes - remove maxEnd check that might be causing resets
@@ -152,7 +157,10 @@ export class InteractionCoordinatorService {
         const deltaX = this.extractTranslateX(transform);
         const deltaTime = this.timeline.pxToSeconds(deltaX);
         const newValue = Math.max(0, this.loopDragState.originalValue + deltaTime);
-        const snappedValue = this.editorState.snapLoopMarkerToGrid(newValue);
+        // Skip grid snapping if shift key was held during drag
+        const snappedValue = this.loopDragState.shiftKey 
+          ? newValue 
+          : this.editorState.snapLoopMarkerToGrid(newValue);
         
         console.log('Marker drag commit:', { 
           marker: this.loopDragState.marker, 
@@ -279,23 +287,24 @@ export class InteractionCoordinatorService {
   }
 
   // Loop region drag handling
-  startLoopMarkerDrag(marker: 'start' | 'end', clientX: number): void {
+  startLoopMarkerDrag(marker: 'start' | 'end', clientX: number, shiftKey = false): void {
     const originalValue = marker === 'start' 
       ? this.editorState.loopStart() 
       : this.editorState.loopEnd();
       
-    this.loopDragState = { marker, startX: clientX, originalValue };
+    this.loopDragState = { marker, startX: clientX, originalValue, shiftKey };
     
     // Cache DOM elements and prepare for transform-based dragging
     this.prepareLoopElementsForDrag();
   }
 
-  startLoopRegionDrag(clientX: number): void {
+  startLoopRegionDrag(clientX: number, shiftKey = false): void {
     this.loopRegionDragState = {
       startX: clientX,
       originalStart: this.editorState.loopStart(),
       originalEnd: this.editorState.loopEnd(),
-      loopDuration: this.editorState.loopEnd() - this.editorState.loopStart()
+      loopDuration: this.editorState.loopEnd() - this.editorState.loopStart(),
+      shiftKey
     };
     
     // Cache DOM elements and prepare for transform-based dragging

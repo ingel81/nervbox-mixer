@@ -244,14 +244,16 @@ export class LoopRegionComponent {
     event.preventDefault();
     event.stopPropagation();
     
-    this.interactionCoordinator.startLoopMarkerDrag(marker, event.clientX);
+    // Pass shift key state to enable/disable grid snapping
+    this.interactionCoordinator.startLoopMarkerDrag(marker, event.clientX, event.shiftKey);
   }
   
   onLoopRegionMouseDown(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
     
-    this.interactionCoordinator.startLoopRegionDrag(event.clientX);
+    // Pass shift key state to enable/disable grid snapping
+    this.interactionCoordinator.startLoopRegionDrag(event.clientX, event.shiftKey);
   }
 
   onLoopMarkerTouchStart(event: TouchEvent, marker: 'start' | 'end'): void {
@@ -259,7 +261,8 @@ export class LoopRegionComponent {
     event.stopPropagation();
     
     const touch = event.touches[0];
-    this.interactionCoordinator.startLoopMarkerDrag(marker, touch.clientX);
+    // Touch doesn't have shift key, so always snap to grid
+    this.interactionCoordinator.startLoopMarkerDrag(marker, touch.clientX, false);
   }
 
   onLoopRegionTouchStart(event: TouchEvent): void {
@@ -267,7 +270,8 @@ export class LoopRegionComponent {
     event.stopPropagation();
     
     const touch = event.touches[0];
-    this.interactionCoordinator.startLoopRegionDrag(touch.clientX);
+    // Touch doesn't have shift key, so always snap to grid
+    this.interactionCoordinator.startLoopRegionDrag(touch.clientX, false);
   }
   
   // Helper methods
