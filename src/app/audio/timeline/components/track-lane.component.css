@@ -129,16 +129,16 @@
 }
 
 /* Playhead in lanes */
-.lane .playhead { 
-  position: absolute; 
-  top: 0; 
-  width: 2px; 
-  height: 100%; 
-  background: linear-gradient(180deg, #f97316 0%, #fbbf24 100%);
-  box-shadow: 
+.lane .playhead {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: #f97316;
+  box-shadow:
     0 0 20px rgba(249, 115, 22, 0.8),
     0 0 40px rgba(249, 115, 22, 0.4);
-  pointer-events: none; 
+  pointer-events: none;
   z-index: 40;
   animation: pulse 1.5s ease-in-out infinite;
   /* Compensate for lane border-left: 3px vs ruler border-left: 1px */
