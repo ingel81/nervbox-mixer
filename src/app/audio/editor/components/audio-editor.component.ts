@@ -645,14 +645,20 @@ export class AudioEditorComponent {
         if (timelineEl) {
           let rect: DOMRect;
           let clipsEl: Element | null = null;
+          let scrollLeft = 0;
 
           if (timelineEl.classList.contains('ruler')) {
             rect = timelineEl.getBoundingClientRect();
+            // For ruler, we need to account for track lanes scroll position
+            const trackLanesEl = this.trackLanesEl?.nativeElement;
+            scrollLeft = trackLanesEl ? trackLanesEl.scrollLeft : 0;
           } else {
             // For lanes, use the clips element for correct positioning
             clipsEl = timelineEl.querySelector('.clips');
             if (!clipsEl) return;
             rect = clipsEl.getBoundingClientRect();
+            // For lanes, scrollLeft is already accounted for in the rect position
+            scrollLeft = 0;
           }
 
           // Get clientX from either mouse or touch event
@@ -661,7 +667,7 @@ export class AudioEditorComponent {
               ? ev.clientX
               : (ev as TouchEvent).touches[0]?.clientX || 0;
           const x = clientX - rect.left;
-          this.timelineService.scrubToPosition(x, 0);
+          this.timelineService.scrubToPosition(x, scrollLeft);
         }
         this.seekingRafId = null;
       });
