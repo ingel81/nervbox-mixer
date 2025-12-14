@@ -10,6 +10,7 @@ import { ContentCreationComponent } from './content-creation.component';
 import { ExportControlsComponent } from './export-controls.component';
 import { AudioEditorComponent } from '../audio/editor/components/audio-editor.component';
 import { KeyboardShortcutsHelpComponent } from './keyboard-shortcuts-help.component';
+import { environment } from '../../environments/environment';
 
 @Component({
     selector: 'app-shell',
@@ -27,10 +28,20 @@ import { KeyboardShortcutsHelpComponent } from './keyboard-shortcuts-help.compon
     ],
     template: `
     <mat-toolbar color="primary" class="toolbar">
+      <!-- Back to Player (LAN mode only) -->
+      @if (isLanMode) {
+        <button mat-icon-button
+                (click)="goToPlayer()"
+                matTooltip="Zurück zum Player"
+                class="back-button">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+      }
+
       <!-- Logo/Branding -->
       <span class="logo">
-        <span class="logo-text">NervBox</span> 
-        <span class="logo-subtitle">Mixer</span> 
+        <span class="logo-text">NervBox</span>
+        <span class="logo-subtitle">Mixer</span>
       </span>
       <span class="spacer"></span>
 
@@ -63,8 +74,15 @@ import { KeyboardShortcutsHelpComponent } from './keyboard-shortcuts-help.compon
 })
 export class ShellComponent {
   @ViewChild('shortcutsHelp') shortcutsHelp!: KeyboardShortcutsHelpComponent;
-  
+
+  readonly isLanMode = !!environment.nervboxApi;
+
   showKeyboardShortcuts() {
     this.shortcutsHelp?.toggle();
+  }
+
+  goToPlayer(): void {
+    // Player is at / (same origin, shares localStorage)
+    window.location.href = '/';
   }
 }

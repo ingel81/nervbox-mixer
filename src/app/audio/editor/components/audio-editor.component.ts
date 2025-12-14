@@ -18,6 +18,7 @@ import { InteractionCoordinatorService } from '../../timeline/services/interacti
 import { FileImportService } from '../../audio-engine/services/file-import.service';
 import { ClipFactoryService } from '../../audio-engine/services/clip-factory.service';
 import { MobileInteractionService } from '../../timeline/services/mobile-interaction.service';
+import { environment } from '../../../../environments/environment';
 import { LoopRegionComponent } from './loop-region.component';
 import { SoundBrowserComponent } from '../../sound-browser/components/sound-browser.component';
 import { BottomPanelComponent } from './bottom-panel.component';
@@ -47,7 +48,6 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'audio-editor',
@@ -147,8 +147,11 @@ export class AudioEditorComponent {
     this.editorState.registerSeekCallback((seconds: number) => {
       this.seekTo(seconds);
     });
-    
-    this.addDefaultHipHopTrack();
+
+    // Only load default arrangement in standalone mode (not LAN mode)
+    if (!environment.nervboxApi) {
+      this.addDefaultHipHopTrack();
+    }
 
     // Initialize sound library
     this.soundLibrary.preloadEssentials().catch(console.error);

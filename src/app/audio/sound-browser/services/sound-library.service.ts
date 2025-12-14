@@ -1,21 +1,94 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { AudioEngineService } from '../../audio-engine/services/audio-engine.service';
 import { SOUND_LIBRARY, SoundLibraryItem, SOUND_CATEGORIES, SoundCategory } from '../../shared/utils/sound-library';
+import { environment } from '../../../../environments/environment';
+import { Sound } from '../../../core/models/sound.model';
 
 @Injectable({ providedIn: 'root' })
 export class SoundLibraryService {
+  private readonly http = inject(HttpClient);
   private loadedSounds = new Map<string, AudioBuffer>();
-  
-  sounds = signal<SoundLibraryItem[]>(SOUND_LIBRARY);
+
+  readonly isLanMode = signal(!!environment.nervboxApi);
+  readonly isLoading = signal(false);
+
+  sounds = signal<SoundLibraryItem[]>([]);
   categories = signal<readonly SoundCategory[]>(SOUND_CATEGORIES);
   selectedCategory = signal<SoundCategory>('All');
   searchTerm = signal<string>('');
-  
+
   filteredSounds = signal<SoundLibraryItem[]>([]);
 
+  // All unique tags from sounds (for upload dialog)
+  readonly availableTags = computed(() => {
+    const allTags = new Set<string>();
+    for (const sound of this.sounds()) {
+      sound.tags?.forEach(tag => allTags.add(tag));
+    }
+    return Array.from(allTags).sort();
+  });
+
   constructor(public audio: AudioEngineService) {
-    // Update filtered sounds when category or search changes
+    this.initializeSounds();
+  }
+
+  private async initializeSounds(): Promise<void> {
+    this.isLoading.set(true);
+
+    if (environment.nervboxApi) {
+      await this.loadFromApi();
+    } else {
+      this.sounds.set(SOUND_LIBRARY);
+    }
+
     this.updateFiltered();
+    this.isLoading.set(false);
+  }
+
+  private async loadFromApi(): Promise<void> {
+    try {
+      const apiSounds = await firstValueFrom(
+        this.http.get<Sound[]>(`${environment.nervboxApi}/sound`)
+      );
+
+      const mappedSounds: SoundLibraryItem[] = apiSounds.map(s => ({
+        id: s.hash,
+        name: s.name,
+        category: this.detectCategory(s.tags, s.name),
+        filename: s.fileName,
+        duration: s.durationMs / 1000,
+        tags: s.tags
+      }));
+
+      this.sounds.set(mappedSounds);
+
+      // Extract categories from sounds
+      const categories = new Set<string>(['All']);
+      mappedSounds.forEach(s => categories.add(s.category));
+      this.categories.set(Array.from(categories) as SoundCategory[]);
+
+    } catch (error) {
+      console.error('Failed to load sounds from API:', error);
+      // Fallback to static library in case of error
+      this.sounds.set(SOUND_LIBRARY);
+    }
+  }
+
+  private detectCategory(tags: string[], name: string): string {
+    // Map tags to categories
+    if (tags.some(t => ['drums', 'kick', 'snare', 'hihat', 'percussion'].includes(t.toLowerCase()))) return 'Drums';
+    if (tags.some(t => t.toLowerCase() === 'bass')) return 'Bass';
+    if (tags.some(t => t.toLowerCase() === 'synth')) return 'Synth';
+    if (tags.some(t => ['fx', 'effect', 'sfx'].includes(t.toLowerCase()))) return 'FX';
+
+    // Fallback: detect from name
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes('kick') || lowerName.includes('snare') || lowerName.includes('drum') || lowerName.includes('hat')) return 'Drums';
+    if (lowerName.includes('bass')) return 'Bass';
+    if (lowerName.includes('synth')) return 'Synth';
+    return 'FX';
   }
 
   private updateFiltered() {
@@ -56,23 +129,28 @@ export class SoundLibraryService {
     if (!sound) return null;
 
     try {
-      const response = await fetch(`/assets/sounds/${sound.filename}`);
+      // Different URL based on mode
+      const url = environment.nervboxApi
+        ? `${environment.nervboxApi}/sound/${soundId}/file`
+        : `/assets/sounds/${sound.filename}`;
+
+      const response = await fetch(url);
       if (!response.ok) {
         console.error(`Failed to load sound: ${sound.filename}`);
         return null;
       }
-      
+
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await this.audio.audioContext.decodeAudioData(arrayBuffer);
-      
+
       // Cache the loaded sound
       this.loadedSounds.set(soundId, audioBuffer);
-      
+
       // Update duration in the sound library
-      this.sounds.update(sounds => 
+      this.sounds.update(sounds =>
         sounds.map(s => s.id === soundId ? { ...s, duration: audioBuffer.duration } : s)
       );
-      
+
       return audioBuffer;
     } catch (error) {
       console.error(`Error loading sound ${sound.filename}:`, error);

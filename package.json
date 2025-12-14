@@ -7,6 +7,8 @@
     "start": "ng serve -o",
     "build": "ng build",
     "build:prod": "ng build --configuration production --output-hashing=all --source-map=false --optimization=true",
+    "build:lan": "ng build --configuration lan",
+    "start:lan": "ng serve --configuration lan",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "scan-sounds": "node scripts/scan-sounds.js",

@@ -1,9 +1,9 @@
 import packageInfo from '../../package.json';
 
 export const environment = {
-  production: false,
+  production: true,
   version: packageInfo.version,
   author: 'ingel81',
   repository: 'https://github.com/ingel81/nervbox-mixer',
-  nervboxApi: undefined as string | undefined
+  nervboxApi: '/api'
 };
