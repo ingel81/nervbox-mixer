@@ -43,8 +43,10 @@ import { environment } from '../../environments/environment';
               <mat-spinner diameter="18"></mat-spinner>
               <span>Uploading...</span>
             } @else {
-              <mat-icon>cloud_upload</mat-icon>
-              <span>Upload to nervbox</span>
+              <ng-container>
+                <mat-icon>cloud_upload</mat-icon>
+                <span>Upload to nervbox</span>
+              </ng-container>
             }
           </button>
 
@@ -286,7 +288,7 @@ export class ExportControlsComponent {
         if (clipEnd > max) max = clipEnd;
       }
     }
-    return Math.max(10, max);
+    return max;
   });
 
   isLoggedIn(): boolean {

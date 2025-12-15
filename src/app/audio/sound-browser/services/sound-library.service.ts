@@ -73,10 +73,11 @@ export class SoundLibraryService {
         this.http.get<Sound[]>(`${environment.nervboxApi}/sound`)
       );
 
+      // In LAN mode: Use tags directly instead of mapped categories
       const mappedSounds: SoundLibraryItem[] = apiSounds.map(s => ({
         id: s.hash,
         name: s.name,
-        category: this.detectCategory(s.tags, s.name),
+        category: s.tags?.[0] || 'uncategorized', // First tag as primary category for compatibility
         filename: s.fileName,
         duration: s.durationMs / 1000,
         tags: s.tags
@@ -84,10 +85,10 @@ export class SoundLibraryService {
 
       this.sounds.set(mappedSounds);
 
-      // Extract categories from sounds
-      const categories = new Set<string>(['All']);
-      mappedSounds.forEach(s => categories.add(s.category));
-      this.categories.set(Array.from(categories) as SoundCategory[]);
+      // Extract unique tags from all sounds as categories (LAN mode = tag-based filter)
+      const allTags = new Set<string>(['All']);
+      apiSounds.forEach(s => s.tags?.forEach(tag => allTags.add(tag)));
+      this.categories.set(Array.from(allTags).sort() as SoundCategory[]);
 
     } catch (error) {
       console.error('Failed to load sounds from API:', error);
@@ -96,6 +97,7 @@ export class SoundLibraryService {
     }
   }
 
+  // Only used for local/offline mode
   private detectCategory(tags: string[], name: string): string {
     // Map tags to categories
     if (tags.some(t => ['drums', 'kick', 'snare', 'hihat', 'percussion'].includes(t.toLowerCase()))) return 'Drums';
@@ -115,17 +117,29 @@ export class SoundLibraryService {
     const category = this.selectedCategory();
     const search = this.searchTerm().toLowerCase();
     const allSounds = this.sounds();
-    
+    const isLan = this.isLanMode();
+
     const filtered = allSounds.filter(sound => {
-      const matchesCategory = category === 'All' || sound.category === category;
-      const matchesSearch = search === '' || 
+      // In LAN mode: filter by tags, in local mode: filter by category
+      let matchesCategory: boolean;
+      if (category === 'All') {
+        matchesCategory = true;
+      } else if (isLan) {
+        // LAN mode: Check if sound has this tag
+        matchesCategory = sound.tags?.some(tag => tag === category) ?? false;
+      } else {
+        // Local mode: Check category
+        matchesCategory = sound.category === category;
+      }
+
+      const matchesSearch = search === '' ||
         sound.name.toLowerCase().includes(search) ||
         sound.tags?.some(tag => tag.toLowerCase().includes(search)) ||
         sound.category.toLowerCase().includes(search);
-      
+
       return matchesCategory && matchesSearch;
     });
-    
+
     this.filteredSounds.set(filtered);
   }
 
