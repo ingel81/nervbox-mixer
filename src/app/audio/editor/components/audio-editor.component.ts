@@ -148,8 +148,24 @@ export class AudioEditorComponent {
       this.seekTo(seconds);
     });
 
-    // Only load default arrangement in standalone mode (not LAN mode)
-    if (!environment.nervboxApi) {
+    // Parse URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const soundsParam = urlParams.get('sounds');
+
+    if (environment.nervboxApi) {
+      // LAN mode
+      this.editorState.snapToGrid.set(false);  // Default: off in LAN mode
+
+      if (soundsParam) {
+        // Load sounds from URL parameter
+        const soundIds = soundsParam.split(',').filter(s => s.trim());
+        this.loadSoundsFromUrl(soundIds);
+      } else {
+        // At least one empty track
+        this.editorState.addTrack();
+      }
+    } else {
+      // Standalone mode (as before)
       this.addDefaultHipHopTrack();
     }
 
@@ -213,6 +229,45 @@ export class AudioEditorComponent {
     // Activate first track
     if (defaultTracks.length > 0) {
       this.editorState.setActiveTrack(defaultTracks[0].id);
+    }
+  }
+
+  private async loadSoundsFromUrl(soundIds: string[]): Promise<void> {
+    // Wait for sounds to be loaded in the library
+    await this.soundLibrary.waitForSounds();
+
+    for (const soundId of soundIds) {
+      const track = this.editorState.addTrack();
+
+      try {
+        const buffer = await this.soundLibrary.loadSound(soundId);
+        const sound = this.soundLibrary.sounds().find(s => s.id === soundId);
+
+        if (buffer && sound) {
+          const clip = this.clipFactory.createClipFromBuffer(
+            buffer,
+            sound.name,
+            0  // Start at beginning
+          );
+          clip.soundId = soundId;
+
+          this.editorState.addClipToTrack(track.id, clip);
+          this.editorState.renameTrack(track.id, sound.name);
+        }
+      } catch (error) {
+        console.error(`Failed to load sound ${soundId}:`, error);
+      }
+    }
+
+    // If no sounds were loaded, ensure at least one empty track
+    if (this.editorState.tracks().length === 0) {
+      this.editorState.addTrack();
+    }
+
+    // Activate first track
+    const tracks = this.editorState.tracks();
+    if (tracks.length > 0) {
+      this.editorState.setActiveTrack(tracks[0].id);
     }
   }
   

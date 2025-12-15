@@ -34,6 +34,8 @@ export class SoundLibraryService {
     this.initializeSounds();
   }
 
+  private initPromise: Promise<void> | null = null;
+
   private async initializeSounds(): Promise<void> {
     this.isLoading.set(true);
 
@@ -45,6 +47,24 @@ export class SoundLibraryService {
 
     this.updateFiltered();
     this.isLoading.set(false);
+  }
+
+  /** Wait for sounds to be loaded (for URL parameter loading) */
+  async waitForSounds(): Promise<void> {
+    // If already loaded, return immediately
+    if (!this.isLoading()) {
+      return;
+    }
+
+    // Wait for loading to complete
+    return new Promise<void>((resolve) => {
+      const checkInterval = setInterval(() => {
+        if (!this.isLoading()) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 50);
+    });
   }
 
   private async loadFromApi(): Promise<void> {
