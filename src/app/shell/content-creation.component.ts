@@ -10,6 +10,7 @@ import { AudioEngineService } from '../audio/audio-engine/services/audio-engine.
 import { WaveformService } from '../audio/audio-engine/services/waveform.service';
 import { RecordingDialogComponent } from '../audio/arrangements/components/dialogs/recording-dialog.component';
 import { Clip } from '../audio/shared/models/models';
+import { generateUUID } from '../audio/shared/utils/uuid.util';
 
 @Component({
     selector: 'content-creation',
@@ -173,7 +174,7 @@ export class ContentCreationComponent {
       
       if (canPlace) {
         this.editorState.addClipToTrack(track.id, {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           name,
           startTime: playheadPos,
           duration: buffer.duration,
@@ -193,7 +194,7 @@ export class ContentCreationComponent {
     if (!placedOnExistingTrack) {
       const newTrack = this.editorState.addTrack();
       this.editorState.addClipToTrack(newTrack.id, {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         name,
         startTime: playheadPos,
         duration: buffer.duration,
@@ -278,7 +279,7 @@ export class ContentCreationComponent {
         
         if (canPlace) {
           this.editorState.addClipToTrack(track.id, {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             name,
             startTime: playheadPos,
             duration: buf.duration,
@@ -300,7 +301,7 @@ export class ContentCreationComponent {
         // Create new track
         const newTrack = this.editorState.addTrack();
         this.editorState.addClipToTrack(newTrack.id, {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           name,
           startTime: playheadPos,
           duration: buf.duration,

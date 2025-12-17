@@ -82,7 +82,7 @@ export interface UploadDialogResult {
             </div>
             <div class="remix-hint">
               <mat-icon>info</mat-icon>
-              <span>"remix" wird automatisch hinzugefügt</span>
+              <span>"remixes" wird automatisch hinzugefügt</span>
             </div>
           </div>
         }
@@ -101,9 +101,19 @@ export interface UploadDialogResult {
     </div>
   `,
   styles: [`
+    :host {
+      display: block;
+    }
+
+    ::ng-deep .mat-mdc-dialog-surface {
+      overflow: hidden !important;
+    }
+
     .dialog-container {
       padding: 0;
-      min-width: 350px;
+      min-width: 500px;
+      max-width: 600px;
+      overflow: hidden;
     }
 
     .dialog-header {

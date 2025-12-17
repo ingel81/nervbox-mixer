@@ -4,6 +4,7 @@ import { SoundLibraryService } from '../../sound-browser/services/sound-library.
 import { WaveformService } from '../../audio-engine/services/waveform.service';
 import { EditorStateService } from '../../editor/services/editor-state.service';
 import { AnalyticsService } from '../../../services/analytics.service';
+import { generateUUID } from '../../shared/utils/uuid.util';
 
 @Injectable({
   providedIn: 'root'
@@ -38,7 +39,7 @@ export class ArrangementService {
     
     for (const trackDef of definition.tracks) {
       const track: Track = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         name: trackDef.name,
         volume: trackDef.volume,
         pan: trackDef.pan,
@@ -85,7 +86,7 @@ export class ArrangementService {
       const color = clipDef.color || trackDef.color || this.getDefaultClipColor(clipDef.soundId);
       
       const clip: Clip = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         name: clipDef.soundId,
         startTime: clipDef.startTime,
         duration: Math.max(0.01, duration), // Ensure minimum duration
@@ -138,7 +139,7 @@ export class ArrangementService {
       mute: track.mute,
       solo: track.solo,
       clips: track.clips.map(clip => ({
-        soundId: clip.soundId || crypto.randomUUID(),
+        soundId: clip.soundId || generateUUID(),
         startTime: clip.startTime,
         duration: clip.duration !== clip.originalDuration ? clip.duration : undefined,
         offset: clip.offset !== clip.trimStart ? clip.offset : undefined,

@@ -2,6 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { Track, ArrangementDefinition } from '../../shared/models/models';
 import { SoundLibraryService } from '../../sound-browser/services/sound-library.service';
 import { ArrangementService } from './arrangement.service';
+import { generateUUID } from '../../shared/utils/uuid.util';
 
 export interface SavedArrangement {
   id: string;                    // UUID für eindeutige ID
@@ -89,7 +90,7 @@ export class ArrangementStorageService {
     } else {
       // Create new arrangement
       const newArrangement: SavedArrangement = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         arrangement: arrangementDef,
         createdAt: now,
         updatedAt: now

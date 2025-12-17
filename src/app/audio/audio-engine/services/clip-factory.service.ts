@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { EditorStateService } from '../../editor/services/editor-state.service';
 import { WaveformService } from './waveform.service';
 import { Clip } from '../../shared/models/models';
+import { generateUUID } from '../../shared/utils/uuid.util';
 
 @Injectable({
   providedIn: 'root'
@@ -27,7 +28,7 @@ export class ClipFactoryService {
     const waveform = this.generateWaveform(buffer, color, options.waveformHeight);
     
     return {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name,
       startTime,
       duration: buffer.duration,

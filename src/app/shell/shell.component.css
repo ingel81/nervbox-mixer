@@ -118,6 +118,38 @@
   }
 }
 
+/* Back to Player Button */
+.back-button {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  padding: 0 !important;
+  margin-right: 12px;
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%) !important;
+  border: 1px solid rgba(147, 51, 234, 0.4) !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.back-button:hover {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.25) 0%, rgba(236, 72, 153, 0.25) 100%) !important;
+  border-color: rgba(147, 51, 234, 0.6) !important;
+  transform: translateX(-2px);
+}
+
+.back-button mat-icon {
+  color: #ec4899 !important;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 /* Help Button */
 .help-button {
   margin-left: 8px;

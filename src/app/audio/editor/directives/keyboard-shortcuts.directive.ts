@@ -1,6 +1,7 @@
 import { Directive, HostListener, inject, Input } from '@angular/core';
 import { EditorStateService } from '../services/editor-state.service';
 import { Clip } from '../../shared/models/models';
+import { generateUUID } from '../../shared/utils/uuid.util';
 
 export interface KeyboardShortcutActions {
   togglePlayback(): void;
@@ -127,7 +128,7 @@ export class KeyboardShortcutsDirective {
     // Create a deep copy of the clip (without the buffer reference)
     this.editorState.clipboardClip = {
       ...clip,
-      id: crypto.randomUUID(), // New ID for the copy
+      id: generateUUID(), // New ID for the copy
       startTime: 0, // Reset position for pasting
     };
   }

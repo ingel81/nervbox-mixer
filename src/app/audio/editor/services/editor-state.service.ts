@@ -2,6 +2,7 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { Track, Clip } from '../../shared/models/models';
 import { WaveformService } from '../../audio-engine/services/waveform.service';
 import { enhanceClipWithWaveformGeneration } from '../../shared/utils/clip.util';
+import { generateUUID } from '../../shared/utils/uuid.util';
 
 // Callback type for seeking during playback
 export type SeekCallback = (seconds: number) => void;
@@ -131,7 +132,7 @@ export class EditorStateService {
   // Track management
   addTrack(): Track {
     const newTrack: Track = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name: `Track ${this.tracks().length + 1}`,
       clips: [],
       mute: false,
@@ -371,7 +372,7 @@ export class EditorStateService {
   copyClip(clip: Clip): void {
     this.clipboardClip = {
       ...clip,
-      id: crypto.randomUUID(), // New ID for the copy
+      id: generateUUID(), // New ID for the copy
       startTime: 0 // Reset position for pasting
     };
   }
@@ -396,7 +397,7 @@ export class EditorStateService {
     
     const pastedClip: Clip = {
       ...this.clipboardClip,
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       startTime: freePosition
     };
     
@@ -551,7 +552,7 @@ export class EditorStateService {
     // Right clip starts at split position with remaining duration
     const rightClip: Clip = {
       ...targetClip,
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       startTime: splitPosition,
       duration: targetClip.duration - relativePosition,
       trimStart: targetClip.trimStart + relativePosition,

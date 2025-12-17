@@ -304,7 +304,7 @@ export class ExportControlsComponent {
     const arrangementName = this.editorState.currentArrangementName();
 
     const dialogRef = this.dialog.open(UploadDialogComponent, {
-      width: '400px',
+      width: '550px',
       panelClass: 'dark-dialog',
       data: { name: arrangementName }
     });

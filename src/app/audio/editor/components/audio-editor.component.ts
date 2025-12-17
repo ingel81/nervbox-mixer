@@ -18,6 +18,7 @@ import { InteractionCoordinatorService } from '../../timeline/services/interacti
 import { FileImportService } from '../../audio-engine/services/file-import.service';
 import { ClipFactoryService } from '../../audio-engine/services/clip-factory.service';
 import { MobileInteractionService } from '../../timeline/services/mobile-interaction.service';
+import { generateUUID } from '../../shared/utils/uuid.util';
 import { environment } from '../../../../environments/environment';
 import { LoopRegionComponent } from './loop-region.component';
 import { SoundBrowserComponent } from '../../sound-browser/components/sound-browser.component';
@@ -939,7 +940,7 @@ export class AudioEditorComponent {
     // Create a duplicate clip positioned after the original
     const duplicate: Clip = {
       ...clip,
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       startTime: clip.startTime + clip.duration + 0.1, // Small gap after original
     };
 
@@ -1258,7 +1259,7 @@ export class AudioEditorComponent {
           buffer.name,
           finalStartTime
         );
-        newClip.soundId = buffer.id || crypto.randomUUID();
+        newClip.soundId = buffer.id || generateUUID();
 
         targetTrack.clips.push(newClip);
       }

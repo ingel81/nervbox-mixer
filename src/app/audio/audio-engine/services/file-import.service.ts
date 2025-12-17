@@ -3,6 +3,7 @@ import { EditorStateService } from '../../editor/services/editor-state.service';
 import { AudioEngineService } from './audio-engine.service';
 import { WaveformService } from './waveform.service';
 import { Track, Clip } from '../../shared/models/models';
+import { generateUUID } from '../../shared/utils/uuid.util';
 import { AnalyticsService } from '../../../services/analytics.service';
 
 @Injectable({
@@ -54,7 +55,7 @@ export class FileImportService {
     
     this.editorState.tracks.update(list => {
       const createTrack = (): Track => ({ 
-        id: crypto.randomUUID(), 
+        id: generateUUID(), 
         name: `Track ${list.length + 1}`, 
         clips: [] as Clip[], 
         mute: false, 
@@ -187,7 +188,7 @@ export class FileImportService {
     });
     
     return {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name,
       startTime,
       duration: buffer.duration,

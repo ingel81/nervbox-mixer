@@ -15,14 +15,14 @@ export class UploadService {
 
   /**
    * Upload a sound file to nervbox backend.
-   * Automatically adds 'remix' tag to all uploads from mixer.
+   * Automatically adds 'remixes' tag to all uploads from mixer.
    */
   uploadSound(file: Blob, filename: string, additionalTags: string[] = []): Observable<UploadResponse> {
     const formData = new FormData();
     formData.append('file', file, filename);
 
-    // Always add 'remix' tag for mixer uploads, plus any additional tags
-    const allTags = ['remix', ...additionalTags.filter(t => t !== 'remix')];
+    // Always add 'remixes' tag for mixer uploads, plus any additional tags
+    const allTags = ['remixes', ...additionalTags.filter(t => t !== 'remixes')];
     formData.append('tags', allTags.join(','));
 
     this.isUploading.set(true);
