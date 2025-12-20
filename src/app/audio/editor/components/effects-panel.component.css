@@ -1,0 +1,446 @@
+.effects-panel {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.no-selection,
+.no-effect-selected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  gap: 12px;
+}
+
+.no-selection mat-icon,
+.no-effect-selected mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  opacity: 0.5;
+}
+
+.no-selection p,
+.no-effect-selected p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.effects-content {
+  display: flex;
+  gap: 20px;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Effect Stack (left side) */
+.effect-stack-container {
+  width: 280px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 0, 15, 0.5);
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.stack-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(147, 51, 234, 0.1);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.2);
+  flex-shrink: 0;
+}
+
+.stack-title {
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.stack-header .add-effect-btn {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  padding: 0;
+  background: rgba(147, 51, 234, 0.3);
+  border: 1px solid rgba(147, 51, 234, 0.5);
+  color: white;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.stack-header .add-effect-btn:hover {
+  background: rgba(147, 51, 234, 0.5);
+  border-color: rgba(147, 51, 234, 0.7);
+}
+
+.stack-header .add-effect-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.effect-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+.effect-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(30, 20, 40, 0.6);
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 36px;
+}
+
+.effect-item:hover {
+  background: rgba(147, 51, 234, 0.15);
+  border-color: rgba(147, 51, 234, 0.4);
+}
+
+.effect-item.selected {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(236, 72, 153, 0.2) 100%);
+  border-color: rgba(147, 51, 234, 0.6);
+}
+
+.effect-item.disabled {
+  opacity: 0.5;
+}
+
+.effect-item.disabled .effect-name {
+  text-decoration: line-through;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+}
+
+.effect-type-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  color: #9333ea;
+  flex-shrink: 0;
+}
+
+.effect-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.toggle-btn,
+.remove-btn {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  padding: 0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-btn mat-icon,
+.remove-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+}
+
+.toggle-btn {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.toggle-btn:hover {
+  color: #9333ea;
+}
+
+.effect-item.disabled .toggle-btn {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.remove-btn {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.remove-btn:hover {
+  color: #ef4444;
+}
+
+/* CDK Drag & Drop */
+.cdk-drag-preview {
+  background: rgba(147, 51, 234, 0.4);
+  border: 1px solid rgba(147, 51, 234, 0.6);
+  border-radius: 6px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Effect Detail (right side) */
+.effect-detail-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 0, 15, 0.5);
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.effect-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(147, 51, 234, 0.1);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.2);
+}
+
+.detail-header mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  color: #9333ea;
+}
+
+.detail-header h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.preset-select {
+  width: 140px;
+}
+
+.parameters {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.param-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.param-row label {
+  width: 80px;
+  min-width: 80px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.param-row mat-slider {
+  flex: 1;
+}
+
+.param-row .value {
+  width: 70px;
+  min-width: 70px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  color: #9333ea;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.param-row.toggle-row {
+  justify-content: flex-start;
+}
+
+.param-row.toggle-row label {
+  flex: none;
+}
+
+.filter-type-select {
+  width: 140px;
+}
+
+/* Material Form Field Overrides - match grid-controls */
+::ng-deep .effects-panel .mat-mdc-form-field {
+  --mdc-outlined-text-field-focus-outline-color: #9333ea;
+  --mdc-theme-primary: #9333ea;
+  --mat-form-field-focus-select-arrow-color: #9333ea;
+  --mat-form-field-container-height: 40px;
+  --mat-form-field-container-vertical-padding: 6px;
+  --mdc-outlined-text-field-container-shape: 4px;
+}
+
+::ng-deep .effects-panel .mat-mdc-form-field .mdc-text-field--outlined .mdc-notched-outline__leading,
+::ng-deep .effects-panel .mat-mdc-form-field .mdc-text-field--outlined .mdc-notched-outline__notch,
+::ng-deep .effects-panel .mat-mdc-form-field .mdc-text-field--outlined .mdc-notched-outline__trailing {
+  border-color: rgba(147, 51, 234, 0.3) !important;
+  border-width: 1px !important;
+}
+
+::ng-deep .effects-panel .mat-mdc-form-field:hover .mdc-text-field--outlined .mdc-notched-outline__leading,
+::ng-deep .effects-panel .mat-mdc-form-field:hover .mdc-text-field--outlined .mdc-notched-outline__notch,
+::ng-deep .effects-panel .mat-mdc-form-field:hover .mdc-text-field--outlined .mdc-notched-outline__trailing {
+  border-color: rgba(147, 51, 234, 0.5) !important;
+  border-width: 1px !important;
+}
+
+::ng-deep .effects-panel .mat-mdc-form-field.mat-focused .mdc-text-field--outlined .mdc-notched-outline__leading,
+::ng-deep .effects-panel .mat-mdc-form-field.mat-focused .mdc-text-field--outlined .mdc-notched-outline__notch,
+::ng-deep .effects-panel .mat-mdc-form-field.mat-focused .mdc-text-field--outlined .mdc-notched-outline__trailing {
+  border-color: #9333ea !important;
+  border-width: 2px !important;
+}
+
+::ng-deep .effects-panel .mat-mdc-form-field .mdc-text-field {
+  background: rgba(40, 30, 50, 0.6) !important;
+  caret-color: #9333ea !important;
+}
+
+::ng-deep .effects-panel .mat-mdc-form-field:hover .mdc-text-field {
+  background: rgba(45, 35, 55, 0.7) !important;
+}
+
+::ng-deep .effects-panel .mat-mdc-form-field.mat-focused .mdc-text-field {
+  background: rgba(50, 40, 60, 0.8) !important;
+}
+
+::ng-deep .effects-panel .mat-mdc-form-field .mdc-text-field--outlined {
+  padding: 0 !important;
+}
+
+::ng-deep .effects-panel .mat-mdc-form-field input,
+::ng-deep .effects-panel .mat-mdc-form-field .mat-mdc-select-value {
+  color: rgba(255, 255, 255, 0.87) !important;
+  font-size: 14px !important;
+}
+
+::ng-deep .effects-panel .mat-mdc-form-field .mdc-floating-label {
+  color: rgba(147, 51, 234, 0.7) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+::ng-deep .effects-panel .mat-mdc-form-field.mat-focused .mdc-floating-label {
+  color: #9333ea !important;
+}
+
+::ng-deep .effects-panel .mat-mdc-form-field .mat-mdc-select-arrow {
+  color: rgba(147, 51, 234, 0.7) !important;
+}
+
+::ng-deep .effects-panel .mat-mdc-form-field.mat-focused .mat-mdc-select-arrow {
+  color: #9333ea !important;
+}
+
+::ng-deep .mat-mdc-menu-panel {
+  background: #0a0012 !important;
+  border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+::ng-deep .mat-mdc-menu-item {
+  color: white !important;
+}
+
+::ng-deep .mat-mdc-menu-item:hover:not(.mat-mdc-menu-item-disabled) {
+  background: rgba(147, 51, 234, 0.3) !important;
+}
+
+::ng-deep .mat-mdc-slider .mdc-slider__track--active_fill {
+  border-color: #9333ea;
+}
+
+::ng-deep .mat-mdc-slider .mdc-slider__thumb-knob {
+  background-color: #9333ea;
+  border-color: #9333ea;
+}
+
+::ng-deep .mat-mdc-slider .mdc-slider__track--inactive {
+  background-color: rgba(147, 51, 234, 0.3);
+}
+
+::ng-deep .mat-mdc-slide-toggle .mdc-switch--selected .mdc-switch__handle::after {
+  background: #9333ea;
+}
+
+::ng-deep .mat-mdc-slide-toggle .mdc-switch--selected .mdc-switch__track::before {
+  background: rgba(147, 51, 234, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .effects-content {
+    flex-direction: column;
+  }
+
+  .effect-stack-container {
+    width: 100%;
+    min-width: unset;
+    max-height: 200px;
+  }
+
+  .effect-detail-container {
+    flex: 1;
+    min-height: 200px;
+  }
+}

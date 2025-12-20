@@ -19,13 +19,25 @@ export class KeyboardShortcutsDirective {
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent): void {
-    // Ignore if user is typing in input field
+    // Ignore if user is typing in input field (but allow Space in sliders)
     const target = event.target as HTMLElement;
-    if (
+    const isInputField =
       target.tagName === 'INPUT' ||
       target.tagName === 'TEXTAREA' ||
-      target.isContentEditable
-    ) {
+      target.isContentEditable;
+
+    // Check if this is a slider input (matSliderThumb) - allow Space to pass through
+    const isSliderInput = target.tagName === 'INPUT' &&
+      (target.classList.contains('mdc-slider__input') ||
+       target.closest('mat-slider') !== null);
+
+    // Block text inputs but allow sliders for Space key
+    if (isInputField && !isSliderInput) {
+      return;
+    }
+
+    // For sliders, only allow Space to pass through, block other keys
+    if (isSliderInput && event.code !== 'Space') {
       return;
     }
 

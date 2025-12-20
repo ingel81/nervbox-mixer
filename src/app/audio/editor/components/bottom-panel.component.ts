@@ -6,6 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { BottomPanelService } from '../services/bottom-panel.service';
 import { SoundBrowserComponent } from '../../sound-browser/components/sound-browser.component';
 import { GridControlsComponent } from './grid-controls.component';
+import { EffectsPanelComponent } from './effects-panel.component';
 
 @Component({
   selector: 'bottom-panel',
@@ -15,7 +16,8 @@ import { GridControlsComponent } from './grid-controls.component';
     MatIconModule,
     MatTooltipModule,
     SoundBrowserComponent,
-    GridControlsComponent
+    GridControlsComponent,
+    EffectsPanelComponent,
   ],
   template: `
     <!-- Tab Bar -->
@@ -66,9 +68,14 @@ import { GridControlsComponent } from './grid-controls.component';
         <div *ngIf="panelService.activeTab() === 'grid'" class="grid-content">
           <grid-controls></grid-controls>
         </div>
-        
+
+        <!-- Effects Tab -->
+        <div *ngIf="panelService.activeTab() === 'effects'" class="effects-content">
+          <effects-panel></effects-panel>
+        </div>
+
         <!-- Placeholder for other tabs -->
-        <div *ngIf="panelService.activeTab() !== 'sounds' && panelService.activeTab() !== 'grid'" class="placeholder-content">
+        <div *ngIf="panelService.activeTab() !== 'sounds' && panelService.activeTab() !== 'grid' && panelService.activeTab() !== 'effects'" class="placeholder-content">
           <div class="placeholder-icon">
             <mat-icon>{{ panelService.activeTabConfig().icon }}</mat-icon>
           </div>

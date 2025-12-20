@@ -399,10 +399,12 @@ export class ExportControlsComponent {
         duration,
         offset,
         bufferDuration: c.buffer?.duration,
-        hasBuffer: !!c.buffer
+        hasBuffer: !!c.buffer,
+        effects: c.effects?.length || 0,
       });
 
       return {
+        clipId: c.id,
         buffer: c.buffer,
         startTime,
         duration: Math.max(0, duration),
@@ -410,8 +412,9 @@ export class ExportControlsComponent {
         gain: 1,
         pan: 0,
         muted: false,
+        effects: c.effects,
       };
-    }).filter(c => c.duration > 0);
+    }).filter((c) => c.duration > 0);
 
     console.log('Export: Final clips to render:', clips.length);
 

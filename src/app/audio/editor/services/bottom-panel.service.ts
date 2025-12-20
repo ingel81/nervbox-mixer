@@ -27,7 +27,8 @@ export class BottomPanelService {
     const gridInfo = this.getGridInfoString();
     return [
       { id: 'sounds', label: 'Sound Library', icon: 'library_music', description: 'Browse and add sounds to your project' },
-      { id: 'grid', label: `Grid ${gridInfo}`, icon: 'grid_on', description: 'Grid & BPM Settings' }
+      { id: 'grid', label: `Grid ${gridInfo}`, icon: 'grid_on', description: 'Grid & BPM Settings' },
+      { id: 'effects', label: 'Effects', icon: 'auto_fix_high', description: 'Add effects to selected clip' },
     ];
   });
 

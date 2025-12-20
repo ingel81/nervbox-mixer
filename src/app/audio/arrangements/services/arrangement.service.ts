@@ -96,7 +96,15 @@ export class ArrangementService {
         originalDuration: buffer.duration,
         buffer,
         color,
-        soundId: clipDef.soundId
+        soundId: clipDef.soundId,
+        // Restore effects from definition with new IDs
+        effects: clipDef.effects?.map((e) => ({
+          id: generateUUID(),
+          type: e.type,
+          enabled: e.enabled,
+          params: { ...e.params },
+          preset: e.preset,
+        })),
       } as Clip;
       
       // Generate waveform after model is applied from JSON
@@ -132,21 +140,31 @@ export class ArrangementService {
     const gridSubdivision = this.editorState.gridSubdivision();
     const snapToGrid = this.editorState.snapToGrid();
     
-    const trackDefinitions: TrackDefinition[] = tracks.map(track => ({
+    const trackDefinitions: TrackDefinition[] = tracks.map((track) => ({
       name: track.name,
       volume: track.volume,
       pan: track.pan,
       mute: track.mute,
       solo: track.solo,
-      clips: track.clips.map(clip => ({
+      clips: track.clips.map((clip) => ({
         soundId: clip.soundId || generateUUID(),
         startTime: clip.startTime,
         duration: clip.duration !== clip.originalDuration ? clip.duration : undefined,
         offset: clip.offset !== clip.trimStart ? clip.offset : undefined,
         trimStart: clip.trimStart > 0 ? clip.trimStart : undefined,
         trimEnd: clip.trimEnd > 0 ? clip.trimEnd : undefined,
-        color: clip.color
-      }))
+        color: clip.color,
+        // Serialize effects (only if present)
+        effects:
+          clip.effects && clip.effects.length > 0
+            ? clip.effects.map((e) => ({
+                type: e.type,
+                enabled: e.enabled,
+                params: { ...e.params },
+                preset: e.preset,
+              }))
+            : undefined,
+      })),
     }));
     
     return {

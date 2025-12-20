@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "ng": "ng",
-    "start": "ng serve -o",
+    "start": "ng serve -o --allowed-hosts=all",
     "build": "ng build",
     "build:prod": "ng build --configuration production --output-hashing=all --source-map=false --optimization=true",
     "build:lan": "ng build --configuration lan",
-    "start:lan": "ng serve --configuration lan",
+    "start:lan": "ng serve --configuration lan --host 0.0.0.0 --allowed-hosts=all",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "scan-sounds": "node scripts/scan-sounds.js",
@@ -33,6 +33,7 @@
     "@angular/router": "^20.1.6",
     "@breezystack/lamejs": "^1.2.7",
     "rxjs": "^7.8.1",
+    "tone": "^15.1.22",
     "tslib": "^2.6.2",
     "zone.js": "~0.15.1"
   },

@@ -373,37 +373,43 @@ export class EditorStateService {
     this.clipboardClip = {
       ...clip,
       id: generateUUID(), // New ID for the copy
-      startTime: 0 // Reset position for pasting
+      startTime: 0, // Reset position for pasting
+      // Deep clone effects with new IDs
+      effects: clip.effects?.map((e) => ({
+        ...e,
+        id: generateUUID(),
+        params: { ...e.params },
+      })),
     };
   }
-  
+
   pasteClip(targetTrackId?: string): Clip | null {
     if (!this.clipboardClip) return null;
-    
+
     // Get target track - use provided ID, active track, or create new
-    const targetTrack = targetTrackId 
-      ? this.tracks().find(t => t.id === targetTrackId)
-      : this.getOrCreateActiveTrack();
-    
+    const targetTrack = targetTrackId ? this.tracks().find((t) => t.id === targetTrackId) : this.getOrCreateActiveTrack();
+
     if (!targetTrack) return null;
-    
+
     // Find free position starting from playhead
     const playheadPos = this.playhead();
-    const freePosition = this.findNextFreePosition(
-      targetTrack, 
-      playheadPos, 
-      this.clipboardClip.duration
-    );
-    
+    const freePosition = this.findNextFreePosition(targetTrack, playheadPos, this.clipboardClip.duration);
+
     const pastedClip: Clip = {
       ...this.clipboardClip,
       id: generateUUID(),
-      startTime: freePosition
+      startTime: freePosition,
+      // Deep clone effects again with new IDs for the pasted clip
+      effects: this.clipboardClip.effects?.map((e) => ({
+        ...e,
+        id: generateUUID(),
+        params: { ...e.params },
+      })),
     };
-    
+
     this.addClipToTrack(targetTrack.id, pastedClip);
     this.selectClip(pastedClip.id);
-    
+
     return pastedClip;
   }
   

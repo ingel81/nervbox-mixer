@@ -15,7 +15,7 @@ export interface SavedArrangement {
 export class ArrangementStorageService {
   private readonly STORAGE_KEY = 'nervbox-arrangements';
   private readonly SCHEMA_KEY = 'nervbox-schema';
-  private readonly CURRENT_SCHEMA = 'v1';
+  private readonly CURRENT_SCHEMA = 'v2'; // v2: Added clip effects support
   
   savedArrangements = signal<SavedArrangement[]>([]);
   private soundLibrary = inject(SoundLibraryService);

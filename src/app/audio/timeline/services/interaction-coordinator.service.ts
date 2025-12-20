@@ -468,8 +468,9 @@ export class InteractionCoordinatorService {
       this.editorState.isPlaying.set(false);
     } else {
       // Convert tracks to clips for audio engine
-      const clips = this.editorState.tracks().flatMap(track => 
-        track.clips.map(clip => ({
+      const clips = this.editorState.tracks().flatMap((track) =>
+        track.clips.map((clip) => ({
+          clipId: clip.id,
           buffer: clip.buffer,
           startTime: clip.startTime,
           duration: clip.duration,
@@ -478,10 +479,11 @@ export class InteractionCoordinatorService {
           pan: track.pan,
           muted: track.mute,
           trimStart: clip.trimStart,
-          trimEnd: clip.trimEnd
+          trimEnd: clip.trimEnd,
+          effects: clip.effects,
         }))
       );
-      
+
       this.audioEngine.play(clips, this.editorState.playhead());
       this.editorState.isPlaying.set(true);
     }

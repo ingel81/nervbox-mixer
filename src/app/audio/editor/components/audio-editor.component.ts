@@ -502,16 +502,17 @@ export class AudioEditorComponent {
 
   private getPlayableClips() {
     const tracks = this.tracks();
-    const hasSoloTracks = tracks.some(t => t.solo);
+    const hasSoloTracks = tracks.some((t) => t.solo);
 
     return tracks
-      .filter(track => {
+      .filter((track) => {
         // If there are solo tracks, only play solo tracks
         // If no solo tracks, play all non-muted tracks
         return hasSoloTracks ? track.solo : !track.mute;
       })
-      .flatMap(track =>
-        track.clips.map(clip => ({
+      .flatMap((track) =>
+        track.clips.map((clip) => ({
+          clipId: clip.id,
           buffer: clip.buffer,
           startTime: clip.startTime,
           duration: clip.duration,
@@ -521,6 +522,7 @@ export class AudioEditorComponent {
           muted: false, // Already filtered out muted tracks above
           trimStart: clip.trimStart,
           trimEnd: clip.trimEnd,
+          effects: clip.effects,
         }))
       );
   }
@@ -889,21 +891,8 @@ export class AudioEditorComponent {
     // If playing, restart from new position
     if (this.isPlaying()) {
       this.audio.stop();
-      const all = this.flattenClips();
-      this.audio.play(
-        all.map(c => ({
-          buffer: c.buffer,
-          startTime: c.startTime,
-          duration: c.duration,
-          offset: c.offset,
-          gain: 1,
-          pan: 0,
-          muted: false,
-          trimStart: c.trimStart,
-          trimEnd: c.trimEnd,
-        })),
-        sec
-      );
+      const clips = this.getPlayableClips();
+      this.audio.play(clips, sec);
       // Restart the playhead ticker from new position
       this.tickPlayhead();
     }

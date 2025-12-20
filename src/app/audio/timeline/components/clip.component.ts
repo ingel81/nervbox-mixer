@@ -73,6 +73,12 @@ export interface ClipDuplicateEvent {
       <div class="clip-duration-bottom">
         <div class="clip-duration">{{ formatDuration(clip.duration) }}</div>
       </div>
+
+      <!-- Effects indicator -->
+      <div class="clip-effects-indicator" *ngIf="hasActiveEffects()">
+        <mat-icon>auto_fix_high</mat-icon>
+        <span>{{ getActiveEffectCount() }}</span>
+      </div>
       
       
       <img *ngIf="clip.waveform" 
@@ -425,6 +431,15 @@ export class ClipComponent implements OnChanges {
 
   isTouchDevice(): boolean {
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  }
+
+  hasActiveEffects(): boolean {
+    return this.getActiveEffectCount() > 0;
+  }
+
+  getActiveEffectCount(): number {
+    if (!this.clip.effects) return 0;
+    return this.clip.effects.filter(e => e.enabled).length;
   }
 
 }
