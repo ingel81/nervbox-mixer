@@ -264,7 +264,8 @@ export class EffectsService {
         return new Tone.PitchShift({
           pitch: p.semitones,
           wet: p.mix,
-          windowSize: 0.03,
+          windowSize: 0.1,
+          delayTime: 0,
         });
       }
 
