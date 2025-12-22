@@ -25,6 +25,8 @@ import {
   PitchShiftParams,
   ChorusParams,
   AutotuneParams,
+  VocoderParams,
+  GainParams,
 } from '../../shared/models/models';
 import { generateUUID } from '../../shared/utils/uuid.util';
 
@@ -336,6 +338,63 @@ import { generateUUID } from '../../shared/utils/uuid.util';
                         <span class="value">{{ (asAutotune(selectedEffect()!.params).speed * 100).toFixed(0) }}%</span>
                       </div>
                     }
+                    @case ('vocoder') {
+                      <div class="param-row">
+                        <label>Carrier</label>
+                        <mat-form-field subscriptSizing="dynamic" class="vocoder-carrier-select">
+                          <mat-select [ngModel]="asVocoder(selectedEffect()!.params).carrierType" (ngModelChange)="updateParam('carrierType', $event)">
+                            <mat-option value="sawtooth">Sawtooth</mat-option>
+                            <mat-option value="square">Square</mat-option>
+                            <mat-option value="pulse">Pulse</mat-option>
+                            <mat-option value="noise">Noise</mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+                      <div class="param-row">
+                        <label>Carrier Freq</label>
+                        <mat-slider [min]="50" [max]="500" [step]="5" discrete>
+                          <input matSliderThumb [ngModel]="asVocoder(selectedEffect()!.params).carrierFreq" (ngModelChange)="updateParam('carrierFreq', $event)">
+                        </mat-slider>
+                        <span class="value">{{ asVocoder(selectedEffect()!.params).carrierFreq }}Hz</span>
+                      </div>
+                      <div class="param-row">
+                        <label>Bands</label>
+                        <mat-slider [min]="8" [max]="32" [step]="2" discrete>
+                          <input matSliderThumb [ngModel]="asVocoder(selectedEffect()!.params).bands" (ngModelChange)="updateParam('bands', $event)">
+                        </mat-slider>
+                        <span class="value">{{ asVocoder(selectedEffect()!.params).bands }}</span>
+                      </div>
+                      <div class="param-row">
+                        <label>Attack</label>
+                        <mat-slider [min]="0.001" [max]="0.1" [step]="0.001" discrete>
+                          <input matSliderThumb [ngModel]="asVocoder(selectedEffect()!.params).attack" (ngModelChange)="updateParam('attack', $event)">
+                        </mat-slider>
+                        <span class="value">{{ (asVocoder(selectedEffect()!.params).attack * 1000).toFixed(0) }}ms</span>
+                      </div>
+                      <div class="param-row">
+                        <label>Release</label>
+                        <mat-slider [min]="0.01" [max]="0.5" [step]="0.01" discrete>
+                          <input matSliderThumb [ngModel]="asVocoder(selectedEffect()!.params).release" (ngModelChange)="updateParam('release', $event)">
+                        </mat-slider>
+                        <span class="value">{{ (asVocoder(selectedEffect()!.params).release * 1000).toFixed(0) }}ms</span>
+                      </div>
+                      <div class="param-row">
+                        <label>Q Factor</label>
+                        <mat-slider [min]="1" [max]="20" [step]="0.5" discrete>
+                          <input matSliderThumb [ngModel]="asVocoder(selectedEffect()!.params).qFactor" (ngModelChange)="updateParam('qFactor', $event)">
+                        </mat-slider>
+                        <span class="value">{{ asVocoder(selectedEffect()!.params).qFactor.toFixed(1) }}</span>
+                      </div>
+                    }
+                    @case ('gain') {
+                      <div class="param-row">
+                        <label>Gain</label>
+                        <mat-slider [min]="-24" [max]="24" [step]="0.5" discrete>
+                          <input matSliderThumb [ngModel]="asGain(selectedEffect()!.params).gain" (ngModelChange)="updateParam('gain', $event)">
+                        </mat-slider>
+                        <span class="value">{{ asGain(selectedEffect()!.params).gain > 0 ? '+' : '' }}{{ asGain(selectedEffect()!.params).gain.toFixed(1) }}dB</span>
+                      </div>
+                    }
                   }
                 </div>
               </div>
@@ -521,5 +580,11 @@ export class EffectsPanelComponent {
   }
   asAutotune(params: unknown): AutotuneParams {
     return params as AutotuneParams;
+  }
+  asVocoder(params: unknown): VocoderParams {
+    return params as VocoderParams;
+  }
+  asGain(params: unknown): GainParams {
+    return params as GainParams;
   }
 }

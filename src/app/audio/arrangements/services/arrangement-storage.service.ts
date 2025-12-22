@@ -15,7 +15,7 @@ export interface SavedArrangement {
 export class ArrangementStorageService {
   private readonly STORAGE_KEY = 'nervbox-arrangements';
   private readonly SCHEMA_KEY = 'nervbox-schema';
-  private readonly CURRENT_SCHEMA = 'v2'; // v2: Added clip effects support
+  private readonly CURRENT_SCHEMA = 'v3'; // v3: Added recording clips support (IndexedDB)
   
   savedArrangements = signal<SavedArrangement[]>([]);
   private soundLibrary = inject(SoundLibraryService);
@@ -39,7 +39,7 @@ export class ArrangementStorageService {
         // Set current schema
         localStorage.setItem(this.SCHEMA_KEY, this.CURRENT_SCHEMA);
         
-        console.log('Old arrangements cleaned up, schema updated to v1');
+        console.log(`Old arrangements cleaned up, schema updated to ${this.CURRENT_SCHEMA}`);
       }
     } catch (error) {
       console.error('Error checking schema:', error);

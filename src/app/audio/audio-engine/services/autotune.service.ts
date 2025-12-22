@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { BungeePitchShift } from 'bungee-pitch-shift';
-import { PitchDetectionService, ScaleNote } from './pitch-detection.service';
+import * as Tone from 'tone';
+import { PitchDetectionService } from './pitch-detection.service';
 import { AutotuneParams } from '../../shared/models/models';
 
 /**
@@ -13,7 +13,7 @@ export interface AutotuneResult {
 }
 
 /**
- * Service for real-time pitch correction (autotune) using bungee-pitch-shift
+ * Service for real-time pitch correction (autotune) using Tone.js PitchShift
  */
 @Injectable({ providedIn: 'root' })
 export class AutotuneService {
@@ -26,17 +26,20 @@ export class AutotuneService {
 
   /**
    * Process audio buffer with autotune effect
-   * This is an offline/pre-processing approach for clip-based editing
+   * Uses Tone.js PitchShift with OfflineAudioContext for high-quality offline processing
    *
    * @param audioBuffer Input audio buffer
    * @param params Autotune parameters
-   * @param context Audio context for processing
+   * @param context Audio context (used for sample rate reference)
    * @returns Processed audio buffer with pitch correction
    */
-  async processAudioBuffer(audioBuffer: AudioBuffer, params: AutotuneParams, context: AudioContext | OfflineAudioContext): Promise<AutotuneResult> {
+  async processAudioBuffer(
+    audioBuffer: AudioBuffer,
+    params: AutotuneParams,
+    _context: AudioContext | OfflineAudioContext
+  ): Promise<AutotuneResult> {
     const sampleRate = audioBuffer.sampleRate;
     const channelData = audioBuffer.getChannelData(0); // Process first channel (mono or left)
-    const duration = audioBuffer.duration;
 
     // Generate scale notes for the selected key/scale
     const scaleNotes = this.pitchDetection.getScaleNotes(params.key, params.scale);
@@ -44,6 +47,8 @@ export class AutotuneService {
     // Analyze pitch throughout the buffer
     const detectedNotes: { time: number; note: string; frequency: number }[] = [];
     const pitchCurve: { time: number; targetRatio: number }[] = [];
+
+    console.log(`[Autotune] Analyzing ${audioBuffer.duration.toFixed(2)}s of audio...`);
 
     for (let pos = 0; pos < channelData.length - this.FRAME_SIZE; pos += this.HOP_SIZE) {
       const frame = channelData.slice(pos, pos + this.FRAME_SIZE);
@@ -72,8 +77,11 @@ export class AutotuneService {
       }
     }
 
+    console.log(`[Autotune] Detected ${detectedNotes.length} pitch points`);
+
     // If no pitch detected, return original buffer
     if (pitchCurve.length === 0) {
+      console.log('[Autotune] No pitch detected in audio');
       return {
         processedBuffer: audioBuffer,
         detectedNotes: [],
@@ -85,32 +93,60 @@ export class AutotuneService {
     const avgRatio = pitchCurve.reduce((sum, p) => sum + p.targetRatio, 0) / pitchCurve.length;
     const avgSemitones = 12 * Math.log2(avgRatio);
 
-    // Use bungee-pitch-shift for high-quality pitch correction
+    console.log(`[Autotune] Average pitch correction: ${avgSemitones.toFixed(2)} semitones`);
+
+    // Skip processing if correction is negligible
+    if (Math.abs(avgSemitones) < 0.01) {
+      console.log('[Autotune] Pitch correction negligible, skipping processing');
+      return {
+        processedBuffer: audioBuffer,
+        detectedNotes,
+        correctionApplied: false,
+      };
+    }
+
     try {
-      const pitchShifter = await BungeePitchShift.create(context as AudioContext, {
-        workletPath: '/assets/audio-worklets/bungee-processor-bundled.js',
-        initialPitch: avgSemitones,
-        initialSpeed: 1.0, // Keep tempo constant
-        initialMix: params.mix,
+      // Create offline context for rendering
+      const offlineContext = new OfflineAudioContext(
+        audioBuffer.numberOfChannels,
+        audioBuffer.length,
+        sampleRate
+      );
+
+      // Set Tone.js to use offline context
+      Tone.setContext(offlineContext as unknown as Tone.Context);
+
+      // Create Tone.js PitchShift
+      const pitchShift = new Tone.PitchShift({
+        pitch: avgSemitones,
+        wet: params.mix,
+        windowSize: 0.1, // 100ms window for better quality
+        delayTime: 0,
       });
 
-      // Create offline context for processing
-      const offlineContext = new OfflineAudioContext(audioBuffer.numberOfChannels, audioBuffer.length, sampleRate);
-
-      // Create source
+      // Create source and connect
       const source = offlineContext.createBufferSource();
       source.buffer = audioBuffer;
 
-      // Connect through pitch shifter
-      source.connect(pitchShifter.node);
-      pitchShifter.connect(offlineContext.destination);
+      // Create native gain nodes for input/output
+      const inputGain = offlineContext.createGain();
+      const outputGain = offlineContext.createGain();
+
+      // Connect: source -> inputGain -> pitchShift -> outputGain -> destination
+      source.connect(inputGain);
+      Tone.connect(inputGain, pitchShift);
+      Tone.connect(pitchShift, outputGain);
+      outputGain.connect(offlineContext.destination);
 
       // Start and render
       source.start(0);
+      console.log('[Autotune] Rendering with pitch shift...');
       const processedBuffer = await offlineContext.startRendering();
 
       // Cleanup
-      pitchShifter.dispose();
+      pitchShift.dispose();
+
+      console.log('[Autotune] ✓ Processing complete');
 
       return {
         processedBuffer,
@@ -118,32 +154,13 @@ export class AutotuneService {
         correctionApplied: true,
       };
     } catch (error) {
-      console.error('Autotune processing failed:', error);
+      console.error('[Autotune] Processing failed:', error);
       return {
         processedBuffer: audioBuffer,
         detectedNotes,
         correctionApplied: false,
       };
     }
-  }
-
-  /**
-   * Create real-time autotune node for live processing
-   * This can be used during playback for real-time pitch correction
-   *
-   * @param context Audio context
-   * @param params Autotune parameters
-   * @returns BungeePitchShift instance configured for autotune
-   */
-  async createRealtimeNode(context: AudioContext, params: AutotuneParams): Promise<BungeePitchShift> {
-    const pitchShifter = await BungeePitchShift.create(context, {
-      workletPath: '/assets/audio-worklets/bungee-processor-bundled.js',
-      initialPitch: 0, // Will be adjusted dynamically
-      initialSpeed: 1.0,
-      initialMix: params.mix,
-    });
-
-    return pitchShifter;
   }
 
   /**

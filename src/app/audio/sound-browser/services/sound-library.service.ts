@@ -2,6 +2,7 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AudioEngineService } from '../../audio-engine/services/audio-engine.service';
+import { RecordingStorageService } from '../../audio-engine/services/recording-storage.service';
 import { SOUND_LIBRARY, SoundLibraryItem, SOUND_CATEGORIES, SoundCategory } from '../../shared/utils/sound-library';
 import { environment } from '../../../../environments/environment';
 import { Sound } from '../../../core/models/sound.model';
@@ -42,6 +43,7 @@ export class SoundLibraryService {
   private readonly http = inject(HttpClient);
   private readonly tagService = inject(TagService);
   private readonly favoritesService = inject(FavoritesService);
+  private readonly recordingStorage = inject(RecordingStorageService);
   private loadedSounds = new Map<string, AudioBuffer>();
 
   readonly isLanMode = signal(!!environment.nervboxApi);
@@ -283,11 +285,30 @@ export class SoundLibraryService {
   // Sound loading
 
   async loadSound(soundId: string): Promise<AudioBuffer | null> {
+    // Check cache first
     if (this.loadedSounds.has(soundId)) {
       return this.loadedSounds.get(soundId)!;
     }
 
-    const sound = this.sounds().find(s => s.id === soundId);
+    // Handle recordings from IndexedDB
+    if (this.recordingStorage.isRecordingId(soundId)) {
+      try {
+        const audioBuffer = await this.recordingStorage.loadRecording(
+          soundId,
+          this.audio.audioContext
+        );
+        if (audioBuffer) {
+          this.loadedSounds.set(soundId, audioBuffer);
+        }
+        return audioBuffer;
+      } catch (error) {
+        console.error(`Error loading recording ${soundId}:`, error);
+        return null;
+      }
+    }
+
+    // Handle sounds from library
+    const sound = this.sounds().find((s) => s.id === soundId);
     if (!sound) return null;
 
     try {
@@ -307,8 +328,8 @@ export class SoundLibraryService {
       this.loadedSounds.set(soundId, audioBuffer);
 
       // Update duration in the sound library
-      this.sounds.update(sounds =>
-        sounds.map(s => s.id === soundId ? { ...s, duration: audioBuffer.duration } : s)
+      this.sounds.update((sounds) =>
+        sounds.map((s) => (s.id === soundId ? { ...s, duration: audioBuffer.duration } : s))
       );
 
       return audioBuffer;

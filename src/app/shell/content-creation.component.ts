@@ -8,6 +8,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { EditorStateService } from '../audio/editor/services/editor-state.service';
 import { AudioEngineService } from '../audio/audio-engine/services/audio-engine.service';
 import { WaveformService } from '../audio/audio-engine/services/waveform.service';
+import { RecordingStorageService } from '../audio/audio-engine/services/recording-storage.service';
 import { RecordingDialogComponent } from '../audio/arrangements/components/dialogs/recording-dialog.component';
 import { Clip } from '../audio/shared/models/models';
 import { generateUUID } from '../audio/shared/utils/uuid.util';
@@ -126,6 +127,7 @@ export class ContentCreationComponent {
     public editorState: EditorStateService,
     private audio: AudioEngineService,
     private waveform: WaveformService,
+    private recordingStorage: RecordingStorageService,
     private dialog: MatDialog
   ) {}
   
@@ -148,30 +150,34 @@ export class ContentCreationComponent {
     });
   }
   
-  private addRecordingToTrack(buffer: AudioBuffer): void {
+  private async addRecordingToTrack(buffer: AudioBuffer): Promise<void> {
     const playheadPos = this.editorState.playhead();
     const name = `Recording ${new Date().toLocaleTimeString()}`;
     const color = 'linear-gradient(45deg, #ef4444, #dc2626)';
-    
+
+    // Save recording to IndexedDB and get soundId
+    const soundId = await this.recordingStorage.saveRecording(buffer, name);
+    console.log(`Recording saved with ID: ${soundId}`);
+
     // Generate waveform for the recording
     const pxPerSecond = this.editorState.pxPerSecond();
     const waveformData = this.waveform.generateFromBuffer(buffer, {
       width: Math.max(200, Math.floor(buffer.duration * pxPerSecond)),
       height: 44,
-      clipColor: color
+      clipColor: color,
     });
-    
+
     const tracks = this.editorState.tracks();
     let placedOnExistingTrack = false;
-    
+
     for (const track of tracks) {
-      const canPlace = !track.clips.some(clip => {
+      const canPlace = !track.clips.some((clip) => {
         const clipStart = clip.startTime;
         const clipEnd = clip.startTime + clip.duration;
         const newClipEnd = playheadPos + buffer.duration;
         return !(newClipEnd <= clipStart || playheadPos >= clipEnd);
       });
-      
+
       if (canPlace) {
         this.editorState.addClipToTrack(track.id, {
           id: generateUUID(),
@@ -184,13 +190,14 @@ export class ContentCreationComponent {
           waveform: waveformData,
           trimStart: 0,
           trimEnd: 0,
-          originalDuration: buffer.duration
+          originalDuration: buffer.duration,
+          soundId,
         } as Clip);
         placedOnExistingTrack = true;
         break;
       }
     }
-    
+
     if (!placedOnExistingTrack) {
       const newTrack = this.editorState.addTrack();
       this.editorState.addClipToTrack(newTrack.id, {
@@ -204,7 +211,8 @@ export class ContentCreationComponent {
         waveform: waveformData,
         trimStart: 0,
         trimEnd: 0,
-        originalDuration: buffer.duration
+        originalDuration: buffer.duration,
+        soundId,
       } as Clip);
     }
   }

@@ -13,7 +13,9 @@ export type EffectType =
   | 'filter'
   | 'pitch-shift'
   | 'chorus'
-  | 'autotune';
+  | 'autotune'
+  | 'vocoder'
+  | 'gain';
 
 // Base interface for all effect parameters
 export interface BaseEffectParams {
@@ -71,6 +73,19 @@ export interface AutotuneParams extends BaseEffectParams {
   speed: number; // 0-1, correction speed (0=slow/natural, 1=instant/robotic)
 }
 
+export interface VocoderParams extends BaseEffectParams {
+  carrierType: 'sawtooth' | 'square' | 'noise' | 'pulse'; // Carrier waveform
+  carrierFreq: number; // Base frequency for carrier oscillator (Hz)
+  bands: number; // Number of filter bands (8-32)
+  attack: number; // Envelope attack time (0.001-0.1 seconds)
+  release: number; // Envelope release time (0.01-0.5 seconds)
+  qFactor: number; // Filter Q/resonance (1-20)
+}
+
+export interface GainParams extends BaseEffectParams {
+  gain: number; // -24 to +24 dB
+}
+
 // Union type for all effect parameters
 export type EffectParams =
   | ReverbParams
@@ -81,7 +96,9 @@ export type EffectParams =
   | FilterParams
   | PitchShiftParams
   | ChorusParams
-  | AutotuneParams;
+  | AutotuneParams
+  | VocoderParams
+  | GainParams;
 
 // A single effect in the effect chain
 export interface ClipEffect {

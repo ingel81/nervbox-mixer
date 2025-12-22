@@ -13,6 +13,8 @@ import {
   PitchShiftParams,
   ChorusParams,
   AutotuneParams,
+  VocoderParams,
+  GainParams,
 } from '../../shared/models/models';
 import { generateUUID } from '../../shared/utils/uuid.util';
 
@@ -59,6 +61,8 @@ export class EffectsService {
     { type: 'pitch-shift', name: 'Pitch Shift', icon: 'trending_up', description: 'Change pitch' },
     { type: 'chorus', name: 'Chorus', icon: 'waves', description: 'Thicken and modulate' },
     { type: 'autotune', name: 'Autotune', icon: 'tune', description: 'Pitch correction' },
+    { type: 'vocoder', name: 'Vocoder', icon: 'record_voice_over', description: 'Robot voice effect' },
+    { type: 'gain', name: 'Gain', icon: 'volume_up', description: 'Boost or cut volume' },
   ];
 
   // Factory presets per effect type
@@ -145,6 +149,27 @@ export class EffectsService {
         { name: 'Chromatic', params: { mix: 1, key: 'C', scale: 'chromatic', strength: 0.7, speed: 0.7 } as AutotuneParams },
       ],
     ],
+    [
+      'vocoder',
+      [
+        { name: 'Classic Robot', params: { mix: 1, carrierType: 'sawtooth', carrierFreq: 110, bands: 16, attack: 0.01, release: 0.05, qFactor: 8 } as VocoderParams },
+        { name: 'Daft Punk', params: { mix: 1, carrierType: 'sawtooth', carrierFreq: 130, bands: 24, attack: 0.005, release: 0.03, qFactor: 12 } as VocoderParams },
+        { name: 'Whisper', params: { mix: 0.8, carrierType: 'noise', carrierFreq: 100, bands: 16, attack: 0.02, release: 0.1, qFactor: 6 } as VocoderParams },
+        { name: 'Synth Voice', params: { mix: 1, carrierType: 'square', carrierFreq: 165, bands: 20, attack: 0.008, release: 0.04, qFactor: 10 } as VocoderParams },
+        { name: 'Subtle Blend', params: { mix: 0.5, carrierType: 'sawtooth', carrierFreq: 100, bands: 12, attack: 0.015, release: 0.08, qFactor: 5 } as VocoderParams },
+      ],
+    ],
+    [
+      'gain',
+      [
+        { name: 'Unity', params: { mix: 1, gain: 0 } as GainParams },
+        { name: 'Boost +6dB', params: { mix: 1, gain: 6 } as GainParams },
+        { name: 'Boost +12dB', params: { mix: 1, gain: 12 } as GainParams },
+        { name: 'Boost +18dB', params: { mix: 1, gain: 18 } as GainParams },
+        { name: 'Cut -6dB', params: { mix: 1, gain: -6 } as GainParams },
+        { name: 'Cut -12dB', params: { mix: 1, gain: -12 } as GainParams },
+      ],
+    ],
   ]);
 
   /**
@@ -170,6 +195,10 @@ export class EffectsService {
         return { mix: 0.5, rate: 2, depth: 0.5, feedback: 0.3 } as ChorusParams;
       case 'autotune':
         return { mix: 1, key: 'C', scale: 'major', strength: 0.5, speed: 0.6 } as AutotuneParams;
+      case 'vocoder':
+        return { mix: 1, carrierType: 'sawtooth', carrierFreq: 110, bands: 16, attack: 0.01, release: 0.05, qFactor: 8 } as VocoderParams;
+      case 'gain':
+        return { mix: 1, gain: 0 } as GainParams;
     }
   }
 
@@ -299,6 +328,21 @@ export class EffectsService {
         // Real autotune processing happens in AutotuneService
         const gain = new Tone.Gain(1);
         return gain;
+      }
+
+      case 'vocoder': {
+        // Vocoder is applied as pre-processing during clip rendering/export
+        // For now, return a passthrough gain node
+        // Real vocoder processing happens in VocoderService
+        const gain = new Tone.Gain(1);
+        return gain;
+      }
+
+      case 'gain': {
+        const p = params as GainParams;
+        // Convert dB to linear gain: 10^(dB/20)
+        const linearGain = Math.pow(10, p.gain / 20);
+        return new Tone.Gain(linearGain);
       }
     }
   }

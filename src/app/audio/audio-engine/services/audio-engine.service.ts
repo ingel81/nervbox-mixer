@@ -4,6 +4,7 @@ import { Mp3Encoder } from '@breezystack/lamejs';
 import { ClipEffect } from '../../shared/models/models';
 import { EffectsService } from './effects.service';
 import { AutotuneService } from './autotune.service';
+import { VocoderService } from './vocoder.service';
 
 // Extended clip interface for playback with effects
 export interface PlayableClip {
@@ -31,10 +32,15 @@ export class AudioEngineService {
 
   private effectsService = inject(EffectsService);
   private autotuneService = inject(AutotuneService);
+  private vocoderService = inject(VocoderService);
 
   // Cache for autotune-processed audio buffers
   // Key format: "clipId-effectHash" where effectHash represents autotune parameters
   private autotuneCache = new Map<string, AudioBuffer>();
+
+  // Cache for vocoder-processed audio buffers
+  // Key format: "clipId-effectHash" where effectHash represents vocoder parameters
+  private vocoderCache = new Map<string, AudioBuffer>();
 
 
   get audioContext(): AudioContext {
@@ -57,13 +63,15 @@ export class AudioEngineService {
     const ctx = this.audioContext;
     if (this.playing) this.stop();
 
-    // Pre-process clips with autotune for realtime preview
-    console.log('[AudioEngine] Pre-processing clips with autotune...');
+    // Pre-process clips with autotune and vocoder for realtime preview
+    console.log('[AudioEngine] Pre-processing clips with autotune/vocoder...');
     const clipsArray = Array.from(clips);
     const processedClips = await Promise.all(
       clipsArray.map(async (clip) => {
-        const autotuneBuffer = await this.applyAutotuneToClip(clip, ctx);
-        return { ...clip, buffer: autotuneBuffer };
+        let processedBuffer = await this.applyAutotuneToClip(clip, ctx);
+        // Apply vocoder after autotune
+        processedBuffer = await this.applyVocoderToClip({ ...clip, buffer: processedBuffer }, ctx);
+        return { ...clip, buffer: processedBuffer };
       })
     );
     console.log('[AudioEngine] ✓ Pre-processing complete, starting playback');
@@ -125,8 +133,8 @@ export class AudioEngineService {
       const pan = ctx.createStereoPanner();
       pan.pan.value = c.pan;
 
-      // Check if clip has enabled effects (excluding autotune, already applied)
-      const enabledEffects = c.effects?.filter((e) => e.enabled && e.type !== 'autotune') || [];
+      // Check if clip has enabled effects (excluding autotune/vocoder, already applied)
+      const enabledEffects = c.effects?.filter((e) => e.enabled && e.type !== 'autotune' && e.type !== 'vocoder') || [];
       if (enabledEffects.length > 0) {
         // Create effect chain: src -> effects -> gain -> pan -> master
         const effectChain = this.effectsService.createEffectChain(c.clipId, enabledEffects, ctx);
@@ -205,12 +213,13 @@ export class AudioEngineService {
     const length = Math.ceil(options.duration * sampleRate);
     const off = new OfflineAudioContext({ numberOfChannels: 2, length, sampleRate });
 
-    // Pre-process clips with autotune
+    // Pre-process clips with autotune and vocoder
     const clipsArray = Array.from(options.clips);
     const processedClips = await Promise.all(
       clipsArray.map(async (clip) => {
-        const autotuneBuffer = await this.applyAutotuneToClip(clip, off);
-        return { ...clip, buffer: autotuneBuffer };
+        let processedBuffer = await this.applyAutotuneToClip(clip, off);
+        processedBuffer = await this.applyVocoderToClip({ ...clip, buffer: processedBuffer }, off);
+        return { ...clip, buffer: processedBuffer };
       })
     );
 
@@ -221,8 +230,8 @@ export class AudioEngineService {
       const gain = new GainNode(off, { gain: c.gain });
       const pan = new StereoPannerNode(off, { pan: c.pan });
 
-      // Check if clip has enabled effects (excluding autotune, already applied)
-      const enabledEffects = c.effects?.filter((e) => e.enabled && e.type !== 'autotune') || [];
+      // Check if clip has enabled effects (excluding autotune/vocoder, already applied)
+      const enabledEffects = c.effects?.filter((e) => e.enabled && e.type !== 'autotune' && e.type !== 'vocoder') || [];
       if (enabledEffects.length > 0) {
         const effectChain = this.effectsService.createEffectChain(c.clipId + '-export', enabledEffects, off);
         if (effectChain) {
@@ -300,12 +309,13 @@ export class AudioEngineService {
     const length = Math.ceil(options.duration * sampleRate);
     const off = new OfflineAudioContext({ numberOfChannels: 2, length, sampleRate });
 
-    // Pre-process clips with autotune
+    // Pre-process clips with autotune and vocoder
     const clipsArray = Array.from(options.clips);
     const processedClips = await Promise.all(
       clipsArray.map(async (clip) => {
-        const autotuneBuffer = await this.applyAutotuneToClip(clip, off);
-        return { ...clip, buffer: autotuneBuffer };
+        let processedBuffer = await this.applyAutotuneToClip(clip, off);
+        processedBuffer = await this.applyVocoderToClip({ ...clip, buffer: processedBuffer }, off);
+        return { ...clip, buffer: processedBuffer };
       })
     );
 
@@ -315,8 +325,8 @@ export class AudioEngineService {
       const gain = new GainNode(off, { gain: c.gain });
       const pan = new StereoPannerNode(off, { pan: c.pan });
 
-      // Check if clip has enabled effects (excluding autotune, already applied)
-      const enabledEffects = c.effects?.filter((e) => e.enabled && e.type !== 'autotune') || [];
+      // Check if clip has enabled effects (excluding autotune/vocoder, already applied)
+      const enabledEffects = c.effects?.filter((e) => e.enabled && e.type !== 'autotune' && e.type !== 'vocoder') || [];
       if (enabledEffects.length > 0) {
         const effectChain = this.effectsService.createEffectChain(c.clipId + '-export', enabledEffects, off);
         if (effectChain) {
@@ -468,6 +478,86 @@ export class AudioEngineService {
     }
     for (const key of keysToDelete) {
       this.autotuneCache.delete(key);
+    }
+  }
+
+  /**
+   * Generate cache key for vocoder-processed buffer
+   * Based on clip ID and vocoder parameters
+   */
+  private getVocoderCacheKey(clipId: string, effect: ClipEffect): string {
+    const params = effect.params as any;
+    return `${clipId}-vocoder-${params.carrierType}-${params.carrierFreq}-${params.bands}-${params.attack}-${params.release}-${params.qFactor}-${params.mix}`;
+  }
+
+  /**
+   * Apply vocoder to a clip's audio buffer
+   * Uses caching to avoid re-processing with same parameters
+   *
+   * @param clip Playable clip with vocoder effect
+   * @param _context Audio context (not used, vocoder does own offline processing)
+   * @returns Processed audio buffer
+   */
+  async applyVocoderToClip(clip: PlayableClip, _context: AudioContext | OfflineAudioContext): Promise<AudioBuffer> {
+    // Find vocoder effect
+    const vocoderEffect = clip.effects?.find((e) => e.type === 'vocoder' && e.enabled);
+
+    if (!vocoderEffect) {
+      return clip.buffer; // No vocoder, return original
+    }
+
+    // Check cache
+    const cacheKey = this.getVocoderCacheKey(clip.clipId, vocoderEffect);
+    const cached = this.vocoderCache.get(cacheKey);
+
+    if (cached) {
+      console.log(`[Vocoder] Using cached buffer for clip ${clip.clipId}`);
+      return cached;
+    }
+
+    // Process with vocoder
+    console.log(`[Vocoder] Processing clip ${clip.clipId} with params:`, vocoderEffect.params);
+
+    try {
+      const result = await this.vocoderService.processAudioBuffer(
+        clip.buffer,
+        vocoderEffect.params as any
+      );
+
+      console.log(`[Vocoder] ✓ Processing complete for clip ${clip.clipId}`, {
+        bands: result.bandsUsed,
+        carrier: result.carrierType,
+      });
+
+      // Cache the result
+      this.vocoderCache.set(cacheKey, result.processedBuffer);
+      return result.processedBuffer;
+    } catch (error) {
+      console.error(`[Vocoder] Processing failed for clip ${clip.clipId}:`, error);
+      return clip.buffer; // Fallback to original on error
+    }
+  }
+
+  /**
+   * Clear vocoder cache
+   * Call this when clips are modified or effects are changed
+   */
+  clearVocoderCache(): void {
+    this.vocoderCache.clear();
+  }
+
+  /**
+   * Clear vocoder cache for a specific clip
+   */
+  clearVocoderCacheForClip(clipId: string): void {
+    const keysToDelete: string[] = [];
+    for (const key of this.vocoderCache.keys()) {
+      if (key.startsWith(clipId + '-')) {
+        keysToDelete.push(key);
+      }
+    }
+    for (const key of keysToDelete) {
+      this.vocoderCache.delete(key);
     }
   }
 }
