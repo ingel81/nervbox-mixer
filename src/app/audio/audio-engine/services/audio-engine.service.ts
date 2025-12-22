@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Mp3Encoder } from '@breezystack/lamejs';
 import { ClipEffect } from '../../shared/models/models';
 import { EffectsService } from './effects.service';
+import { AutotuneService } from './autotune.service';
 
 // Extended clip interface for playback with effects
 export interface PlayableClip {
@@ -29,6 +30,11 @@ export class AudioEngineService {
   private scheduledNodes: { src: AudioBufferSourceNode; gain: GainNode; pan: StereoPannerNode }[] = [];
 
   private effectsService = inject(EffectsService);
+  private autotuneService = inject(AutotuneService);
+
+  // Cache for autotune-processed audio buffers
+  // Key format: "clipId-effectHash" where effectHash represents autotune parameters
+  private autotuneCache = new Map<string, AudioBuffer>();
 
 
   get audioContext(): AudioContext {
@@ -188,15 +194,24 @@ export class AudioEngineService {
     const length = Math.ceil(options.duration * sampleRate);
     const off = new OfflineAudioContext({ numberOfChannels: 2, length, sampleRate });
 
+    // Pre-process clips with autotune
+    const clipsArray = Array.from(options.clips);
+    const processedClips = await Promise.all(
+      clipsArray.map(async (clip) => {
+        const autotuneBuffer = await this.applyAutotuneToClip(clip, off);
+        return { ...clip, buffer: autotuneBuffer };
+      })
+    );
+
     // Render audio with effects
-    for (const c of options.clips) {
+    for (const c of processedClips) {
       if (c.muted) continue;
       const src = new AudioBufferSourceNode(off, { buffer: c.buffer });
       const gain = new GainNode(off, { gain: c.gain });
       const pan = new StereoPannerNode(off, { pan: c.pan });
 
-      // Check if clip has enabled effects
-      const enabledEffects = c.effects?.filter((e) => e.enabled) || [];
+      // Check if clip has enabled effects (excluding autotune, already applied)
+      const enabledEffects = c.effects?.filter((e) => e.enabled && e.type !== 'autotune') || [];
       if (enabledEffects.length > 0) {
         const effectChain = this.effectsService.createEffectChain(c.clipId + '-export', enabledEffects, off);
         if (effectChain) {
@@ -274,14 +289,23 @@ export class AudioEngineService {
     const length = Math.ceil(options.duration * sampleRate);
     const off = new OfflineAudioContext({ numberOfChannels: 2, length, sampleRate });
 
-    for (const c of options.clips) {
+    // Pre-process clips with autotune
+    const clipsArray = Array.from(options.clips);
+    const processedClips = await Promise.all(
+      clipsArray.map(async (clip) => {
+        const autotuneBuffer = await this.applyAutotuneToClip(clip, off);
+        return { ...clip, buffer: autotuneBuffer };
+      })
+    );
+
+    for (const c of processedClips) {
       if (c.muted) continue;
       const src = new AudioBufferSourceNode(off, { buffer: c.buffer });
       const gain = new GainNode(off, { gain: c.gain });
       const pan = new StereoPannerNode(off, { pan: c.pan });
 
-      // Check if clip has enabled effects
-      const enabledEffects = c.effects?.filter((e) => e.enabled) || [];
+      // Check if clip has enabled effects (excluding autotune, already applied)
+      const enabledEffects = c.effects?.filter((e) => e.enabled && e.type !== 'autotune') || [];
       if (enabledEffects.length > 0) {
         const effectChain = this.effectsService.createEffectChain(c.clipId + '-export', enabledEffects, off);
         if (effectChain) {
@@ -349,5 +373,90 @@ export class AudioEngineService {
       }
     }
     return out;
+  }
+
+  /**
+   * Generate cache key for autotune-processed buffer
+   * Based on clip ID and autotune parameters
+   */
+  private getAutotuneCacheKey(clipId: string, effect: ClipEffect): string {
+    const params = effect.params as any;
+    return `${clipId}-${params.key}-${params.scale}-${params.strength}-${params.speed}-${params.mix}`;
+  }
+
+  /**
+   * Apply autotune to a clip's audio buffer
+   * Uses caching to avoid re-processing with same parameters
+   *
+   * @param clip Playable clip with autotune effect
+   * @param context Audio context for processing
+   * @returns Processed audio buffer
+   */
+  async applyAutotuneToClip(clip: PlayableClip, context: AudioContext | OfflineAudioContext): Promise<AudioBuffer> {
+    // Find autotune effect
+    const autotuneEffect = clip.effects?.find((e) => e.type === 'autotune' && e.enabled);
+
+    if (!autotuneEffect) {
+      return clip.buffer; // No autotune, return original
+    }
+
+    // Check cache
+    const cacheKey = this.getAutotuneCacheKey(clip.clipId, autotuneEffect);
+    const cached = this.autotuneCache.get(cacheKey);
+
+    if (cached) {
+      console.log(`[Autotune] Using cached buffer for clip ${clip.clipId}`);
+      return cached;
+    }
+
+    // Process with autotune
+    console.log(`[Autotune] Processing clip ${clip.clipId} with params:`, autotuneEffect.params);
+
+    try {
+      const result = await this.autotuneService.processAudioBuffer(
+        clip.buffer,
+        autotuneEffect.params as any,
+        context
+      );
+
+      if (result.correctionApplied) {
+        console.log(`[Autotune] ✓ Correction applied to clip ${clip.clipId}`, {
+          detectedNotes: result.detectedNotes.length,
+        });
+
+        // Cache the result
+        this.autotuneCache.set(cacheKey, result.processedBuffer);
+        return result.processedBuffer;
+      } else {
+        console.log(`[Autotune] ✗ No correction needed for clip ${clip.clipId}`);
+        return clip.buffer;
+      }
+    } catch (error) {
+      console.error(`[Autotune] Processing failed for clip ${clip.clipId}:`, error);
+      return clip.buffer; // Fallback to original on error
+    }
+  }
+
+  /**
+   * Clear autotune cache
+   * Call this when clips are modified or effects are changed
+   */
+  clearAutotuneCache(): void {
+    this.autotuneCache.clear();
+  }
+
+  /**
+   * Clear autotune cache for a specific clip
+   */
+  clearAutotuneCacheForClip(clipId: string): void {
+    const keysToDelete: string[] = [];
+    for (const key of this.autotuneCache.keys()) {
+      if (key.startsWith(clipId + '-')) {
+        keysToDelete.push(key);
+      }
+    }
+    for (const key of keysToDelete) {
+      this.autotuneCache.delete(key);
+    }
   }
 }
