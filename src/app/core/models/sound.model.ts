@@ -9,6 +9,11 @@ export interface Sound {
   createdAt: string;
   tags: string[];
   playCount: number;
+  // Extended fields for votes and author
+  authorId?: number;
+  upVotes?: number;
+  downVotes?: number;
+  score?: number;
 }
 
 // Upload response from POST /api/sound/upload

@@ -5,6 +5,12 @@ export interface SoundLibraryItem {
   filename: string;
   duration?: number; // Duration in seconds (extracted by scan-sounds.js)
   tags?: string[];
+  // Extended fields for LAN mode (from API)
+  playCount?: number;
+  upVotes?: number;
+  downVotes?: number;
+  score?: number;
+  createdAt?: string;
 }
 
 export const SOUND_LIBRARY: SoundLibraryItem[] = [

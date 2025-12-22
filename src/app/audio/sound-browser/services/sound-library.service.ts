@@ -5,21 +5,100 @@ import { AudioEngineService } from '../../audio-engine/services/audio-engine.ser
 import { SOUND_LIBRARY, SoundLibraryItem, SOUND_CATEGORIES, SoundCategory } from '../../shared/utils/sound-library';
 import { environment } from '../../../../environments/environment';
 import { Sound } from '../../../core/models/sound.model';
+import { TagService } from '../../../core/services/tag.service';
+import { FavoritesService } from '../../../core/services/favorites.service';
+
+// Sort options matching the player
+export type SortOption =
+  | 'name-asc'
+  | 'name-desc'
+  | 'plays-desc'
+  | 'votes-desc'
+  | 'votes-asc'
+  | 'newest'
+  | 'duration-desc'
+  | 'duration-asc'
+  | 'random';
+
+export interface SortOptionItem {
+  value: SortOption;
+  label: string;
+}
+
+export const SORT_OPTIONS: SortOptionItem[] = [
+  { value: 'name-asc', label: 'Name A-Z' },
+  { value: 'name-desc', label: 'Name Z-A' },
+  { value: 'plays-desc', label: 'Meistgespielt' },
+  { value: 'votes-desc', label: 'Beste Bewertung' },
+  { value: 'votes-asc', label: 'Schlechteste' },
+  { value: 'newest', label: 'Neueste' },
+  { value: 'duration-desc', label: 'Längste' },
+  { value: 'duration-asc', label: 'Kürzeste' },
+  { value: 'random', label: 'Zufall' },
+];
 
 @Injectable({ providedIn: 'root' })
 export class SoundLibraryService {
   private readonly http = inject(HttpClient);
+  private readonly tagService = inject(TagService);
+  private readonly favoritesService = inject(FavoritesService);
   private loadedSounds = new Map<string, AudioBuffer>();
 
   readonly isLanMode = signal(!!environment.nervboxApi);
   readonly isLoading = signal(false);
 
+  // Core data
   sounds = signal<SoundLibraryItem[]>([]);
   categories = signal<readonly SoundCategory[]>(SOUND_CATEGORIES);
+
+  // Filters
   selectedCategory = signal<SoundCategory>('All');
   searchTerm = signal<string>('');
+  selectedTags = signal<string[]>([]);
+  showFavoritesOnly = signal(false);
 
-  filteredSounds = signal<SoundLibraryItem[]>([]);
+  // Sorting
+  sortOption = signal<SortOption>('plays-desc');
+  private randomSeed = signal(Math.random());
+
+  // Computed filtered and sorted sounds
+  readonly filteredSounds = computed(() => {
+    let result = this.sounds();
+    const search = this.searchTerm().toLowerCase();
+    const selectedTags = this.selectedTags();
+    const category = this.selectedCategory();
+    const isLan = this.isLanMode();
+    const favOnly = this.showFavoritesOnly();
+
+    // 1. Category filter (for local mode compatibility)
+    if (category !== 'All' && !isLan) {
+      result = result.filter(s => s.category === category);
+    }
+
+    // 2. Multi-Tag filter (OR logic) - only in LAN mode when tags selected
+    if (isLan && selectedTags.length > 0) {
+      result = result.filter(sound =>
+        selectedTags.some(tag => sound.tags?.includes(tag))
+      );
+    }
+
+    // 3. Search filter
+    if (search) {
+      result = result.filter(sound =>
+        sound.name.toLowerCase().includes(search) ||
+        sound.tags?.some(tag => tag.toLowerCase().includes(search)) ||
+        sound.category.toLowerCase().includes(search)
+      );
+    }
+
+    // 4. Favorites filter
+    if (favOnly && isLan) {
+      result = result.filter(s => this.favoritesService.isFavorite(s.id));
+    }
+
+    // 5. Apply sorting
+    return this.applySorting(result);
+  });
 
   // All unique tags from sounds (for upload dialog)
   readonly availableTags = computed(() => {
@@ -34,29 +113,29 @@ export class SoundLibraryService {
     this.initializeSounds();
   }
 
-  private initPromise: Promise<void> | null = null;
-
   private async initializeSounds(): Promise<void> {
     this.isLoading.set(true);
 
     if (environment.nervboxApi) {
-      await this.loadFromApi();
+      // Load tags and favorites in parallel
+      await Promise.all([
+        this.loadFromApi(),
+        this.tagService.loadTags(),
+        this.favoritesService.loadFavorites(),
+      ]);
     } else {
       this.sounds.set(SOUND_LIBRARY);
     }
 
-    this.updateFiltered();
     this.isLoading.set(false);
   }
 
   /** Wait for sounds to be loaded (for URL parameter loading) */
   async waitForSounds(): Promise<void> {
-    // If already loaded, return immediately
     if (!this.isLoading()) {
       return;
     }
 
-    // Wait for loading to complete
     return new Promise<void>((resolve) => {
       const checkInterval = setInterval(() => {
         if (!this.isLoading()) {
@@ -73,88 +152,137 @@ export class SoundLibraryService {
         this.http.get<Sound[]>(`${environment.nervboxApi}/sound`)
       );
 
-      // In LAN mode: Use tags directly instead of mapped categories
+      // Map API sounds to SoundLibraryItem with extended fields
       const mappedSounds: SoundLibraryItem[] = apiSounds.map(s => ({
         id: s.hash,
         name: s.name,
-        category: s.tags?.[0] || 'uncategorized', // First tag as primary category for compatibility
+        category: s.tags?.[0] || 'uncategorized',
         filename: s.fileName,
         duration: s.durationMs / 1000,
-        tags: s.tags
+        tags: s.tags,
+        playCount: s.playCount,
+        upVotes: s.upVotes,
+        downVotes: s.downVotes,
+        score: s.score,
+        createdAt: s.createdAt,
       }));
 
       this.sounds.set(mappedSounds);
 
-      // Extract unique tags from all sounds as categories (LAN mode = tag-based filter)
+      // Extract unique tags as categories for backwards compatibility
       const allTags = new Set<string>(['All']);
       apiSounds.forEach(s => s.tags?.forEach(tag => allTags.add(tag)));
       this.categories.set(Array.from(allTags).sort() as SoundCategory[]);
 
     } catch (error) {
       console.error('Failed to load sounds from API:', error);
-      // Fallback to static library in case of error
       this.sounds.set(SOUND_LIBRARY);
     }
   }
 
-  // Only used for local/offline mode
-  private detectCategory(tags: string[], name: string): string {
-    // Map tags to categories
-    if (tags.some(t => ['drums', 'kick', 'snare', 'hihat', 'percussion'].includes(t.toLowerCase()))) return 'Drums';
-    if (tags.some(t => t.toLowerCase() === 'bass')) return 'Bass';
-    if (tags.some(t => t.toLowerCase() === 'synth')) return 'Synth';
-    if (tags.some(t => ['fx', 'effect', 'sfx'].includes(t.toLowerCase()))) return 'FX';
+  private applySorting(sounds: SoundLibraryItem[]): SoundLibraryItem[] {
+    const sorted = [...sounds];
+    const option = this.sortOption();
 
-    // Fallback: detect from name
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes('kick') || lowerName.includes('snare') || lowerName.includes('drum') || lowerName.includes('hat')) return 'Drums';
-    if (lowerName.includes('bass')) return 'Bass';
-    if (lowerName.includes('synth')) return 'Synth';
-    return 'FX';
+    switch (option) {
+      case 'name-asc':
+        return sorted.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+
+      case 'name-desc':
+        return sorted.sort((a, b) => b.name.localeCompare(a.name, 'de'));
+
+      case 'plays-desc':
+        return sorted.sort((a, b) => (b.playCount ?? 0) - (a.playCount ?? 0));
+
+      case 'votes-desc':
+        return sorted.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
+      case 'votes-asc':
+        return sorted.sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
+
+      case 'newest':
+        return sorted.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
+
+      case 'duration-desc':
+        return sorted.sort((a, b) => (b.duration ?? 0) - (a.duration ?? 0));
+
+      case 'duration-asc':
+        return sorted.sort((a, b) => (a.duration ?? 0) - (b.duration ?? 0));
+
+      case 'random':
+        return this.seededShuffle(sorted, this.randomSeed());
+
+      default:
+        return sorted;
+    }
   }
 
-  private updateFiltered() {
-    const category = this.selectedCategory();
-    const search = this.searchTerm().toLowerCase();
-    const allSounds = this.sounds();
-    const isLan = this.isLanMode();
+  // Deterministic shuffle based on seed (stable random order)
+  private seededShuffle<T>(array: T[], seed: number): T[] {
+    const result = [...array];
+    let currentIndex = result.length;
 
-    const filtered = allSounds.filter(sound => {
-      // In LAN mode: filter by tags, in local mode: filter by category
-      let matchesCategory: boolean;
-      if (category === 'All') {
-        matchesCategory = true;
-      } else if (isLan) {
-        // LAN mode: Check if sound has this tag
-        matchesCategory = sound.tags?.some(tag => tag === category) ?? false;
-      } else {
-        // Local mode: Check category
-        matchesCategory = sound.category === category;
-      }
+    // Simple seeded random
+    const seededRandom = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
 
-      const matchesSearch = search === '' ||
-        sound.name.toLowerCase().includes(search) ||
-        sound.tags?.some(tag => tag.toLowerCase().includes(search)) ||
-        sound.category.toLowerCase().includes(search);
+    while (currentIndex > 0) {
+      const randomIndex = Math.floor(seededRandom() * currentIndex);
+      currentIndex--;
+      [result[currentIndex], result[randomIndex]] = [result[randomIndex], result[currentIndex]];
+    }
 
-      return matchesCategory && matchesSearch;
-    });
-
-    this.filteredSounds.set(filtered);
+    return result;
   }
 
-  setCategory(category: SoundCategory) {
+  // Public methods for updating filters
+
+  setCategory(category: SoundCategory): void {
     this.selectedCategory.set(category);
-    this.updateFiltered();
   }
 
-  setSearchTerm(term: string) {
+  setSearchTerm(term: string): void {
     this.searchTerm.set(term);
-    this.updateFiltered();
   }
+
+  setSortOption(option: SortOption): void {
+    // Reseed random when switching to random sort
+    if (option === 'random') {
+      this.randomSeed.set(Math.random());
+    }
+    this.sortOption.set(option);
+  }
+
+  toggleTag(tag: string): void {
+    const current = this.selectedTags();
+    if (current.includes(tag)) {
+      this.selectedTags.set(current.filter(t => t !== tag));
+    } else {
+      this.selectedTags.set([...current, tag]);
+    }
+  }
+
+  clearTags(): void {
+    this.selectedTags.set([]);
+  }
+
+  setShowFavoritesOnly(show: boolean): void {
+    this.showFavoritesOnly.set(show);
+  }
+
+  toggleFavoritesOnly(): void {
+    this.showFavoritesOnly.update(v => !v);
+  }
+
+  // Sound loading
 
   async loadSound(soundId: string): Promise<AudioBuffer | null> {
-    // Return cached if already loaded
     if (this.loadedSounds.has(soundId)) {
       return this.loadedSounds.get(soundId)!;
     }
@@ -163,7 +291,6 @@ export class SoundLibraryService {
     if (!sound) return null;
 
     try {
-      // Different URL based on mode
       const url = environment.nervboxApi
         ? `${environment.nervboxApi}/sound/${soundId}/file`
         : `/assets/sounds/${sound.filename}`;
@@ -177,7 +304,6 @@ export class SoundLibraryService {
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await this.audio.audioContext.decodeAudioData(arrayBuffer);
 
-      // Cache the loaded sound
       this.loadedSounds.set(soundId, audioBuffer);
 
       // Update duration in the sound library
@@ -197,12 +323,10 @@ export class SoundLibraryService {
     await Promise.allSettled(promises);
   }
 
-  // Preload a few essential sounds on app start
   async preloadEssentials(): Promise<void> {
     const essentials = [
-      // Beat making essentials
-      'kick-808', 'kick-trap', 
-      'snare-trap', 'snare-clap', 
+      'kick-808', 'kick-trap',
+      'snare-trap', 'snare-clap',
       'hihat-closed', 'hihat-open',
       'bass-808-long', 'bass-808-short'
     ];
