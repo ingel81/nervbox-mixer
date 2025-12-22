@@ -12,6 +12,7 @@ import {
   FilterParams,
   PitchShiftParams,
   ChorusParams,
+  AutotuneParams,
 } from '../../shared/models/models';
 import { generateUUID } from '../../shared/utils/uuid.util';
 
@@ -57,6 +58,7 @@ export class EffectsService {
     { type: 'filter', name: 'Filter', icon: 'filter_alt', description: 'Frequency shaping' },
     { type: 'pitch-shift', name: 'Pitch Shift', icon: 'trending_up', description: 'Change pitch' },
     { type: 'chorus', name: 'Chorus', icon: 'waves', description: 'Thicken and modulate' },
+    { type: 'autotune', name: 'Autotune', icon: 'tune', description: 'Pitch correction' },
   ];
 
   // Factory presets per effect type
@@ -133,6 +135,16 @@ export class EffectsService {
         { name: 'Vibrato', params: { mix: 0.8, rate: 5, depth: 0.8, feedback: 0.1 } as ChorusParams },
       ],
     ],
+    [
+      'autotune',
+      [
+        { name: 'Natural', params: { mix: 1, key: 'C', scale: 'major', strength: 0.3, speed: 0.4 } as AutotuneParams },
+        { name: 'Subtle Fix', params: { mix: 1, key: 'C', scale: 'major', strength: 0.5, speed: 0.6 } as AutotuneParams },
+        { name: 'Hard Tune', params: { mix: 1, key: 'C', scale: 'major', strength: 1.0, speed: 0.9 } as AutotuneParams },
+        { name: 'T-Pain', params: { mix: 1, key: 'C', scale: 'minor', strength: 1.0, speed: 1.0 } as AutotuneParams },
+        { name: 'Chromatic', params: { mix: 1, key: 'C', scale: 'chromatic', strength: 0.7, speed: 0.7 } as AutotuneParams },
+      ],
+    ],
   ]);
 
   /**
@@ -156,6 +168,8 @@ export class EffectsService {
         return { mix: 0.5, semitones: 0 } as PitchShiftParams;
       case 'chorus':
         return { mix: 0.5, rate: 2, depth: 0.5, feedback: 0.3 } as ChorusParams;
+      case 'autotune':
+        return { mix: 1, key: 'C', scale: 'major', strength: 0.5, speed: 0.6 } as AutotuneParams;
     }
   }
 
@@ -277,6 +291,14 @@ export class EffectsService {
           feedback: p.feedback,
           wet: p.mix,
         });
+      }
+
+      case 'autotune': {
+        // Autotune is applied as pre-processing during clip rendering/export
+        // For now, return a passthrough gain node
+        // Real autotune processing happens in AutotuneService
+        const gain = new Tone.Gain(1);
+        return gain;
       }
     }
   }

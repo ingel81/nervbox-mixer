@@ -12,7 +12,8 @@ export type EffectType =
   | 'compressor'
   | 'filter'
   | 'pitch-shift'
-  | 'chorus';
+  | 'chorus'
+  | 'autotune';
 
 // Base interface for all effect parameters
 export interface BaseEffectParams {
@@ -63,6 +64,13 @@ export interface ChorusParams extends BaseEffectParams {
   feedback: number; // 0-0.95
 }
 
+export interface AutotuneParams extends BaseEffectParams {
+  key: string; // Musical key (e.g., 'C', 'Am', 'F#')
+  scale: 'chromatic' | 'major' | 'minor'; // Scale type
+  strength: number; // 0-1, correction strength (0=off, 1=hard snap)
+  speed: number; // 0-1, correction speed (0=slow/natural, 1=instant/robotic)
+}
+
 // Union type for all effect parameters
 export type EffectParams =
   | ReverbParams
@@ -72,7 +80,8 @@ export type EffectParams =
   | CompressorParams
   | FilterParams
   | PitchShiftParams
-  | ChorusParams;
+  | ChorusParams
+  | AutotuneParams;
 
 // A single effect in the effect chain
 export interface ClipEffect {

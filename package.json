@@ -32,6 +32,8 @@
     "@angular/platform-browser-dynamic": "^20.1.6",
     "@angular/router": "^20.1.6",
     "@breezystack/lamejs": "^1.2.7",
+    "bungee-pitch-shift": "^1.0.8",
+    "pitchfinder": "^2.3.4",
     "rxjs": "^7.8.1",
     "tone": "^15.1.22",
     "tslib": "^2.6.2",

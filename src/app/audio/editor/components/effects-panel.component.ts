@@ -24,6 +24,7 @@ import {
   FilterParams,
   PitchShiftParams,
   ChorusParams,
+  AutotuneParams,
 } from '../../shared/models/models';
 import { generateUUID } from '../../shared/utils/uuid.util';
 
@@ -290,6 +291,51 @@ import { generateUUID } from '../../shared/utils/uuid.util';
                         <span class="value">{{ (asChorus(selectedEffect()!.params).feedback * 100).toFixed(0) }}%</span>
                       </div>
                     }
+                    @case ('autotune') {
+                      <div class="param-row">
+                        <label>Key</label>
+                        <mat-form-field subscriptSizing="dynamic" class="autotune-key-select">
+                          <mat-select [ngModel]="asAutotune(selectedEffect()!.params).key" (ngModelChange)="updateParam('key', $event)">
+                            <mat-option value="C">C</mat-option>
+                            <mat-option value="C#">C#</mat-option>
+                            <mat-option value="D">D</mat-option>
+                            <mat-option value="D#">D#</mat-option>
+                            <mat-option value="E">E</mat-option>
+                            <mat-option value="F">F</mat-option>
+                            <mat-option value="F#">F#</mat-option>
+                            <mat-option value="G">G</mat-option>
+                            <mat-option value="G#">G#</mat-option>
+                            <mat-option value="A">A</mat-option>
+                            <mat-option value="A#">A#</mat-option>
+                            <mat-option value="B">B</mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+                      <div class="param-row">
+                        <label>Scale</label>
+                        <mat-form-field subscriptSizing="dynamic" class="autotune-scale-select">
+                          <mat-select [ngModel]="asAutotune(selectedEffect()!.params).scale" (ngModelChange)="updateParam('scale', $event)">
+                            <mat-option value="chromatic">Chromatic</mat-option>
+                            <mat-option value="major">Major</mat-option>
+                            <mat-option value="minor">Minor</mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+                      <div class="param-row">
+                        <label>Strength</label>
+                        <mat-slider [min]="0" [max]="1" [step]="0.01" discrete>
+                          <input matSliderThumb [ngModel]="asAutotune(selectedEffect()!.params).strength" (ngModelChange)="updateParam('strength', $event)">
+                        </mat-slider>
+                        <span class="value">{{ (asAutotune(selectedEffect()!.params).strength * 100).toFixed(0) }}%</span>
+                      </div>
+                      <div class="param-row">
+                        <label>Speed</label>
+                        <mat-slider [min]="0" [max]="1" [step]="0.01" discrete>
+                          <input matSliderThumb [ngModel]="asAutotune(selectedEffect()!.params).speed" (ngModelChange)="updateParam('speed', $event)">
+                        </mat-slider>
+                        <span class="value">{{ (asAutotune(selectedEffect()!.params).speed * 100).toFixed(0) }}%</span>
+                      </div>
+                    }
                   }
                 </div>
               </div>
@@ -472,5 +518,8 @@ export class EffectsPanelComponent {
   }
   asChorus(params: unknown): ChorusParams {
     return params as ChorusParams;
+  }
+  asAutotune(params: unknown): AutotuneParams {
+    return params as AutotuneParams;
   }
 }
