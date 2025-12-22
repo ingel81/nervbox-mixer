@@ -32,7 +32,8 @@
       "Bash(npx playwright test:*)",
       "WebFetch(domain:material.angular.dev)",
       "Bash(npm version:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(git merge:*)"
     ],
     "deny": []
   }

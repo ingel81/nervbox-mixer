@@ -49,7 +49,7 @@ export class TagService {
     this._loading.set(true);
     try {
       const tags = await firstValueFrom(
-        this.http.get<Tag[]>(`${environment.nervboxApi}/tags`)
+        this.http.get<Tag[]>(`${environment.nervboxApi}/tag`)
       );
       this._tags.set(tags);
       this._loaded.set(true);

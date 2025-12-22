@@ -10,8 +10,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { SoundLibraryService, SORT_OPTIONS, SortOption } from '../services/sound-library.service';
+import { InstrumentCategory } from '../../shared/utils/instrument-library';
 import { SoundLibraryItem } from '../../shared/utils/sound-library';
 import { TagService } from '../../../core/services/tag.service';
 import { FavoritesService } from '../../../core/services/favorites.service';
@@ -30,6 +32,7 @@ import { FavoritesService } from '../../../core/services/favorites.service';
     MatTooltipModule,
     MatDividerModule,
     MatBadgeModule,
+    MatButtonToggleModule,
     ScrollingModule,
   ],
   template: `
@@ -39,24 +42,40 @@ import { FavoritesService } from '../../../core/services/favorites.service';
 
       <!-- Panel Mode Header (simplified) -->
       <div class="panel-header" *ngIf="panelMode">
+        <!-- Tab Toggle (LAN mode) -->
+        <div class="source-toggle" *ngIf="libraryService.isLanMode()">
+          <button class="toggle-btn"
+                  [class.active]="libraryService.activeTab() === 'nervbox'"
+                  (click)="onTabChange('nervbox')">
+            <mat-icon>cloud</mat-icon>
+            <span class="toggle-label">Nervbox</span>
+          </button>
+          <button class="toggle-btn"
+                  [class.active]="libraryService.activeTab() === 'instruments'"
+                  (click)="onTabChange('instruments')">
+            <mat-icon>piano</mat-icon>
+            <span class="toggle-label">Instrumente</span>
+          </button>
+        </div>
+
         <!-- Search -->
         <div class="search-box">
           <mat-icon class="search-icon">search</mat-icon>
           <input type="text"
                  class="search-input"
                  placeholder="Suchen..."
-                 [value]="libraryService.searchTerm()"
+                 [value]="currentSearchTerm()"
                  (input)="onSearchChange($event)">
           <button class="clear-btn"
-                  *ngIf="libraryService.searchTerm()"
+                  *ngIf="currentSearchTerm()"
                   (click)="clearSearch()"
                   matTooltip="Suche leeren">
             <mat-icon>close</mat-icon>
           </button>
         </div>
 
-        <!-- Sort Dropdown (LAN mode only) -->
-        <div class="sort-dropdown" *ngIf="libraryService.isLanMode()">
+        <!-- Sort Dropdown (LAN mode, Nervbox tab only) -->
+        <div class="sort-dropdown" *ngIf="libraryService.isLanMode() && !libraryService.isShowingInstruments()">
           <mat-icon class="sort-icon">sort</mat-icon>
           <mat-select [value]="libraryService.sortOption()"
                       (selectionChange)="onSortChange($event.value)"
@@ -67,18 +86,30 @@ import { FavoritesService } from '../../../core/services/favorites.service';
           </mat-select>
         </div>
 
-        <!-- Favorites Toggle (LAN mode + authenticated) -->
+        <!-- Instrument Category Filter (LAN mode, Instruments tab) -->
+        <div class="category-dropdown" *ngIf="libraryService.isShowingInstruments()">
+          <mat-icon class="category-icon">piano</mat-icon>
+          <mat-select [value]="libraryService.instrumentCategory()"
+                      (selectionChange)="onInstrumentCategoryChange($event.value)"
+                      panelClass="category-panel">
+            <mat-option *ngFor="let cat of libraryService.instrumentCategories()" [value]="cat">
+              {{ cat }}
+            </mat-option>
+          </mat-select>
+        </div>
+
+        <!-- Favorites Toggle (LAN mode + authenticated, Nervbox only) -->
         <button class="fav-toggle"
-                *ngIf="libraryService.isLanMode() && favoritesService.isAuthenticated()"
+                *ngIf="libraryService.isLanMode() && favoritesService.isAuthenticated() && !libraryService.isShowingInstruments()"
                 [class.active]="libraryService.showFavoritesOnly()"
                 (click)="toggleFavoritesFilter()"
                 [matTooltip]="libraryService.showFavoritesOnly() ? 'Alle anzeigen' : 'Nur Favoriten'">
           <mat-icon>{{ libraryService.showFavoritesOnly() ? 'favorite' : 'favorite_border' }}</mat-icon>
         </button>
 
-        <!-- Tag Filter Menu (LAN mode only) -->
+        <!-- Tag Filter Menu (LAN mode, Nervbox only) -->
         <button class="tag-menu-trigger"
-                *ngIf="libraryService.isLanMode()"
+                *ngIf="libraryService.isLanMode() && !libraryService.isShowingInstruments()"
                 [matMenuTriggerFor]="tagMenuPanel"
                 [matBadge]="selectedTagCount() || null"
                 [matBadgeHidden]="selectedTagCount() === 0"
@@ -126,24 +157,40 @@ import { FavoritesService } from '../../../core/services/favorites.service';
            *ngIf="!panelMode"
            (mousedown)="onHeaderMouseDown($event)">
 
+        <!-- Tab Toggle (LAN mode) -->
+        <div class="source-toggle" *ngIf="libraryService.isLanMode()">
+          <button class="toggle-btn"
+                  [class.active]="libraryService.activeTab() === 'nervbox'"
+                  (click)="onTabChange('nervbox')">
+            <mat-icon>cloud</mat-icon>
+            <span class="toggle-label">Nervbox</span>
+          </button>
+          <button class="toggle-btn"
+                  [class.active]="libraryService.activeTab() === 'instruments'"
+                  (click)="onTabChange('instruments')">
+            <mat-icon>piano</mat-icon>
+            <span class="toggle-label">Instrumente</span>
+          </button>
+        </div>
+
         <!-- Search -->
         <div class="search-box">
           <mat-icon class="search-icon">search</mat-icon>
           <input type="text"
                  class="search-input"
                  placeholder="Suchen..."
-                 [value]="libraryService.searchTerm()"
+                 [value]="currentSearchTerm()"
                  (input)="onSearchChange($event)">
           <button class="clear-btn"
-                  *ngIf="libraryService.searchTerm()"
+                  *ngIf="currentSearchTerm()"
                   (click)="clearSearch()"
                   matTooltip="Suche leeren">
             <mat-icon>close</mat-icon>
           </button>
         </div>
 
-        <!-- Sort Dropdown (LAN mode only) -->
-        <div class="sort-dropdown" *ngIf="libraryService.isLanMode()">
+        <!-- Sort Dropdown (LAN mode, Nervbox only) -->
+        <div class="sort-dropdown" *ngIf="libraryService.isLanMode() && !libraryService.isShowingInstruments()">
           <mat-icon class="sort-icon">sort</mat-icon>
           <mat-select [value]="libraryService.sortOption()"
                       (selectionChange)="onSortChange($event.value)"
@@ -154,18 +201,30 @@ import { FavoritesService } from '../../../core/services/favorites.service';
           </mat-select>
         </div>
 
-        <!-- Favorites Toggle (LAN mode + authenticated) -->
+        <!-- Instrument Category Filter (LAN mode, Instruments tab) -->
+        <div class="category-dropdown" *ngIf="libraryService.isShowingInstruments()">
+          <mat-icon class="category-icon">piano</mat-icon>
+          <mat-select [value]="libraryService.instrumentCategory()"
+                      (selectionChange)="onInstrumentCategoryChange($event.value)"
+                      panelClass="category-panel">
+            <mat-option *ngFor="let cat of libraryService.instrumentCategories()" [value]="cat">
+              {{ cat }}
+            </mat-option>
+          </mat-select>
+        </div>
+
+        <!-- Favorites Toggle (LAN mode + authenticated, Nervbox only) -->
         <button class="fav-toggle"
-                *ngIf="libraryService.isLanMode() && favoritesService.isAuthenticated()"
+                *ngIf="libraryService.isLanMode() && favoritesService.isAuthenticated() && !libraryService.isShowingInstruments()"
                 [class.active]="libraryService.showFavoritesOnly()"
                 (click)="toggleFavoritesFilter()"
                 [matTooltip]="libraryService.showFavoritesOnly() ? 'Alle anzeigen' : 'Nur Favoriten'">
           <mat-icon>{{ libraryService.showFavoritesOnly() ? 'favorite' : 'favorite_border' }}</mat-icon>
         </button>
 
-        <!-- Tag Filter Menu (LAN mode only) -->
+        <!-- Tag Filter Menu (LAN mode, Nervbox only) -->
         <button class="tag-menu-trigger"
-                *ngIf="libraryService.isLanMode()"
+                *ngIf="libraryService.isLanMode() && !libraryService.isShowingInstruments()"
                 [matMenuTriggerFor]="tagMenu"
                 [matBadge]="selectedTagCount() || null"
                 [matBadgeHidden]="selectedTagCount() === 0"
@@ -236,7 +295,8 @@ import { FavoritesService } from '../../../core/services/favorites.service';
       <!-- Sound List with Virtual Scrolling -->
       <cdk-virtual-scroll-viewport [itemSize]="72" class="sound-list">
         <div class="sound-item"
-             *cdkVirtualFor="let sound of libraryService.filteredSounds(); trackBy: trackByHash"
+             *cdkVirtualFor="let sound of libraryService.displayedSounds(); trackBy: trackByHash"
+             [class.instrument]="libraryService.isShowingInstruments()"
              [class.loading]="loadingStates[sound.id]"
              [class.dragging]="currentDraggedSound?.id === sound.id"
              [class.desktop-mode]="!isTouchDevice"
@@ -245,16 +305,19 @@ import { FavoritesService } from '../../../core/services/favorites.service';
           <div class="sound-info">
             <div class="sound-name">{{ sound.name }}</div>
             <div class="sound-meta">
+              <!-- Kategorie-Badge nur bei Instrumenten -->
+              <span class="category-badge" *ngIf="libraryService.isShowingInstruments()">{{ sound.category }}</span>
               <span class="duration" *ngIf="sound.duration">
                 {{ formatDuration(sound.duration) }}
               </span>
-              <span class="play-count" *ngIf="sound.playCount && libraryService.isLanMode()">
+              <!-- Play-Count nur bei Nervbox -->
+              <span class="play-count" *ngIf="sound.playCount && !libraryService.isShowingInstruments()">
                 <mat-icon class="meta-icon">play_arrow</mat-icon>
                 {{ sound.playCount }}
               </span>
             </div>
-            <!-- Colored Tags -->
-            <div class="sound-tags" *ngIf="sound.tags && sound.tags.length > 0">
+            <!-- Colored Tags (nur bei Nervbox) -->
+            <div class="sound-tags" *ngIf="!libraryService.isShowingInstruments() && sound.tags && sound.tags.length > 0">
               <span class="tag"
                     *ngFor="let tag of getVisibleTags(sound.tags)"
                     [style.background]="getTagBackground(tag)"
@@ -269,20 +332,20 @@ import { FavoritesService } from '../../../core/services/favorites.service';
             </div>
           </div>
 
-          <!-- Vote Score (LAN mode only) -->
+          <!-- Vote Score (nur bei Nervbox) -->
           <div class="vote-score"
-               *ngIf="libraryService.isLanMode() && sound.score !== undefined"
-               [class.positive]="(sound.score ?? 0) > 0"
-               [class.negative]="(sound.score ?? 0) < 0"
+               *ngIf="!libraryService.isShowingInstruments() && sound.score !== undefined"
+               [class.positive]="sound.score > 0"
+               [class.negative]="sound.score < 0"
                matTooltip="Bewertung: {{ sound.upVotes ?? 0 }} up / {{ sound.downVotes ?? 0 }} down">
-            {{ sound.score ?? 0 }}
+            {{ sound.score }}
           </div>
 
           <div class="sound-actions">
-            <!-- Favorite Button (LAN mode + authenticated) -->
+            <!-- Favorite Button (nur bei Nervbox) -->
             <button mat-icon-button
                     class="favorite-btn"
-                    *ngIf="libraryService.isLanMode() && favoritesService.isAuthenticated()"
+                    *ngIf="!libraryService.isShowingInstruments() && favoritesService.isAuthenticated()"
                     [class.is-favorite]="isFavorite(sound.id)"
                     (click)="$event.stopPropagation(); toggleFavorite(sound.id)"
                     [matTooltip]="isFavorite(sound.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'">
@@ -315,21 +378,21 @@ import { FavoritesService } from '../../../core/services/favorites.service';
 
             <!-- Add Button -->
             <button mat-icon-button
-                    class="add-btn"
-                    (click)="$event.stopPropagation(); addSoundToProject(sound)"
-                    [disabled]="loadingStates[sound.id]"
-                    matTooltip="Zum Projekt hinzufügen">
-              <mat-icon>add</mat-icon>
+                      class="add-btn"
+                      (click)="$event.stopPropagation(); addSoundToProject(sound)"
+                      [disabled]="loadingStates[sound.id]"
+                      matTooltip="Zum Projekt hinzufügen">
+                <mat-icon>add</mat-icon>
             </button>
           </div>
         </div>
 
         <!-- Empty State -->
-        <div class="empty-state" *ngIf="libraryService.filteredSounds().length === 0">
-          <mat-icon>library_music</mat-icon>
-          <p>Keine Sounds gefunden</p>
+        <div class="empty-state" *ngIf="libraryService.displayedSounds().length === 0">
+          <mat-icon>{{ libraryService.isShowingInstruments() ? 'piano' : 'library_music' }}</mat-icon>
+          <p>{{ libraryService.isShowingInstruments() ? 'Keine Instrumente gefunden' : 'Keine Sounds gefunden' }}</p>
           <button mat-button
-                  *ngIf="hasActiveFilters()"
+                  *ngIf="hasActiveFilters() && !libraryService.isShowingInstruments()"
                   (click)="clearAllFilters()">
             Filter zurücksetzen
           </button>
@@ -351,6 +414,13 @@ export class SoundBrowserComponent {
   readonly favoritesService = inject(FavoritesService);
 
   readonly sortOptions = SORT_OPTIONS;
+
+  // Computed: Aktueller Suchterm je nach Tab
+  readonly currentSearchTerm = computed(() =>
+    this.libraryService.isShowingInstruments()
+      ? this.libraryService.instrumentSearchTerm()
+      : this.libraryService.searchTerm()
+  );
 
   loadingStates: Record<string, boolean> = {};
 
@@ -433,14 +503,32 @@ export class SoundBrowserComponent {
     this.libraryService.setSortOption(option);
   }
 
+  // Tab-Wechsel (LAN-Modus)
+  onTabChange(tab: 'nervbox' | 'instruments'): void {
+    this.libraryService.setActiveTab(tab);
+  }
+
+  // Instrument-Kategorie ändern
+  onInstrumentCategoryChange(category: InstrumentCategory): void {
+    this.libraryService.setInstrumentCategory(category);
+  }
+
   // Search methods
   onSearchChange(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.libraryService.setSearchTerm(target.value);
+    if (this.libraryService.isShowingInstruments()) {
+      this.libraryService.setInstrumentSearchTerm(target.value);
+    } else {
+      this.libraryService.setSearchTerm(target.value);
+    }
   }
 
   clearSearch(): void {
-    this.libraryService.setSearchTerm('');
+    if (this.libraryService.isShowingInstruments()) {
+      this.libraryService.setInstrumentSearchTerm('');
+    } else {
+      this.libraryService.setSearchTerm('');
+    }
   }
 
   // Filter helpers

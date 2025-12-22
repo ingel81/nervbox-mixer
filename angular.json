@@ -60,6 +60,39 @@
               "outputHashing": "all",
               "sourceMap": false,
               "baseHref": "/mixer/",
+              "assets": [
+                "src/favicon.ico",
+                "src/assets",
+                "src/robots.txt",
+                "src/sitemap.xml",
+                {
+                  "glob": "**/*",
+                  "input": "../instruments",
+                  "output": "/assets/instruments"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.lan.ts"
+                }
+              ]
+            },
+            "lan-dev": {
+              "optimization": false,
+              "sourceMap": true,
+              "baseHref": "/mixer/",
+              "assets": [
+                "src/favicon.ico",
+                "src/assets",
+                "src/robots.txt",
+                "src/sitemap.xml",
+                {
+                  "glob": "**/*",
+                  "input": "../instruments",
+                  "output": "/assets/instruments"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -80,7 +113,7 @@
               "buildTarget": "nervbox-mixer:build:development"
             },
             "lan": {
-              "buildTarget": "nervbox-mixer:build:lan",
+              "buildTarget": "nervbox-mixer:build:lan-dev",
               "proxyConfig": "proxy.conf.json"
             }
           },

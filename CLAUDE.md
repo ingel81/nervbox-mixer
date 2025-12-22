@@ -24,6 +24,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm start` - Start development server with auto-open browser (DO NOT USE)
 - `npm run build` - Create production build
 - `npm run build:prod` - Production build with optimizations
+- `npm run build:lan` - Build for LAN/Pi deployment (baseHref: /mixer/)
+- `npm run start:lan` - Start dev server for LAN mode (uses nervbox backend as proxy)
 - `npm run watch` - Build in watch mode for development
 - `npm run scan-sounds` - Regenerate sound library catalog from src/assets/sounds/
 - `npm run lint` - Run ESLint to check for code quality issues
@@ -149,6 +151,13 @@ scripts/
 - Lazy loading with caching for performance
 - Generated catalog via `npm run scan-sounds`
 - Categories: Drums, Bass, Synth, FX with searchable tags
+
+**LAN-Modus (Dual Sound Browser)**:
+- Tab "Nervbox": Sounds von der API (dynamisch, Tags, Votes, Favoriten)
+- Tab "Instrumente": Lokale statische Sounds (Bass, Drums, Synth)
+- `instrument-library.ts`: Gefilterte Library ohne FX (222 Sounds)
+- Assets unter `/assets/instruments/` (getrennt von API-Sounds)
+- Kategorie-Filter: All, Bass, Drums, Synth
 
 ### Component Communication Pattern
 - **AudioEditorComponent** owns all state

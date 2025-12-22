@@ -4,6 +4,11 @@ import { firstValueFrom } from 'rxjs';
 import { AudioEngineService } from '../../audio-engine/services/audio-engine.service';
 import { RecordingStorageService } from '../../audio-engine/services/recording-storage.service';
 import { SOUND_LIBRARY, SoundLibraryItem, SOUND_CATEGORIES, SoundCategory } from '../../shared/utils/sound-library';
+import {
+  INSTRUMENT_LIBRARY,
+  INSTRUMENT_CATEGORIES,
+  InstrumentCategory,
+} from '../../shared/utils/instrument-library';
 import { environment } from '../../../../environments/environment';
 import { Sound } from '../../../core/models/sound.model';
 import { TagService } from '../../../core/services/tag.service';
@@ -63,6 +68,14 @@ export class SoundLibraryService {
   sortOption = signal<SortOption>('plays-desc');
   private randomSeed = signal(Math.random());
 
+  // Tab-Umschaltung (nur LAN-Modus relevant)
+  readonly activeTab = signal<'nervbox' | 'instruments'>('nervbox');
+
+  // Instrument-spezifische Filter
+  readonly instrumentCategory = signal<InstrumentCategory>('All');
+  readonly instrumentSearchTerm = signal<string>('');
+  readonly instrumentCategories = signal<readonly InstrumentCategory[]>(INSTRUMENT_CATEGORIES);
+
   // Computed filtered and sorted sounds
   readonly filteredSounds = computed(() => {
     let result = this.sounds();
@@ -100,6 +113,45 @@ export class SoundLibraryService {
 
     // 5. Apply sorting
     return this.applySorting(result);
+  });
+
+  // Computed: Gefilterte Instrumente (für Instrument-Tab)
+  readonly filteredInstruments = computed(() => {
+    let result = [...INSTRUMENT_LIBRARY];
+    const category = this.instrumentCategory();
+    const search = this.instrumentSearchTerm().toLowerCase();
+
+    // 1. Kategorie-Filter
+    if (category !== 'All') {
+      result = result.filter((s) => s.category === category);
+    }
+
+    // 2. Suche
+    if (search) {
+      result = result.filter(
+        (s) =>
+          s.name.toLowerCase().includes(search) ||
+          s.category.toLowerCase().includes(search)
+      );
+    }
+
+    // Alphabetisch sortieren
+    return result.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  });
+
+  // Computed: Anzuzeigende Sounds basierend auf aktivem Tab
+  readonly displayedSounds = computed(() => {
+    if (!this.isLanMode()) {
+      return this.filteredSounds();
+    }
+    return this.activeTab() === 'instruments'
+      ? this.filteredInstruments()
+      : this.filteredSounds();
+  });
+
+  // Computed: Prüft ob aktuell Instrumente angezeigt werden
+  readonly isShowingInstruments = computed(() => {
+    return this.isLanMode() && this.activeTab() === 'instruments';
   });
 
   // All unique tags from sounds (for upload dialog)
@@ -282,6 +334,20 @@ export class SoundLibraryService {
     this.showFavoritesOnly.update(v => !v);
   }
 
+  // Tab-Methoden (LAN-Modus)
+
+  setActiveTab(tab: 'nervbox' | 'instruments'): void {
+    this.activeTab.set(tab);
+  }
+
+  setInstrumentCategory(category: InstrumentCategory): void {
+    this.instrumentCategory.set(category);
+  }
+
+  setInstrumentSearchTerm(term: string): void {
+    this.instrumentSearchTerm.set(term);
+  }
+
   // Sound loading
 
   async loadSound(soundId: string): Promise<AudioBuffer | null> {
@@ -307,7 +373,13 @@ export class SoundLibraryService {
       }
     }
 
-    // Handle sounds from library
+    // Prüfe ob es ein Instrument-Sound ist (lokal, statisch)
+    const instrumentSound = INSTRUMENT_LIBRARY.find((s) => s.id === soundId);
+    if (instrumentSound) {
+      return this.loadInstrumentSound(instrumentSound);
+    }
+
+    // Handle sounds from API (Nervbox)
     const sound = this.sounds().find((s) => s.id === soundId);
     if (!sound) return null;
 
@@ -335,6 +407,29 @@ export class SoundLibraryService {
       return audioBuffer;
     } catch (error) {
       console.error(`Error loading sound ${sound.filename}:`, error);
+      return null;
+    }
+  }
+
+  // Instrument-Sounds aus lokalen Assets laden
+  private async loadInstrumentSound(sound: SoundLibraryItem): Promise<AudioBuffer | null> {
+    try {
+      // Instrumente werden aus assets/instruments/ geladen (relativ zu base href)
+      const url = `assets/instruments/${sound.filename}`;
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error(`Failed to load instrument sound: ${sound.filename}`);
+        return null;
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.audio.audioContext.decodeAudioData(arrayBuffer);
+
+      this.loadedSounds.set(sound.id, audioBuffer);
+      return audioBuffer;
+    } catch (error) {
+      console.error(`Error loading instrument sound ${sound.filename}:`, error);
       return null;
     }
   }

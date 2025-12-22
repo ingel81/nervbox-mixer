@@ -804,3 +804,224 @@
   background: rgba(147, 51, 234, 0.3);
   border-radius: 3px;
 }
+
+/* ========== SOURCE TOGGLE (Header) ========== */
+.source-toggle {
+  display: flex;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  padding: 2px;
+  border: 1px solid rgba(147, 51, 234, 0.2);
+}
+
+.toggle-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.toggle-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(147, 51, 234, 0.1);
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.4) 0%, rgba(236, 72, 153, 0.3) 100%);
+  color: white;
+}
+
+.toggle-btn mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.toggle-btn .toggle-label {
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ========== CATEGORY DROPDOWN ========== */
+.category-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  border-radius: 4px;
+  padding: 0 6px;
+  height: 28px;
+  cursor: pointer;
+}
+
+.category-dropdown .category-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: rgba(147, 51, 234, 0.8);
+  flex-shrink: 0;
+}
+
+.category-dropdown ::ng-deep .mat-mdc-select {
+  width: 70px;
+}
+
+.category-dropdown ::ng-deep .mat-mdc-select-trigger {
+  height: 26px;
+  min-height: 26px;
+}
+
+.category-dropdown ::ng-deep .mat-mdc-select-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.category-dropdown ::ng-deep .mat-mdc-select-arrow-wrapper {
+  transform: translateY(0);
+}
+
+.category-dropdown ::ng-deep .mat-mdc-select-arrow {
+  color: rgba(147, 51, 234, 0.6);
+}
+
+/* Category Panel Overlay */
+::ng-deep .category-panel {
+  background: linear-gradient(180deg, #1a1f3a 0%, #0a0e27 100%) !important;
+  border: 1px solid rgba(147, 51, 234, 0.3) !important;
+  min-width: 120px !important;
+}
+
+::ng-deep .category-panel .mat-mdc-option {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px !important;
+  min-height: 32px !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  padding: 0 12px !important;
+}
+
+::ng-deep .category-panel .mat-mdc-option:hover {
+  background: rgba(147, 51, 234, 0.2) !important;
+}
+
+::ng-deep .category-panel .mat-mdc-option.mdc-list-item--selected {
+  background: rgba(147, 51, 234, 0.3) !important;
+  color: white !important;
+}
+
+/* ========== SOURCE TABS (LAN-Modus) - unused now ========== */
+.source-tabs {
+  padding: 8px 12px;
+  display: flex;
+  justify-content: center;
+  border-bottom: 1px solid rgba(147, 51, 234, 0.2);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.source-tabs mat-button-toggle-group {
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+.source-tabs ::ng-deep .mat-button-toggle {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.source-tabs ::ng-deep .mat-button-toggle-button {
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.source-tabs ::ng-deep .mat-button-toggle.mat-button-toggle-checked {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.4) 0%, rgba(236, 72, 153, 0.3) 100%);
+  color: white;
+}
+
+.source-tabs ::ng-deep .mat-button-toggle mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.source-tabs ::ng-deep .mat-button-toggle-label-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+}
+
+/* ========== INSTRUMENT CATEGORIES ========== */
+.instrument-categories {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  border-bottom: 1px solid rgba(147, 51, 234, 0.15);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.instrument-categories::-webkit-scrollbar {
+  height: 4px;
+}
+
+.instrument-categories::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.instrument-categories::-webkit-scrollbar-thumb {
+  background: rgba(147, 51, 234, 0.3);
+  border-radius: 2px;
+}
+
+.category-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.category-chip:hover {
+  background: rgba(147, 51, 234, 0.15);
+  border-color: rgba(147, 51, 234, 0.4);
+}
+
+.category-chip.selected {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.4) 0%, rgba(236, 72, 153, 0.3) 100%);
+  border-color: rgba(147, 51, 234, 0.6);
+  color: white;
+}
+
+/* ========== INSTRUMENT SOUND ITEM ========== */
+.sound-item.instrument .category-badge {
+  font-size: 9px;
+  padding: 2px 6px;
+  background: rgba(147, 51, 234, 0.2);
+  border-radius: 4px;
+  color: rgba(147, 51, 234, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
