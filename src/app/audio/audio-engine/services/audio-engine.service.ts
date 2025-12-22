@@ -53,15 +53,26 @@ export class AudioEngineService {
     return await this.audioContext.decodeAudioData(arrayBuf);
   }
 
-  play(clips: Iterable<PlayableClip>, fromTime = 0): void {
+  async play(clips: Iterable<PlayableClip>, fromTime = 0): Promise<void> {
     const ctx = this.audioContext;
     if (this.playing) this.stop();
+
+    // Pre-process clips with autotune for realtime preview
+    console.log('[AudioEngine] Pre-processing clips with autotune...');
+    const clipsArray = Array.from(clips);
+    const processedClips = await Promise.all(
+      clipsArray.map(async (clip) => {
+        const autotuneBuffer = await this.applyAutotuneToClip(clip, ctx);
+        return { ...clip, buffer: autotuneBuffer };
+      })
+    );
+    console.log('[AudioEngine] ✓ Pre-processing complete, starting playback');
 
     // Use minimal delay for highest precision
     this.startContextTime = ctx.currentTime + 0.01; // Reduced from 0.05 to 0.01
     this.startTimelineTime = fromTime;
 
-    for (const c of clips) {
+    for (const c of processedClips) {
       if (c.muted) continue;
       const relStart = c.startTime - fromTime;
       const clipEnd = c.startTime + c.duration;
@@ -114,8 +125,8 @@ export class AudioEngineService {
       const pan = ctx.createStereoPanner();
       pan.pan.value = c.pan;
 
-      // Check if clip has enabled effects
-      const enabledEffects = c.effects?.filter((e) => e.enabled) || [];
+      // Check if clip has enabled effects (excluding autotune, already applied)
+      const enabledEffects = c.effects?.filter((e) => e.enabled && e.type !== 'autotune') || [];
       if (enabledEffects.length > 0) {
         // Create effect chain: src -> effects -> gain -> pan -> master
         const effectChain = this.effectsService.createEffectChain(c.clipId, enabledEffects, ctx);

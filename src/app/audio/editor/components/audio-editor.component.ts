@@ -446,11 +446,11 @@ export class AudioEditorComponent {
     this.scrollX.set(lanesEl.scrollLeft);
   }
 
-  private restartPlaybackFromCurrentPosition() {
+  private async restartPlaybackFromCurrentPosition(): Promise<void> {
     const currentPlayheadPosition = this.playhead();
     this.audio.stop();
     const clips = this.getPlayableClips();
-    this.audio.play(clips, currentPlayheadPosition);
+    await this.audio.play(clips, currentPlayheadPosition);
     this.tickPlayhead();
   }
 
@@ -458,11 +458,11 @@ export class AudioEditorComponent {
     if (this.isPlaying()) {
       this.pause();
     } else {
-      this.play();
+      void this.play();
     }
   }
 
-  play(): void {
+  async play(): Promise<void> {
     let startPosition = this.playhead();
 
     // If loop is enabled and playhead is outside loop region, start at loop start
@@ -477,10 +477,10 @@ export class AudioEditorComponent {
     }
 
     const clips = this.getPlayableClips();
-    this.audio.play(clips, startPosition);
+    await this.audio.play(clips, startPosition);
     this.editorState.play();
     this.tickPlayhead();
-    
+
     // Track play event
     this.analytics.trackPlayback('play');
   }
@@ -883,7 +883,7 @@ export class AudioEditorComponent {
     this.tickRAF = requestAnimationFrame(loop);
   }
 
-  seekTo(sec: number) {
+  async seekTo(sec: number): Promise<void> {
     this.playhead.set(sec);
     // Track seek event
     this.analytics.trackSeek(sec);
@@ -892,7 +892,7 @@ export class AudioEditorComponent {
     if (this.isPlaying()) {
       this.audio.stop();
       const clips = this.getPlayableClips();
-      this.audio.play(clips, sec);
+      await this.audio.play(clips, sec);
       // Restart the playhead ticker from new position
       this.tickPlayhead();
     }

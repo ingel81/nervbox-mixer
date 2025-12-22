@@ -462,7 +462,7 @@ export class InteractionCoordinatorService {
   }
 
   // Shortcut actions
-  private togglePlayback(): void {
+  private async togglePlayback(): Promise<void> {
     if (this.editorState.isPlaying()) {
       this.audioEngine.stop();
       this.editorState.isPlaying.set(false);
@@ -484,7 +484,7 @@ export class InteractionCoordinatorService {
         }))
       );
 
-      this.audioEngine.play(clips, this.editorState.playhead());
+      await this.audioEngine.play(clips, this.editorState.playhead());
       this.editorState.isPlaying.set(true);
     }
   }
