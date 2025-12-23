@@ -101,8 +101,10 @@ src/app/
     │   └── arrangement-patterns.ts         # Predefined arrangement patterns
     ├── editor/                    # Main editor components and state
     │   ├── components/            # Editor UI components
-    │   │   ├── audio-editor.component.*   # Main editor component (1246 lines)
+    │   │   ├── audio-editor.component.*   # Main editor component (~1310 lines)
     │   │   ├── bottom-panel.component.*   # Bottom control panel
+    │   │   ├── effects-panel.component.*  # Audio effects panel
+    │   │   ├── grid-controls.component.ts # Grid/snap controls
     │   │   └── loop-region.component.ts   # Loop region visualization
     │   └── services/              # Editor state management
     │       ├── bottom-panel.service.ts    # Bottom panel state
@@ -112,8 +114,11 @@ src/app/
     │   │   ├── models.ts          # Core data models
     │   │   └── lamejs.d.ts        # MP3 encoder type definitions
     │   └── utils/                 # Utility functions
+    │       ├── clip.util.ts       # Clip utility functions
+    │       ├── instrument-library.ts  # Instrument catalog for LAN mode
     │       ├── sound-library.ts   # Generated sound catalog
-    │       └── timeline.util.ts   # Timeline utility functions
+    │       ├── timeline.util.ts   # Timeline utility functions
+    │       └── uuid.util.ts       # UUID generation
     ├── sound-browser/             # Sound library and browser
     │   ├── components/            # Sound browser UI
     │   │   ├── preview-clip.component.ts   # Audio preview component
@@ -134,11 +139,13 @@ src/app/
             ├── unified-drag.service.ts             # Unified drag operations
             └── virtual-drag.service.ts             # Virtual drag handling
 
-src/assets/sounds/     # Audio files (excluded from Git)
-├── drums/            # Drum samples
-├── bass/             # Bass samples
-├── synth/            # Synthesizer sounds
-└── fx/               # Sound effects
+src/assets/
+├── audio-worklets/   # Web Audio worklets
+└── sounds/           # Audio files (excluded from Git)
+    ├── drums/        # Drum samples
+    ├── bass/         # Bass samples
+    ├── synth/        # Synthesizer sounds
+    └── fx/           # Sound effects
 
 scripts/
 └── scan-sounds.js    # Generates sound library catalog
@@ -339,8 +346,8 @@ Currently no tests implemented. When adding tests:
 ## Component Refactoring Plan
 
 ### AudioEditorComponent Decomposition Strategy
-**Progress**: 1246 → 1131 lines (115 lines extracted, 9.2% reduction)
-**Current target**: Reduce to ~400-500 lines through extraction
+**Current size**: ~1310 lines
+**Target**: Reduce to ~400-500 lines through extraction
 
 ### Extraction Candidates (Priority Order)
 
@@ -387,9 +394,10 @@ Currently no tests implemented. When adding tests:
 - **Dependencies**: EditorStateService
 
 ### Progress Summary
-- **✅ KeyboardShortcutsDirective**: 115 lines extracted
-- **Remaining extraction targets**: ~650 lines (52% additional reduction possible)
-- **Current AudioEditorComponent size**: 1131 lines
+- **✅ KeyboardShortcutsDirective**: Extracted
+- **✅ EffectsPanelComponent**: Extracted
+- **✅ GridControlsComponent**: Extracted
+- **Current AudioEditorComponent size**: ~1310 lines
 - **Final target size**: ~480 lines
 
 ### Benefits Achieved
