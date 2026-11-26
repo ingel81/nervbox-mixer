@@ -39,7 +39,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-### Standalone Angular 20 Application
+### Standalone Angular 22 Application
 - **No NgModules** - Components use standalone: true and import dependencies directly
 - **Angular Signals** - All state management uses signals instead of RxJS subjects
 - **Computed signals** - For derived state calculations

@@ -1,5 +1,5 @@
-import { Component, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,27 +13,28 @@ import { KeyboardShortcutsHelpComponent } from './keyboard-shortcuts-help.compon
 import { environment } from '../../environments/environment';
 
 @Component({
-    selector: 'app-shell',
-    imports: [
-        CommonModule,
-        MatToolbarModule,
-        MatIconModule,
-        MatButtonModule,
-        MatTooltipModule,
-        ProjectManagementComponent,
-        ContentCreationComponent,
-        ExportControlsComponent,
-        AudioEditorComponent,
-        KeyboardShortcutsHelpComponent
-    ],
-    template: `
+  selector: 'app-shell',
+  imports: [
+    MatToolbarModule,
+    MatIconModule,
+    MatButtonModule,
+    MatTooltipModule,
+    ProjectManagementComponent,
+    ContentCreationComponent,
+    ExportControlsComponent,
+    AudioEditorComponent,
+    KeyboardShortcutsHelpComponent,
+  ],
+  template: `
     <mat-toolbar color="primary" class="toolbar">
       <!-- Back to Player (LAN mode only) -->
       @if (isLanMode) {
-        <button mat-icon-button
-                (click)="goToPlayer()"
-                matTooltip="Zurück zum Player"
-                class="back-button">
+        <button
+          mat-icon-button
+          (click)="goToPlayer()"
+          matTooltip="Zurück zum Player"
+          class="back-button"
+        >
           <mat-icon>arrow_back</mat-icon>
         </button>
       }
@@ -45,7 +46,6 @@ import { environment } from '../../environments/environment';
       </span>
       <span class="spacer"></span>
 
-
       <!-- Project Management -->
       <project-management></project-management>
 
@@ -54,23 +54,26 @@ import { environment } from '../../environments/environment';
 
       <!-- Export Controls -->
       <export-controls></export-controls>
-      
+
       <!-- Help Button -->
-      <button mat-icon-button 
-              (click)="showKeyboardShortcuts()" 
-              matTooltip="Keyboard Shortcuts"
-              class="help-button">
+      <button
+        mat-icon-button
+        (click)="showKeyboardShortcuts()"
+        matTooltip="Keyboard Shortcuts"
+        class="help-button"
+      >
         <mat-icon>keyboard</mat-icon>
       </button>
     </mat-toolbar>
 
     <!-- Main Editor -->
     <audio-editor></audio-editor>
-    
+
     <!-- Keyboard Shortcuts Help -->
     <app-keyboard-shortcuts-help #shortcutsHelp></app-keyboard-shortcuts-help>
   `,
-    styleUrls: ['./shell.component.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./shell.component.css'],
 })
 export class ShellComponent {
   @ViewChild('shortcutsHelp') shortcutsHelp!: KeyboardShortcutsHelpComponent;

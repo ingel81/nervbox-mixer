@@ -1,5 +1,14 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -28,57 +37,73 @@ export interface TrackClickEvent {
 }
 
 @Component({
-    selector: 'track-header',
-    imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatTooltipModule],
-    template: `
+  selector: 'track-header',
+  imports: [FormsModule, MatIconModule, MatButtonModule, MatTooltipModule],
+  template: `
     <div class="track-head" (click)="onHeaderClick($event)">
       <div class="track-controls">
-        <div class="title" 
-             [class.editing]="isEditing">
-          <span *ngIf="!isEditing" class="title-content" [title]="track.name">
-            <span class="track-name-text">{{ track.name }}</span>
-            <mat-icon class="edit-icon" (click)="startEditing()">edit</mat-icon>
-          </span>
-          <input *ngIf="isEditing" 
-                 #nameInput
-                 [(ngModel)]="editingName"
-                 (keydown)="onEditKeyDown($event)"
-                 (blur)="finishEditing()"
-                 class="name-input" />
+        <div class="title" [class.editing]="isEditing">
+          @if (!isEditing) {
+            <span class="title-content" [title]="track.name">
+              <span class="track-name-text">{{ track.name }}</span>
+              <mat-icon class="edit-icon" (click)="startEditing()"
+                >edit</mat-icon
+              >
+            </span>
+          }
+          @if (isEditing) {
+            <input
+              #nameInput
+              [(ngModel)]="editingName"
+              (keydown)="onEditKeyDown($event)"
+              (blur)="finishEditing()"
+              class="name-input"
+            />
+          }
         </div>
         <div class="track-buttons">
-          <button mat-icon-button 
-                  class="track-btn" 
-                  [class.active]="track.mute"
-                  (click)="onToggleMute()" 
-                  matTooltip="Mute">
+          <button
+            mat-icon-button
+            class="track-btn"
+            [class.active]="track.mute"
+            (click)="onToggleMute()"
+            matTooltip="Mute"
+          >
             <mat-icon>{{ track.mute ? 'volume_off' : 'volume_up' }}</mat-icon>
           </button>
-          <button mat-icon-button 
-                  class="track-btn" 
-                  [class.active]="track.solo"
-                  (click)="onToggleSolo()" 
-                  matTooltip="Solo">
+          <button
+            mat-icon-button
+            class="track-btn"
+            [class.active]="track.solo"
+            (click)="onToggleSolo()"
+            matTooltip="Solo"
+          >
             <mat-icon>headset</mat-icon>
           </button>
-          <button mat-icon-button class="track-btn delete" (click)="onRemoveTrack()" matTooltip="Remove track">
+          <button
+            mat-icon-button
+            class="track-btn delete"
+            (click)="onRemoveTrack()"
+            matTooltip="Remove track"
+          >
             <mat-icon>close</mat-icon>
           </button>
         </div>
       </div>
     </div>
   `,
-    styleUrls: ['./track-header.component.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./track-header.component.css'],
 })
 export class TrackHeaderComponent implements AfterViewInit {
   @Input() track!: Track;
-  
+
   @Output() muteToggled = new EventEmitter<TrackMuteEvent>();
   @Output() soloToggled = new EventEmitter<TrackSoloEvent>();
   @Output() trackDeleted = new EventEmitter<TrackDeleteEvent>();
   @Output() trackRenamed = new EventEmitter<TrackRenameEvent>();
   @Output() trackClicked = new EventEmitter<TrackClickEvent>();
-  
+
   @ViewChild('nameInput') nameInputEl?: ElementRef<HTMLInputElement>;
 
   isEditing = false;
@@ -94,7 +119,7 @@ export class TrackHeaderComponent implements AfterViewInit {
   startEditing() {
     this.isEditing = true;
     this.editingName = this.track.name;
-    
+
     setTimeout(() => {
       if (this.nameInputEl) {
         this.nameInputEl.nativeElement.focus();
@@ -104,8 +129,15 @@ export class TrackHeaderComponent implements AfterViewInit {
   }
 
   finishEditing() {
-    if (this.isEditing && this.editingName.trim() && this.editingName !== this.track.name) {
-      this.trackRenamed.emit({ track: this.track, newName: this.editingName.trim() });
+    if (
+      this.isEditing &&
+      this.editingName.trim() &&
+      this.editingName !== this.track.name
+    ) {
+      this.trackRenamed.emit({
+        track: this.track,
+        newName: this.editingName.trim(),
+      });
     }
     this.isEditing = false;
   }
@@ -132,12 +164,14 @@ export class TrackHeaderComponent implements AfterViewInit {
 
   onHeaderClick(event: MouseEvent) {
     // Don't trigger if clicking on buttons or during editing
-    if ((event.target as HTMLElement).closest('button') || 
-        (event.target as HTMLElement).closest('.edit-icon') ||
-        this.isEditing) {
+    if (
+      (event.target as HTMLElement).closest('button') ||
+      (event.target as HTMLElement).closest('.edit-icon') ||
+      this.isEditing
+    ) {
       return;
     }
-    
+
     this.trackClicked.emit({ track: this.track });
   }
 }

@@ -1,5 +1,10 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  ElementRef,
+  ViewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -14,115 +19,124 @@ import { Clip } from '../audio/shared/models/models';
 import { generateUUID } from '../audio/shared/utils/uuid.util';
 
 @Component({
-    selector: 'content-creation',
-    imports: [CommonModule, MatButtonModule, MatIconModule, MatTooltipModule],
-    template: `
-    
-    <button mat-icon-button 
-            (click)="openFileDialog()" 
-            matTooltip="Import audio files"
-            class="content-btn">
+  selector: 'content-creation',
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule],
+  template: `
+    <button
+      mat-icon-button
+      (click)="openFileDialog()"
+      matTooltip="Import audio files"
+      class="content-btn"
+    >
       <mat-icon>file_upload</mat-icon>
     </button>
-    
-    <input #fileInput 
-           type="file" 
-           multiple 
-           accept="audio/*" 
-           (change)="handleFileInput($event)" 
-           hidden>
-    
-    <button mat-icon-button
-            (click)="openRecordingDialog()"
-            matTooltip="Record from microphone"
-            class="content-btn record-btn">
+
+    <input
+      #fileInput
+      type="file"
+      multiple
+      accept="audio/*"
+      (change)="handleFileInput($event)"
+      hidden
+    />
+
+    <button
+      mat-icon-button
+      (click)="openRecordingDialog()"
+      matTooltip="Record from microphone"
+      class="content-btn record-btn"
+    >
       <mat-icon>mic</mat-icon>
     </button>
   `,
-    styles: [`
-    :host {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 4px;
-      margin-right: 16px;
-      height: 48px;
-    }
-    
-    .content-btn {
-      color: rgba(255, 255, 255, 0.8);
-      transition: all 0.2s ease;
-    }
-    
-    .content-btn:hover {
-      color: #9333ea;
-      background: rgba(147, 51, 234, 0.1);
-    }
-    
-    .content-btn.active {
-      color: #ec4899 !important;
-      background: rgba(236, 72, 153, 0.2) !important;
-      box-shadow: 0 0 10px rgba(236, 72, 153, 0.3);
-    }
-    
-    .record-btn:hover {
-      color: #ef4444;
-      background: rgba(239, 68, 68, 0.1);
-    }
-    
-    /* Mobile styles */
-    @media (max-width: 768px) {
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: [
+    `
       :host {
-        gap: 0px;
-        margin-right: 0px;
-        height: 48px;
         display: flex;
         align-items: center;
         justify-content: flex-start;
+        gap: 4px;
+        margin-right: 16px;
+        height: 48px;
       }
-      
+
       .content-btn {
-        background: transparent !important;
-        border: none !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
+        color: rgba(255, 255, 255, 0.8);
+        transition: all 0.2s ease;
       }
-      
+
       .content-btn:hover {
-        background: rgba(147, 51, 234, 0.1) !important;
-        box-shadow: none !important;
+        color: #9333ea;
+        background: rgba(147, 51, 234, 0.1);
       }
-      
+
       .content-btn.active {
-        background: rgba(236, 72, 153, 0.15) !important;
         color: #ec4899 !important;
-        box-shadow: none !important;
+        background: rgba(236, 72, 153, 0.2) !important;
+        box-shadow: 0 0 10px rgba(236, 72, 153, 0.3);
       }
-      
-      .content-btn mat-icon {
-        font-size: 20px !important;
-        width: 20px !important;
-        height: 20px !important;
-        color: rgba(255, 255, 255, 0.9) !important;
+
+      .record-btn:hover {
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.1);
       }
-      
-      .content-btn.active mat-icon {
-        color: #ec4899 !important;
+
+      /* Mobile styles */
+      @media (max-width: 768px) {
+        :host {
+          gap: 0px;
+          margin-right: 0px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+        }
+
+        .content-btn {
+          background: transparent !important;
+          border: none !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+        }
+
+        .content-btn:hover {
+          background: rgba(147, 51, 234, 0.1) !important;
+          box-shadow: none !important;
+        }
+
+        .content-btn.active {
+          background: rgba(236, 72, 153, 0.15) !important;
+          color: #ec4899 !important;
+          box-shadow: none !important;
+        }
+
+        .content-btn mat-icon {
+          font-size: 20px !important;
+          width: 20px !important;
+          height: 20px !important;
+          color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .content-btn.active mat-icon {
+          color: #ec4899 !important;
+        }
       }
-    }
-    
-    @media (max-width: 480px) {      
-      .content-btn mat-icon {
-        font-size: 18px !important;
-        width: 18px !important;
-        height: 18px !important;
+
+      @media (max-width: 480px) {
+        .content-btn mat-icon {
+          font-size: 18px !important;
+          width: 18px !important;
+          height: 18px !important;
+        }
       }
-    }
-  `]
+    `,
+  ],
 })
 export class ContentCreationComponent {
-  @ViewChild('fileInput', { static: false }) fileInput!: ElementRef<HTMLInputElement>;
-  
+  @ViewChild('fileInput', { static: false })
+  fileInput!: ElementRef<HTMLInputElement>;
+
   constructor(
     public editorState: EditorStateService,
     private audio: AudioEngineService,
@@ -130,26 +144,24 @@ export class ContentCreationComponent {
     private recordingStorage: RecordingStorageService,
     private dialog: MatDialog
   ) {}
-  
-  
+
   openFileDialog(): void {
     this.fileInput.nativeElement.click();
   }
-  
-  
+
   openRecordingDialog(): void {
     const dialogRef = this.dialog.open(RecordingDialogComponent, {
       width: '600px',
-      panelClass: 'recording-dialog'
+      panelClass: 'recording-dialog',
     });
-    
+
     dialogRef.afterClosed().subscribe(audioBuffer => {
       if (audioBuffer) {
         this.addRecordingToTrack(audioBuffer);
       }
     });
   }
-  
+
   private async addRecordingToTrack(buffer: AudioBuffer): Promise<void> {
     const playheadPos = this.editorState.playhead();
     const name = `Recording ${new Date().toLocaleTimeString()}`;
@@ -171,7 +183,7 @@ export class ContentCreationComponent {
     let placedOnExistingTrack = false;
 
     for (const track of tracks) {
-      const canPlace = !track.clips.some((clip) => {
+      const canPlace = !track.clips.some(clip => {
         const clipStart = clip.startTime;
         const clipEnd = clip.startTime + clip.duration;
         const newClipEnd = playheadPos + buffer.duration;
@@ -223,23 +235,23 @@ export class ContentCreationComponent {
       this.onFilesSelected(target.files);
     }
   }
-  
+
   async onFilesSelected(files: FileList | null): Promise<void> {
     if (!files || files.length === 0) return;
-    
+
     console.log(`Importing ${files.length} audio files...`);
-    
+
     // Process files in batches to avoid memory issues
     const filesArray = Array.from(files);
     const batchSize = 10;
     const buffers: AudioBuffer[] = [];
-    
+
     // Decode in batches
     for (let i = 0; i < filesArray.length; i += batchSize) {
       const batch = filesArray.slice(i, i + batchSize);
       try {
         const batchBuffers = await Promise.all(
-          batch.map(async (f) => {
+          batch.map(async f => {
             try {
               return await this.audio.decode(f);
             } catch (err) {
@@ -248,35 +260,39 @@ export class ContentCreationComponent {
             }
           })
         );
-        buffers.push(...batchBuffers.filter(b => b !== null) as AudioBuffer[]);
-        console.log(`Processed ${Math.min(i + batchSize, filesArray.length)} of ${filesArray.length} files`);
+        buffers.push(
+          ...(batchBuffers.filter(b => b !== null) as AudioBuffer[])
+        );
+        console.log(
+          `Processed ${Math.min(i + batchSize, filesArray.length)} of ${filesArray.length} files`
+        );
       } catch (err) {
         console.error('Batch decode error:', err);
       }
     }
-    
+
     if (buffers.length === 0) {
       console.error('No files could be decoded');
       return;
     }
-    
+
     console.log(`Successfully imported ${buffers.length} files`);
-    
+
     // Add files to tracks
     this.addBuffersToTracks(buffers, filesArray);
   }
-  
+
   private addBuffersToTracks(buffers: AudioBuffer[], files: File[]): void {
     const playheadPos = this.editorState.playhead();
-    
+
     buffers.forEach((buf, i) => {
       const name = files[i]?.name.replace(/\.[^.]+$/, '') || `Audio ${i + 1}`;
       const color = this.getColorByFilename(name);
-      
+
       // Try to find a track with space at playhead position
       const tracks = this.editorState.tracks();
       let placedOnExistingTrack = false;
-      
+
       for (const track of tracks) {
         const canPlace = !track.clips.some(clip => {
           const clipStart = clip.startTime;
@@ -284,7 +300,7 @@ export class ContentCreationComponent {
           const newClipEnd = playheadPos + buf.duration;
           return !(newClipEnd <= clipStart || playheadPos >= clipEnd);
         });
-        
+
         if (canPlace) {
           this.editorState.addClipToTrack(track.id, {
             id: generateUUID(),
@@ -297,14 +313,14 @@ export class ContentCreationComponent {
             waveform: '', // Will be generated later
             trimStart: 0,
             trimEnd: 0,
-            originalDuration: buf.duration
+            originalDuration: buf.duration,
           } as Clip);
           placedOnExistingTrack = true;
           console.log(`Added ${name} to existing ${track.name} at playhead`);
           break;
         }
       }
-      
+
       if (!placedOnExistingTrack) {
         // Create new track
         const newTrack = this.editorState.addTrack();
@@ -319,13 +335,13 @@ export class ContentCreationComponent {
           waveform: '', // Will be generated later
           trimStart: 0,
           trimEnd: 0,
-          originalDuration: buf.duration
+          originalDuration: buf.duration,
         } as Clip);
         console.log(`Added ${name} to new ${newTrack.name} at playhead`);
       }
     });
   }
-  
+
   private getColorByFilename(filename: string): string {
     const colors = [
       'linear-gradient(45deg, #dc2626, #b91c1c)',
@@ -335,18 +351,17 @@ export class ContentCreationComponent {
       'linear-gradient(45deg, #8b5cf6, #7c3aed)',
       'linear-gradient(45deg, #ec4899, #be185d)',
       'linear-gradient(45deg, #06b6d4, #0891b2)',
-      'linear-gradient(45deg, #84cc16, #65a30d)'
+      'linear-gradient(45deg, #84cc16, #65a30d)',
     ];
-    
+
     // Simple hash function for consistent color assignment
     let hash = 0;
     for (let i = 0; i < filename.length; i++) {
       const char = filename.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
-    
+
     return colors[Math.abs(hash) % colors.length];
   }
-
 }

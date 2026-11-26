@@ -1,6 +1,22 @@
-import { Component, Input, Output, EventEmitter, ElementRef, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ClipComponent, ClipDragEvent, ClipTrimEvent, ClipSelectEvent, ClipDeleteEvent, ClipDuplicateEvent } from './clip.component';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  ElementRef,
+  inject,
+  computed,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+
+import {
+  ClipComponent,
+  ClipDragEvent,
+  ClipTrimEvent,
+  ClipSelectEvent,
+  ClipDeleteEvent,
+  ClipDuplicateEvent,
+} from './clip.component';
 import { Track } from '../../shared/models/models';
 import { EditorStateService } from '../../editor/services/editor-state.service';
 import { TimelineService } from '../services/timeline.service';
@@ -21,65 +37,76 @@ export interface TrackHoverEvent {
 }
 
 @Component({
-    selector: 'track-lane',
-    imports: [CommonModule, ClipComponent],
-    template: `
-    <div class="lane" 
-         #laneElement
-         [style.width.px]="duration * pxPerSecond"
-         [attr.data-track-index]="trackIndex"
-         (mousedown)="onLaneMouseDown($event)" 
-         (touchstart)="onLaneTouchStart($event)"
-         (mouseenter)="onLaneMouseEnter()"
-         (mouseleave)="onLaneMouseLeave()"
-         (drop)="onDrop($event)" 
-         (dragover)="onDragOver($event)"
-         (dragenter)="onDragEnter($event)"
-         (dragleave)="onDragLeave($event)"
-         [class.drag-over]="isDragOver"
-         [class.sound-drag-hover]="isSoundDragTarget()">
+  selector: 'track-lane',
+  imports: [ClipComponent],
+  template: `
+    <div
+      class="lane"
+      #laneElement
+      [style.width.px]="duration * pxPerSecond"
+      [attr.data-track-index]="trackIndex"
+      (mousedown)="onLaneMouseDown($event)"
+      (touchstart)="onLaneTouchStart($event)"
+      (mouseenter)="onLaneMouseEnter()"
+      (mouseleave)="onLaneMouseLeave()"
+      (drop)="onDrop($event)"
+      (dragover)="onDragOver($event)"
+      (dragenter)="onDragEnter($event)"
+      (dragleave)="onDragLeave($event)"
+      [class.drag-over]="isDragOver"
+      [class.sound-drag-hover]="isSoundDragTarget()"
+    >
       <!-- Active track background -->
-      <div class="active-track-bg" 
-           [style.width.px]="duration * pxPerSecond"
-           *ngIf="editorState.activeTrackId() === track.id">
-      </div>
+      @if (editorState.activeTrackId() === track.id) {
+        <div
+          class="active-track-bg"
+          [style.width.px]="duration * pxPerSecond"
+        ></div>
+      }
       <!-- Active track highlight line -->
-      <div class="active-highlight" 
-           [style.width.px]="duration * pxPerSecond"
-           *ngIf="editorState.activeTrackId() === track.id">
-      </div>
+      @if (editorState.activeTrackId() === track.id) {
+        <div
+          class="active-highlight"
+          [style.width.px]="duration * pxPerSecond"
+        ></div>
+      }
       <!-- Grid Lines for this track -->
-      <div class="lane-grid-lines" 
-           [style.width.px]="duration * pxPerSecond"
-           *ngIf="editorState.showGrid()">
-        @for (line of gridLines(); track line.time) {
-          <div class="grid-line"
-               [attr.data-type]="line.type"
-               [attr.data-time]="line.time"
-               [class.bar-line]="line.type === 'bar'"
-               [class.beat-line]="line.type === 'beat'" 
-               [class.subdivision-line]="line.type === 'subdivision'"
-               [style.left.px]="line.time * pxPerSecond">
-          </div>
+      @if (editorState.showGrid()) {
+        <div class="lane-grid-lines" [style.width.px]="duration * pxPerSecond">
+          @for (line of gridLines(); track line.time) {
+            <div
+              class="grid-line"
+              [attr.data-type]="line.type"
+              [attr.data-time]="line.time"
+              [class.bar-line]="line.type === 'bar'"
+              [class.beat-line]="line.type === 'beat'"
+              [class.subdivision-line]="line.type === 'subdivision'"
+              [style.left.px]="line.time * pxPerSecond"
+            ></div>
+          }
+        </div>
+      }
+      <div class="clips" [style.width.px]="duration * pxPerSecond">
+        @for (clip of track.clips; track clip) {
+          <audio-clip
+            [clip]="clip"
+            [pxPerSecond]="pxPerSecond"
+            [tracks]="tracks"
+            [trackIndex]="trackIndex"
+            (clipSelected)="onClipSelected($event)"
+            (dragStarted)="onClipDragStarted($event)"
+            (trimStarted)="onClipTrimStarted($event)"
+            (clipDeleted)="onClipDeleted($event)"
+            (clipDuplicated)="onClipDuplicated($event)"
+          >
+          </audio-clip>
         }
       </div>
-      <div class="clips" [style.width.px]="duration * pxPerSecond">
-        <audio-clip *ngFor="let clip of track.clips"
-                    [clip]="clip"
-                    [pxPerSecond]="pxPerSecond"
-                    [tracks]="tracks"
-                    [trackIndex]="trackIndex"
-                    (clipSelected)="onClipSelected($event)"
-                    (dragStarted)="onClipDragStarted($event)"
-                    (trimStarted)="onClipTrimStarted($event)"
-                    (clipDeleted)="onClipDeleted($event)"
-                    (clipDuplicated)="onClipDuplicated($event)">
-        </audio-clip>
-      </div>
-      <div class="playhead" [style.left.px]="(playhead * pxPerSecond)"></div>
+      <div class="playhead" [style.left.px]="playhead * pxPerSecond"></div>
     </div>
   `,
-    styleUrls: ['./track-lane.component.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./track-lane.component.css'],
 })
 export class TrackLaneComponent {
   @Input() track!: Track;
@@ -111,13 +138,13 @@ export class TrackLaneComponent {
 
   editorState = inject(EditorStateService);
   timelineService = inject(TimelineService);
-  
+
   // Grid Lines für visuelle Darstellung
   gridLines = computed(() => {
     if (!this.editorState.showGrid()) return [];
     return this.timelineService.getGridLines();
   });
-  
+
   constructor(private elementRef: ElementRef) {}
 
   onDrop(event: DragEvent) {
@@ -163,31 +190,31 @@ export class TrackLaneComponent {
   onClipDuplicated(event: ClipDuplicateEvent) {
     this.clipDuplicated.emit(event);
   }
-  
+
   // Sound drag preview methods
   isSoundDragTarget(): boolean {
     return this.dragPreview?.targetTrack?.id === this.track.id;
   }
-  
+
   shouldShowPreview(): boolean {
     return !!this.dragPreview && this.isSoundDragTarget();
   }
-  
+
   getPreviewPosition(): { x: number; y: number } {
     if (!this.dragPreview) return { x: 0, y: 0 };
-    
+
     // Convert global position to relative position within the track lane
     const laneRect = this.elementRef.nativeElement.getBoundingClientRect();
     return {
       x: this.dragPreview.position.x - laneRect.left,
-      y: this.dragPreview.position.y - laneRect.top
+      y: this.dragPreview.position.y - laneRect.top,
     };
   }
-  
+
   onLaneMouseEnter() {
     this.trackHover.emit({ track: this.track, isHovering: true });
   }
-  
+
   onLaneMouseLeave() {
     this.trackHover.emit({ track: this.track, isHovering: false });
   }

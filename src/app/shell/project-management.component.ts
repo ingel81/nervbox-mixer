@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -16,26 +16,27 @@ import { LoadArrangementDialogComponent } from '../audio/arrangements/components
 import { ConfirmDialogComponent } from '../audio/arrangements/components/dialogs/confirm-dialog.component';
 
 @Component({
-    selector: 'project-management',
-    imports: [
-        CommonModule,
-        MatButtonModule,
-        MatIconModule,
-        MatMenuModule,
-        MatDividerModule,
-        MatTooltipModule,
-        MatSnackBarModule
-    ],
-    template: `
-    <button mat-button 
-            [matMenuTriggerFor]="arrangementMenu" 
-            class="arrangement-btn" 
-            matTooltip="Arrangements">
+  selector: 'project-management',
+  imports: [
+    MatButtonModule,
+    MatIconModule,
+    MatMenuModule,
+    MatDividerModule,
+    MatTooltipModule,
+    MatSnackBarModule,
+  ],
+  template: `
+    <button
+      mat-button
+      [matMenuTriggerFor]="arrangementMenu"
+      class="arrangement-btn"
+      matTooltip="Arrangements"
+    >
       <mat-icon>folder</mat-icon>
       <span class="btn-text">Arrangements</span>
       <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
     </button>
-    
+
     <mat-menu #arrangementMenu="matMenu">
       <button mat-menu-item (click)="newArrangement()">
         <mat-icon>add</mat-icon>
@@ -51,92 +52,94 @@ import { ConfirmDialogComponent } from '../audio/arrangements/components/dialogs
       </button>
     </mat-menu>
   `,
-    styles: [`
-    :host {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      height: 48px;
-    }
-    
-    .arrangement-btn {
-      background: rgba(147, 51, 234, 0.1) !important;
-      color: rgba(147, 51, 234, 0.9) !important;
-      font-weight: 600 !important;
-      font-size: 11px !important;
-      text-transform: uppercase !important;
-      letter-spacing: 1px !important;
-      font-family: 'JetBrains Mono', monospace !important;
-      padding: 0 12px !important;
-      height: 36px !important;
-      margin-left: 8px !important;
-      border: 1px solid rgba(147, 51, 234, 0.2) !important;
-      transition: all 0.15s ease !important;
-    }
-    
-    .arrangement-btn:hover {
-      background: rgba(147, 51, 234, 0.2) !important;
-      color: rgba(236, 72, 153, 1) !important;
-      border-color: rgba(147, 51, 234, 0.5) !important;
-      transform: translateY(-1px);
-    }
-    
-    .arrangement-btn mat-icon {
-      margin-right: 4px !important;
-    }
-    
-    .dropdown-icon {
-      margin-left: 2px !important;
-      margin-right: 0 !important;
-    }
-    
-    /* Mobile styles */
-    @media (max-width: 768px) {
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: [
+    `
       :host {
-        height: 48px;
         display: flex;
         align-items: center;
         justify-content: flex-start;
+        height: 48px;
       }
-      
-      .btn-text {
-        display: none;
-      }
-      
-      .dropdown-icon {
-        display: none;
-      }
-      
+
       .arrangement-btn {
-        min-width: auto !important;
-        width: 40px !important;
-        height: 40px !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        background: transparent !important;
-        border: none !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-      }
-      
-      .arrangement-btn:hover {
         background: rgba(147, 51, 234, 0.1) !important;
-        transform: none;
-        box-shadow: none !important;
+        color: rgba(147, 51, 234, 0.9) !important;
+        font-weight: 600 !important;
+        font-size: 11px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        padding: 0 12px !important;
+        height: 36px !important;
+        margin-left: 8px !important;
+        border: 1px solid rgba(147, 51, 234, 0.2) !important;
+        transition: all 0.15s ease !important;
       }
-      
+
+      .arrangement-btn:hover {
+        background: rgba(147, 51, 234, 0.2) !important;
+        color: rgba(236, 72, 153, 1) !important;
+        border-color: rgba(147, 51, 234, 0.5) !important;
+        transform: translateY(-1px);
+      }
+
       .arrangement-btn mat-icon {
-        margin: 0 !important;
-        font-size: 20px !important;
-        width: 20px !important;
-        height: 20px !important;
-        color: rgba(255, 255, 255, 0.9) !important;
+        margin-right: 4px !important;
       }
-    }
-  `]
+
+      .dropdown-icon {
+        margin-left: 2px !important;
+        margin-right: 0 !important;
+      }
+
+      /* Mobile styles */
+      @media (max-width: 768px) {
+        :host {
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+        }
+
+        .btn-text {
+          display: none;
+        }
+
+        .dropdown-icon {
+          display: none;
+        }
+
+        .arrangement-btn {
+          min-width: auto !important;
+          width: 40px !important;
+          height: 40px !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          background: transparent !important;
+          border: none !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+        }
+
+        .arrangement-btn:hover {
+          background: rgba(147, 51, 234, 0.1) !important;
+          transform: none;
+          box-shadow: none !important;
+        }
+
+        .arrangement-btn mat-icon {
+          margin: 0 !important;
+          font-size: 20px !important;
+          width: 20px !important;
+          height: 20px !important;
+          color: rgba(255, 255, 255, 0.9) !important;
+        }
+      }
+    `,
+  ],
 })
 export class ProjectManagementComponent {
-  
   constructor(
     private editorState: EditorStateService,
     private arrangementStorage: ArrangementStorageService,
@@ -144,83 +147,99 @@ export class ProjectManagementComponent {
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) {}
-  
+
   saveArrangement(): void {
     const currentName = this.editorState.currentArrangementName();
-    
+
     const dialogRef = this.dialog.open(SaveArrangementDialogComponent, {
       width: '700px',
-      data: { currentName: currentName === 'Untitled' ? '' : currentName }
+      data: { currentName: currentName === 'Untitled' ? '' : currentName },
     });
 
     dialogRef.afterClosed().subscribe(name => {
       if (name) {
-        this.arrangementStorage.saveArrangement(name, this.editorState.tracks());
+        this.arrangementStorage.saveArrangement(
+          name,
+          this.editorState.tracks()
+        );
         this.editorState.setArrangementName(name);
-        this.snackBar.open(`Arrangement "${name}" saved successfully`, 'Close', {
-          duration: 3000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom'
-        });
+        this.snackBar.open(
+          `Arrangement "${name}" saved successfully`,
+          'Close',
+          {
+            duration: 3000,
+            horizontalPosition: 'center',
+            verticalPosition: 'bottom',
+          }
+        );
       }
     });
   }
-  
+
   loadArrangement(): void {
     const dialogRef = this.dialog.open(LoadArrangementDialogComponent, {
       width: '700px',
-      maxHeight: '80vh'
+      maxHeight: '80vh',
     });
 
-    dialogRef.afterClosed().subscribe(async (selectedArrangement) => {
+    dialogRef.afterClosed().subscribe(async selectedArrangement => {
       if (selectedArrangement) {
-        const tracks = await this.arrangementStorage.loadArrangement(selectedArrangement.id);
+        const tracks = await this.arrangementStorage.loadArrangement(
+          selectedArrangement.id
+        );
         if (tracks) {
           this.editorState.tracks.set(tracks);
-          this.editorState.setArrangementName(selectedArrangement.arrangement.name);
+          this.editorState.setArrangementName(
+            selectedArrangement.arrangement.name
+          );
           this.editorState.stop();
-          this.snackBar.open(`Arrangement "${selectedArrangement.arrangement.name}" loaded`, 'Close', {
-            duration: 3000,
-            horizontalPosition: 'center',
-            verticalPosition: 'bottom'
-          });
+          this.snackBar.open(
+            `Arrangement "${selectedArrangement.arrangement.name}" loaded`,
+            'Close',
+            {
+              duration: 3000,
+              horizontalPosition: 'center',
+              verticalPosition: 'bottom',
+            }
+          );
         } else {
           this.snackBar.open('Failed to load arrangement', 'Close', {
             duration: 3000,
             horizontalPosition: 'center',
-            verticalPosition: 'bottom'
+            verticalPosition: 'bottom',
           });
         }
       }
     });
   }
-  
+
   async newArrangement(): Promise<void> {
     if (this.editorState.tracks().length > 0) {
       const dialogRef = this.dialog.open(ConfirmDialogComponent, {
         data: {
           title: 'New Arrangement',
-          message: 'This will clear the current arrangement. Any unsaved changes will be lost. Continue?',
+          message:
+            'This will clear the current arrangement. Any unsaved changes will be lost. Continue?',
           confirmText: 'Create New',
           cancelText: 'Cancel',
-          icon: 'warning'
-        }
+          icon: 'warning',
+        },
       });
 
       const confirmed = await dialogRef.afterClosed().toPromise();
       if (!confirmed) return;
     }
-    
+
     this.editorState.clearArrangement();
     this.editorState.setArrangementName('Untitled');
-    
+
     // Add a single empty track
     this.editorState.addTrack();
-    
+
     this.snackBar.open('New arrangement created', 'Close', {
       duration: 2000,
       horizontalPosition: 'center',
-      verticalPosition: 'bottom'
+      verticalPosition: 'bottom',
     });
   }
 }

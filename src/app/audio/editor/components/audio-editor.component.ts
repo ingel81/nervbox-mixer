@@ -6,8 +6,9 @@ import {
   effect,
   signal,
   computed,
+  ChangeDetectionStrategy,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { AudioEngineService } from '../../audio-engine/services/audio-engine.service';
 import { SoundLibraryService } from '../../sound-browser/services/sound-library.service';
 import { EditorStateService } from '../services/editor-state.service';
@@ -42,7 +43,10 @@ import {
 import { TrackHeaderComponent } from '../../timeline/components/track-header.component';
 import { TrackLaneComponent } from '../../timeline/components/track-lane.component';
 import { Clip, Track } from '../../shared/models/models';
-import { KeyboardShortcutsDirective, KeyboardShortcutActions } from '../directives/keyboard-shortcuts.directive';
+import {
+  KeyboardShortcutsDirective,
+  KeyboardShortcutActions,
+} from '../directives/keyboard-shortcuts.directive';
 import { AnalyticsService } from '../../../services/analytics.service';
 
 import { MatSliderModule } from '@angular/material/slider';
@@ -53,7 +57,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 @Component({
   selector: 'audio-editor',
   imports: [
-    CommonModule,
     MatSliderModule,
     MatIconModule,
     MatButtonModule,
@@ -67,6 +70,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     KeyboardShortcutsDirective,
   ],
   templateUrl: './audio-editor.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./audio-editor.component.css'],
 })
 export class AudioEditorComponent {
@@ -155,7 +159,7 @@ export class AudioEditorComponent {
 
     if (environment.nervboxApi) {
       // LAN mode
-      this.editorState.snapToGrid.set(false);  // Default: off in LAN mode
+      this.editorState.snapToGrid.set(false); // Default: off in LAN mode
 
       if (soundsParam) {
         // Load sounds from URL parameter
@@ -248,7 +252,7 @@ export class AudioEditorComponent {
           const clip = this.clipFactory.createClipFromBuffer(
             buffer,
             sound.name,
-            0  // Start at beginning
+            0 // Start at beginning
           );
           clip.soundId = soundId;
 
@@ -271,52 +275,52 @@ export class AudioEditorComponent {
       this.editorState.setActiveTrack(tracks[0].id);
     }
   }
-  
+
   // Grid Lines für visuelle Darstellung
   gridLines = computed(() => {
     if (!this.editorState.showGrid()) return [];
     return this.timelineService.getGridLines();
   });
-  
+
   // Computed value für die Gesamthöhe aller Tracks
   totalTracksHeight = computed(() => {
     const trackCount = this.tracks().length;
     const trackHeight = 60; // Tatsächliche Track-Höhe (siehe track-lane.component.css)
     return trackCount * trackHeight;
   });
-  
+
   // Helper für BPM-Display
   formattedBPM = computed(() => {
     return `${this.editorState.bpm()} BPM`;
   });
-  
-  // Helper für Grid-Resolution-Display  
+
+  // Helper für Grid-Resolution-Display
   formattedGridResolution = computed(() => {
     const subdivision = this.editorState.gridSubdivision();
     const labels: Record<string, string> = {
-      'bar': 'Takte',
+      bar: 'Takte',
       '1/2': '1/2 Noten',
       '1/4': '1/4 Noten',
       '1/8': '1/8 Noten',
-      '1/16': '1/16 Noten'
+      '1/16': '1/16 Noten',
     };
     return labels[subdivision] || '1/4 Noten';
   });
-  
+
   // Helper methods for grid info display
   getTimeSignatureString(): string {
     const sig = this.editorState.timeSignature();
     return `${sig.numerator}/${sig.denominator}`;
   }
-  
+
   getGridResolutionString(): string {
     const subdivision = this.editorState.gridSubdivision();
     const labels: Record<string, string> = {
-      'bar': 'Bars',
+      bar: 'Bars',
       '1/2': '1/2',
       '1/4': '1/4',
       '1/8': '1/8',
-      '1/16': '1/16'
+      '1/16': '1/16',
     };
     return labels[subdivision] || '1/4';
   }
@@ -346,7 +350,7 @@ export class AudioEditorComponent {
   private toggleSolo(track: Track) {
     const trackIndex = this.tracks().findIndex(t => t.id === track.id);
     const isSolo = track.solo;
-    
+
     this.tracks.update(list => {
       const hasSoloTracks = list.some(t => t.solo);
       const isTrackCurrentlySolo = track.solo;
@@ -362,7 +366,7 @@ export class AudioEditorComponent {
         return list.map(t => (t.id === track.id ? { ...t, solo: true } : t));
       }
     });
-    
+
     // Track solo/unsolo event
     this.analytics.trackTrackControl(isSolo ? 'unsolo' : 'solo', trackIndex);
 
@@ -387,7 +391,8 @@ export class AudioEditorComponent {
     // Track loop toggle event
     this.analytics.trackLoopRegion(isEnabled ? 'disable' : 'enable');
     if (!isEnabled) {
-      const duration = this.editorState.loopEnd() - this.editorState.loopStart();
+      const duration =
+        this.editorState.loopEnd() - this.editorState.loopStart();
       this.analytics.trackLoopDuration(duration);
     }
   }
@@ -495,23 +500,23 @@ export class AudioEditorComponent {
   stop(): void {
     this.audio.stop();
     this.editorState.stop();
-    
+
     // Track stop event
     this.analytics.trackPlayback('stop');
   }
 
   private getPlayableClips() {
     const tracks = this.tracks();
-    const hasSoloTracks = tracks.some((t) => t.solo);
+    const hasSoloTracks = tracks.some(t => t.solo);
 
     return tracks
-      .filter((track) => {
+      .filter(track => {
         // If there are solo tracks, only play solo tracks
         // If no solo tracks, play all non-muted tracks
         return hasSoloTracks ? track.solo : !track.mute;
       })
-      .flatMap((track) =>
-        track.clips.map((clip) => ({
+      .flatMap(track =>
+        track.clips.map(clip => ({
           clipId: clip.id,
           buffer: clip.buffer,
           startTime: clip.startTime,
@@ -674,8 +679,11 @@ export class AudioEditorComponent {
   onMouseMove(ev: MouseEvent | TouchEvent) {
     // Delegate all loop dragging to InteractionCoordinatorService
     if (this.timelineEl?.nativeElement) {
-      this.interactionCoordinator.handleMouseMove(ev, this.timelineEl.nativeElement);
-      
+      this.interactionCoordinator.handleMouseMove(
+        ev,
+        this.timelineEl.nativeElement
+      );
+
       // Exit early if the service is handling loop dragging
       if (this.interactionCoordinator.isDragging) {
         return;
@@ -738,7 +746,6 @@ export class AudioEditorComponent {
     // Trimming is now handled by individual ClipComponents
     // Clip dragging is now handled by the Virtual Drag System
   }
-
 
   @HostListener('window:mouseup')
   onMouseUp() {
@@ -912,7 +919,6 @@ export class AudioEditorComponent {
     return this.flattenClips().find(c => c.id === selectedId) || null;
   }
 
-
   pasteClip(): void {
     if (!this.clipboardClip) return;
 
@@ -946,11 +952,10 @@ export class AudioEditorComponent {
 
     // Select the new duplicate
     this.editorState.selectedClipId.set(duplicate.id);
-    
+
     // Track duplicate action
     this.analytics.trackClipAction('duplicate', 'clip');
   }
-
 
   async onSoundSelected(
     buffer: AudioBuffer & { name: string; category: string; id?: string }
@@ -1182,11 +1187,11 @@ export class AudioEditorComponent {
       const clipWidthInPx = buffer.duration * this.pxPerSecond();
       const x = event.clientX - rect.left - clipWidthInPx / 2;
       let dropTime = Math.max(0, this.timelineService.pxToSeconds(x));
-      
+
       // Snap to grid if enabled
       if (this.editorState.snapToGrid()) {
         dropTime = this.editorState.snapPositionToGrid(dropTime);
-        
+
         // Visual feedback
         this.showSnapIndicator(dropTime);
       }
@@ -1211,14 +1216,14 @@ export class AudioEditorComponent {
     const indicator = document.createElement('div');
     indicator.className = 'snap-indicator';
     indicator.style.left = `${this.timelineService.secondsToPx(time)}px`;
-    
+
     const container = this.trackLanesEl?.nativeElement;
     if (container) {
       container.appendChild(indicator);
       setTimeout(() => indicator.remove(), 500);
     }
   }
-  
+
   private addSoundToTrack(
     buffer: AudioBuffer & { name: string; category: string; id?: string },
     track: Track,

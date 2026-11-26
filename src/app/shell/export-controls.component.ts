@@ -1,5 +1,10 @@
-import { Component, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  computed,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -13,32 +18,36 @@ import { EditorStateService } from '../audio/editor/services/editor-state.servic
 import { AudioEngineService } from '../audio/audio-engine/services/audio-engine.service';
 import { AnalyticsService } from '../services/analytics.service';
 import { UploadService } from '../core/services/upload.service';
-import { UploadDialogComponent, UploadDialogResult } from './upload-dialog.component';
+import {
+  UploadDialogComponent,
+  UploadDialogResult,
+} from './upload-dialog.component';
 import { environment } from '../../environments/environment';
 
 @Component({
-    selector: 'export-controls',
-    imports: [
-      CommonModule,
-      MatButtonModule,
-      MatIconModule,
-      MatMenuModule,
-      MatSnackBarModule,
-      MatProgressSpinnerModule,
-      MatTooltipModule,
-      MatDialogModule
-    ],
-    template: `
+  selector: 'export-controls',
+  imports: [
+    MatButtonModule,
+    MatIconModule,
+    MatMenuModule,
+    MatSnackBarModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule,
+    MatDialogModule,
+  ],
+  template: `
     <!-- Only show if there are clips -->
     @if (hasClips()) {
       <!-- LAN Mode -->
       @if (isLanMode) {
         @if (isLoggedIn()) {
           <!-- Logged in: Upload button -->
-          <button mat-flat-button
-                  class="upload-btn"
-                  [disabled]="uploadService.isUploading()"
-                  (click)="openUploadDialog()">
+          <button
+            mat-flat-button
+            class="upload-btn"
+            [disabled]="uploadService.isUploading()"
+            (click)="openUploadDialog()"
+          >
             @if (uploadService.isUploading()) {
               <mat-spinner diameter="18"></mat-spinner>
               <span>Uploading...</span>
@@ -51,10 +60,12 @@ import { environment } from '../../environments/environment';
           </button>
 
           <!-- Local export dropdown -->
-          <button mat-icon-button
-                  [matMenuTriggerFor]="localExportMenu"
-                  class="more-btn"
-                  matTooltip="Lokal exportieren">
+          <button
+            mat-icon-button
+            [matMenuTriggerFor]="localExportMenu"
+            class="more-btn"
+            matTooltip="Lokal exportieren"
+          >
             <mat-icon>download</mat-icon>
           </button>
 
@@ -70,18 +81,22 @@ import { environment } from '../../environments/environment';
           </mat-menu>
         } @else {
           <!-- Not logged in -->
-          <button mat-stroked-button
-                  class="login-btn"
-                  matTooltip="Im Player einloggen um hochzuladen"
-                  (click)="goToPlayer()">
+          <button
+            mat-stroked-button
+            class="login-btn"
+            matTooltip="Im Player einloggen um hochzuladen"
+            (click)="goToPlayer()"
+          >
             <mat-icon>login</mat-icon>
             <span>Login für Upload</span>
           </button>
 
-          <button mat-icon-button
-                  [matMenuTriggerFor]="localExportMenu2"
-                  class="more-btn"
-                  matTooltip="Lokal exportieren">
+          <button
+            mat-icon-button
+            [matMenuTriggerFor]="localExportMenu2"
+            class="more-btn"
+            matTooltip="Lokal exportieren"
+          >
             <mat-icon>download</mat-icon>
           </button>
 
@@ -98,9 +113,11 @@ import { environment } from '../../environments/environment';
         }
       } @else {
         <!-- Standalone Mode -->
-        <button mat-flat-button
-                [matMenuTriggerFor]="exportMenu"
-                class="export-btn">
+        <button
+          mat-flat-button
+          [matMenuTriggerFor]="exportMenu"
+          class="export-btn"
+        >
           <mat-icon>download</mat-icon>
           <span>Export</span>
           <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
@@ -119,143 +136,154 @@ import { environment } from '../../environments/environment';
       }
     }
   `,
-    styles: [`
-    :host {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      height: 48px;
-      margin-left: 8px;
-    }
-
-    /* Upload Button */
-    .upload-btn {
-      display: inline-flex !important;
-      align-items: center !important;
-      background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%) !important;
-      color: white !important;
-      font-weight: 500 !important;
-      font-size: 13px !important;
-      height: 36px !important;
-      padding: 0 16px !important;
-      border-radius: 6px !important;
-    }
-
-    .upload-btn:hover:not(:disabled) {
-      box-shadow: 0 4px 20px rgba(147, 51, 234, 0.4) !important;
-    }
-
-    .upload-btn:disabled {
-      opacity: 0.7;
-    }
-
-    .upload-btn mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-      margin-right: 8px;
-      vertical-align: middle;
-      line-height: 1;
-    }
-
-    .upload-btn mat-spinner {
-      margin-right: 8px;
-    }
-
-    /* Login Button */
-    .login-btn {
-      color: #fbbf24 !important;
-      border-color: rgba(251, 191, 36, 0.5) !important;
-      font-size: 13px !important;
-      height: 36px !important;
-      padding: 0 14px !important;
-    }
-
-    .login-btn:hover {
-      background: rgba(251, 191, 36, 0.1) !important;
-    }
-
-    .login-btn mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-      margin-right: 6px;
-    }
-
-    /* More/Download button */
-    .more-btn {
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      width: 36px !important;
-      height: 36px !important;
-      background: rgba(255, 255, 255, 0.05) !important;
-      border: 1px solid rgba(255, 255, 255, 0.15) !important;
-      border-radius: 6px !important;
-    }
-
-    .more-btn:hover {
-      background: rgba(255, 255, 255, 0.1) !important;
-    }
-
-    .more-btn mat-icon {
-      color: rgba(255, 255, 255, 0.7);
-      vertical-align: middle;
-      line-height: 1;
-    }
-
-    /* Export Button (Standalone) */
-    .export-btn {
-      background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%) !important;
-      color: white !important;
-      font-weight: 500 !important;
-      font-size: 13px !important;
-      height: 36px !important;
-      padding: 0 12px !important;
-      border-radius: 6px !important;
-    }
-
-    .export-btn mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-    }
-
-    .export-btn mat-icon:first-child {
-      margin-right: 6px;
-    }
-
-    .dropdown-icon {
-      margin-left: 2px;
-      margin-right: -4px !important;
-    }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-      .upload-btn span,
-      .login-btn span,
-      .export-btn span {
-        display: none;
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: [
+    `
+      :host {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 48px;
+        margin-left: 8px;
       }
 
-      .upload-btn,
-      .login-btn,
-      .export-btn {
-        min-width: 40px !important;
-        width: 40px !important;
-        padding: 0 !important;
+      /* Upload Button */
+      .upload-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        background: linear-gradient(
+          135deg,
+          #9333ea 0%,
+          #ec4899 100%
+        ) !important;
+        color: white !important;
+        font-weight: 500 !important;
+        font-size: 13px !important;
+        height: 36px !important;
+        padding: 0 16px !important;
+        border-radius: 6px !important;
       }
 
-      .upload-btn mat-icon,
+      .upload-btn:hover:not(:disabled) {
+        box-shadow: 0 4px 20px rgba(147, 51, 234, 0.4) !important;
+      }
+
+      .upload-btn:disabled {
+        opacity: 0.7;
+      }
+
+      .upload-btn mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+        vertical-align: middle;
+        line-height: 1;
+      }
+
+      .upload-btn mat-spinner {
+        margin-right: 8px;
+      }
+
+      /* Login Button */
+      .login-btn {
+        color: #fbbf24 !important;
+        border-color: rgba(251, 191, 36, 0.5) !important;
+        font-size: 13px !important;
+        height: 36px !important;
+        padding: 0 14px !important;
+      }
+
+      .login-btn:hover {
+        background: rgba(251, 191, 36, 0.1) !important;
+      }
+
       .login-btn mat-icon {
-        margin: 0 !important;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        margin-right: 6px;
+      }
+
+      /* More/Download button */
+      .more-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 36px !important;
+        height: 36px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 6px !important;
+      }
+
+      .more-btn:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+      }
+
+      .more-btn mat-icon {
+        color: rgba(255, 255, 255, 0.7);
+        vertical-align: middle;
+        line-height: 1;
+      }
+
+      /* Export Button (Standalone) */
+      .export-btn {
+        background: linear-gradient(
+          135deg,
+          #9333ea 0%,
+          #ec4899 100%
+        ) !important;
+        color: white !important;
+        font-weight: 500 !important;
+        font-size: 13px !important;
+        height: 36px !important;
+        padding: 0 12px !important;
+        border-radius: 6px !important;
+      }
+
+      .export-btn mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .export-btn mat-icon:first-child {
+        margin-right: 6px;
       }
 
       .dropdown-icon {
-        display: none;
+        margin-left: 2px;
+        margin-right: -4px !important;
       }
-    }
-  `]
+
+      /* Mobile */
+      @media (max-width: 768px) {
+        .upload-btn span,
+        .login-btn span,
+        .export-btn span {
+          display: none;
+        }
+
+        .upload-btn,
+        .login-btn,
+        .export-btn {
+          min-width: 40px !important;
+          width: 40px !important;
+          padding: 0 !important;
+        }
+
+        .upload-btn mat-icon,
+        .login-btn mat-icon {
+          margin: 0 !important;
+        }
+
+        .dropdown-icon {
+          display: none;
+        }
+      }
+    `,
+  ],
 })
 export class ExportControlsComponent {
   private readonly editorState = inject(EditorStateService);
@@ -306,22 +334,27 @@ export class ExportControlsComponent {
     const dialogRef = this.dialog.open(UploadDialogComponent, {
       width: '550px',
       panelClass: 'dark-dialog',
-      data: { name: arrangementName }
+      data: { name: arrangementName },
     });
 
-    dialogRef.afterClosed().subscribe(async (result: UploadDialogResult | null) => {
-      if (result) {
-        const success = await this.uploadToNervbox(result.name, result.tags);
-        if (success) {
-          // Add name to cache to prevent duplicate uploads
-          this.uploadService.addNameToCache(result.name);
+    dialogRef
+      .afterClosed()
+      .subscribe(async (result: UploadDialogResult | null) => {
+        if (result) {
+          const success = await this.uploadToNervbox(result.name, result.tags);
+          if (success) {
+            // Add name to cache to prevent duplicate uploads
+            this.uploadService.addNameToCache(result.name);
+          }
         }
-      }
-    });
+      });
   }
 
   /** Upload to nervbox */
-  private async uploadToNervbox(name: string, tags: string[]): Promise<boolean> {
+  private async uploadToNervbox(
+    name: string,
+    tags: string[]
+  ): Promise<boolean> {
     const blob = await this.renderMixdown('mp3');
     if (!blob) return false;
 
@@ -332,11 +365,15 @@ export class ExportControlsComponent {
       await firstValueFrom(
         this.uploadService.uploadSound(blob, filename, tags)
       );
-      this.snackBar.open('Erfolgreich zu nervbox hochgeladen!', 'OK', { duration: 3000 });
+      this.snackBar.open('Erfolgreich zu nervbox hochgeladen!', 'OK', {
+        duration: 3000,
+      });
       return true;
     } catch (error) {
       console.error('Upload failed:', error);
-      this.snackBar.open(`Upload fehlgeschlagen: ${error}`, 'OK', { duration: 5000 });
+      this.snackBar.open(`Upload fehlgeschlagen: ${error}`, 'OK', {
+        duration: 5000,
+      });
       return false;
     }
   }
@@ -377,44 +414,46 @@ export class ExportControlsComponent {
       console.log('Export: Clips after loop filter:', allClips.length);
     }
 
-    const clips = allClips.map(c => {
-      let startTime = c.startTime;
-      let duration = c.duration;
-      let offset = c.offset + (c.trimStart || 0);
+    const clips = allClips
+      .map(c => {
+        let startTime = c.startTime;
+        let duration = c.duration;
+        let offset = c.offset + (c.trimStart || 0);
 
-      if (isLoopEnabled) {
-        startTime = Math.max(0, c.startTime - loopStart);
-        if (c.startTime < loopStart) {
-          const clipOffset = loopStart - c.startTime;
-          offset += clipOffset;
-          duration -= clipOffset;
+        if (isLoopEnabled) {
+          startTime = Math.max(0, c.startTime - loopStart);
+          if (c.startTime < loopStart) {
+            const clipOffset = loopStart - c.startTime;
+            offset += clipOffset;
+            duration -= clipOffset;
+          }
+          if (c.startTime + c.duration > loopEnd) {
+            duration = Math.max(0, loopEnd - Math.max(c.startTime, loopStart));
+          }
         }
-        if (c.startTime + c.duration > loopEnd) {
-          duration = Math.max(0, loopEnd - Math.max(c.startTime, loopStart));
-        }
-      }
 
-      console.log('Export clip:', c.name, {
-        startTime,
-        duration,
-        offset,
-        bufferDuration: c.buffer?.duration,
-        hasBuffer: !!c.buffer,
-        effects: c.effects?.length || 0,
-      });
+        console.log('Export clip:', c.name, {
+          startTime,
+          duration,
+          offset,
+          bufferDuration: c.buffer?.duration,
+          hasBuffer: !!c.buffer,
+          effects: c.effects?.length || 0,
+        });
 
-      return {
-        clipId: c.id,
-        buffer: c.buffer,
-        startTime,
-        duration: Math.max(0, duration),
-        offset: Math.max(0, offset),
-        gain: 1,
-        pan: 0,
-        muted: false,
-        effects: c.effects,
-      };
-    }).filter((c) => c.duration > 0);
+        return {
+          clipId: c.id,
+          buffer: c.buffer,
+          startTime,
+          duration: Math.max(0, duration),
+          offset: Math.max(0, offset),
+          gain: 1,
+          pan: 0,
+          muted: false,
+          effects: c.effects,
+        };
+      })
+      .filter(c => c.duration > 0);
 
     console.log('Export: Final clips to render:', clips.length);
 
@@ -424,7 +463,9 @@ export class ExportControlsComponent {
         : await this.audio.renderToWav({ clips, duration: this.duration() });
     } catch (error) {
       console.error('Render failed:', error);
-      this.snackBar.open(`Export fehlgeschlagen: ${error}`, 'OK', { duration: 5000 });
+      this.snackBar.open(`Export fehlgeschlagen: ${error}`, 'OK', {
+        duration: 5000,
+      });
       return null;
     }
   }

@@ -1,44 +1,74 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { TrackHeaderComponent, TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackRenameEvent } from './track-header.component';
-import { TrackLaneComponent, TrackDropEvent, TrackDragEvent } from './track-lane.component';
-import { ClipDragEvent, ClipTrimEvent, ClipSelectEvent } from './clip.component';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+
+import {
+  TrackHeaderComponent,
+  TrackMuteEvent,
+  TrackSoloEvent,
+  TrackDeleteEvent,
+  TrackRenameEvent,
+} from './track-header.component';
+import {
+  TrackLaneComponent,
+  TrackDropEvent,
+  TrackDragEvent,
+} from './track-lane.component';
+import {
+  ClipDragEvent,
+  ClipTrimEvent,
+  ClipSelectEvent,
+} from './clip.component';
 import { Track } from '../../shared/models/models';
 
 // Re-export interfaces from child components for backward compatibility
-export { TrackMuteEvent, TrackSoloEvent, TrackDeleteEvent, TrackRenameEvent } from './track-header.component';
+export {
+  TrackMuteEvent,
+  TrackSoloEvent,
+  TrackDeleteEvent,
+  TrackRenameEvent,
+} from './track-header.component';
 export { TrackDropEvent, TrackDragEvent } from './track-lane.component';
 
 @Component({
-    selector: 'audio-track',
-    imports: [CommonModule, TrackHeaderComponent, TrackLaneComponent],
-    template: `
+  selector: 'audio-track',
+  imports: [TrackHeaderComponent, TrackLaneComponent],
+  template: `
     <!-- Track header component -->
-    <track-header [track]="track"
-                  (muteToggled)="onMuteToggled($event)"
-                  (soloToggled)="onSoloToggled($event)"
-                  (trackDeleted)="onTrackDeleted($event)"
-                  (trackRenamed)="onTrackRenamed($event)">
+    <track-header
+      [track]="track"
+      (muteToggled)="onMuteToggled($event)"
+      (soloToggled)="onSoloToggled($event)"
+      (trackDeleted)="onTrackDeleted($event)"
+      (trackRenamed)="onTrackRenamed($event)"
+    >
     </track-header>
 
     <!-- Track lane component -->
-    <track-lane [track]="track"
-                [tracks]="tracks"
-                [trackIndex]="trackIndex"
-                [pxPerSecond]="pxPerSecond"
-                [duration]="duration"
-                [playhead]="playhead"
-                [isDragOver]="isDragOver"
-                (trackDrop)="onTrackDrop($event)"
-                (trackDragEnter)="onTrackDragEnter($event)"
-                (trackDragLeave)="onTrackDragLeave($event)"
-                (laneMouseDown)="onLaneMouseDown($event)"
-                (clipSelected)="onClipSelected($event)"
-                (clipDragStarted)="onClipDragStarted($event)"
-                (clipTrimStarted)="onClipTrimStarted($event)">
+    <track-lane
+      [track]="track"
+      [tracks]="tracks"
+      [trackIndex]="trackIndex"
+      [pxPerSecond]="pxPerSecond"
+      [duration]="duration"
+      [playhead]="playhead"
+      [isDragOver]="isDragOver"
+      (trackDrop)="onTrackDrop($event)"
+      (trackDragEnter)="onTrackDragEnter($event)"
+      (trackDragLeave)="onTrackDragLeave($event)"
+      (laneMouseDown)="onLaneMouseDown($event)"
+      (clipSelected)="onClipSelected($event)"
+      (clipDragStarted)="onClipDragStarted($event)"
+      (clipTrimStarted)="onClipTrimStarted($event)"
+    >
     </track-lane>
   `,
-    styleUrls: ['./track.component.css']
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrls: ['./track.component.css'],
 })
 export class TrackComponent {
   @Input({ required: true }) track!: Track;

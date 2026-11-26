@@ -1,7 +1,17 @@
-import { Component, inject, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  inject,
+  computed,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
-import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+import {
+  CdkDragDrop,
+  DragDropModule,
+  moveItemInArray,
+} from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -12,7 +22,11 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 import { EditorStateService } from '../services/editor-state.service';
-import { EffectsService, EffectMeta, FactoryPreset } from '../../audio-engine/services/effects.service';
+import {
+  EffectsService,
+  EffectMeta,
+  FactoryPreset,
+} from '../../audio-engine/services/effects.service';
 import {
   ClipEffect,
   EffectType,
@@ -34,7 +48,6 @@ import { generateUUID } from '../../shared/utils/uuid.util';
   selector: 'effects-panel',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     DragDropModule,
     MatButtonModule,
@@ -63,7 +76,12 @@ import { generateUUID } from '../../shared/utils/uuid.util';
           <div class="effect-stack-container">
             <div class="stack-header">
               <span class="stack-title">Effects</span>
-              <button mat-icon-button class="add-effect-btn" [matMenuTriggerFor]="addMenu" matTooltip="Add Effect">
+              <button
+                mat-icon-button
+                class="add-effect-btn"
+                [matMenuTriggerFor]="addMenu"
+                matTooltip="Add Effect"
+              >
                 <mat-icon>add</mat-icon>
               </button>
             </div>
@@ -71,25 +89,41 @@ import { generateUUID } from '../../shared/utils/uuid.util';
             <div
               cdkDropList
               class="effect-list"
-              (cdkDropListDropped)="onDrop($event)">
+              (cdkDropListDropped)="onDrop($event)"
+            >
               @for (effect of clipEffects(); track effect.id) {
                 <div
                   cdkDrag
                   class="effect-item"
                   [class.selected]="selectedEffectId() === effect.id"
                   [class.disabled]="!effect.enabled"
-                  (click)="selectEffect(effect)">
+                  (click)="selectEffect(effect)"
+                >
                   <div class="drag-handle" cdkDragHandle>
                     <mat-icon>drag_indicator</mat-icon>
                   </div>
-                  <mat-icon class="effect-type-icon">{{ getEffectIcon(effect.type) }}</mat-icon>
-                  <span class="effect-name">{{ getEffectName(effect.type) }}</span>
-                  <button mat-icon-button (click)="toggleEnabled($event, effect)" class="toggle-btn"
-                          [matTooltip]="effect.enabled ? 'Disable' : 'Enable'">
-                    <mat-icon>{{ effect.enabled ? 'visibility' : 'visibility_off' }}</mat-icon>
+                  <mat-icon class="effect-type-icon">{{
+                    getEffectIcon(effect.type)
+                  }}</mat-icon>
+                  <span class="effect-name">{{
+                    getEffectName(effect.type)
+                  }}</span>
+                  <button
+                    mat-icon-button
+                    (click)="toggleEnabled($event, effect)"
+                    class="toggle-btn"
+                    [matTooltip]="effect.enabled ? 'Disable' : 'Enable'"
+                  >
+                    <mat-icon>{{
+                      effect.enabled ? 'visibility' : 'visibility_off'
+                    }}</mat-icon>
                   </button>
-                  <button mat-icon-button (click)="removeEffect($event, effect)" class="remove-btn"
-                          matTooltip="Remove">
+                  <button
+                    mat-icon-button
+                    (click)="removeEffect($event, effect)"
+                    class="remove-btn"
+                    matTooltip="Remove"
+                  >
                     <mat-icon>close</mat-icon>
                   </button>
                 </div>
@@ -111,14 +145,27 @@ import { generateUUID } from '../../shared/utils/uuid.util';
             @if (selectedEffect()) {
               <div class="effect-detail">
                 <div class="detail-header">
-                  <mat-icon>{{ getEffectIcon(selectedEffect()!.type) }}</mat-icon>
+                  <mat-icon>{{
+                    getEffectIcon(selectedEffect()!.type)
+                  }}</mat-icon>
                   <h3>{{ getEffectName(selectedEffect()!.type) }}</h3>
-                  <mat-form-field class="preset-select" subscriptSizing="dynamic">
+                  <mat-form-field
+                    class="preset-select"
+                    subscriptSizing="dynamic"
+                  >
                     <mat-label>Preset</mat-label>
-                    <mat-select [value]="selectedEffect()!.preset || 'custom'" (selectionChange)="applyPreset($event.value)">
+                    <mat-select
+                      [value]="selectedEffect()!.preset || 'custom'"
+                      (selectionChange)="applyPreset($event.value)"
+                    >
                       <mat-option value="custom">Custom</mat-option>
-                      @for (preset of getPresets(selectedEffect()!.type); track preset.name) {
-                        <mat-option [value]="preset.name">{{ preset.name }}</mat-option>
+                      @for (
+                        preset of getPresets(selectedEffect()!.type);
+                        track preset.name
+                      ) {
+                        <mat-option [value]="preset.name">{{
+                          preset.name
+                        }}</mat-option>
                       }
                     </mat-select>
                   </mat-form-field>
@@ -129,9 +176,17 @@ import { generateUUID } from '../../shared/utils/uuid.util';
                   <div class="param-row">
                     <label>Mix</label>
                     <mat-slider [min]="0" [max]="1" [step]="0.01" discrete>
-                      <input matSliderThumb [ngModel]="selectedEffect()!.params.mix" (ngModelChange)="updateParam('mix', $event)">
+                      <input
+                        matSliderThumb
+                        [ngModel]="selectedEffect()!.params.mix"
+                        (ngModelChange)="updateParam('mix', $event)"
+                      />
                     </mat-slider>
-                    <span class="value">{{ (selectedEffect()!.params.mix * 100).toFixed(0) }}%</span>
+                    <span class="value"
+                      >{{
+                        (selectedEffect()!.params.mix * 100).toFixed(0)
+                      }}%</span
+                    >
                   </div>
 
                   <!-- Type-specific parameters -->
@@ -139,107 +194,291 @@ import { generateUUID } from '../../shared/utils/uuid.util';
                     @case ('reverb') {
                       <div class="param-row">
                         <label>Decay</label>
-                        <mat-slider [min]="0.1" [max]="10" [step]="0.1" discrete>
-                          <input matSliderThumb [ngModel]="asReverb(selectedEffect()!.params).decay" (ngModelChange)="updateParam('decay', $event)">
+                        <mat-slider
+                          [min]="0.1"
+                          [max]="10"
+                          [step]="0.1"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="asReverb(selectedEffect()!.params).decay"
+                            (ngModelChange)="updateParam('decay', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asReverb(selectedEffect()!.params).decay.toFixed(1) }}s</span>
+                        <span class="value"
+                          >{{
+                            asReverb(selectedEffect()!.params).decay.toFixed(1)
+                          }}s</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>Pre-Delay</label>
-                        <mat-slider [min]="0" [max]="0.1" [step]="0.005" discrete>
-                          <input matSliderThumb [ngModel]="asReverb(selectedEffect()!.params).preDelay" (ngModelChange)="updateParam('preDelay', $event)">
+                        <mat-slider
+                          [min]="0"
+                          [max]="0.1"
+                          [step]="0.005"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asReverb(selectedEffect()!.params).preDelay
+                            "
+                            (ngModelChange)="updateParam('preDelay', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ (asReverb(selectedEffect()!.params).preDelay * 1000).toFixed(0) }}ms</span>
+                        <span class="value"
+                          >{{
+                            (
+                              asReverb(selectedEffect()!.params).preDelay * 1000
+                            ).toFixed(0)
+                          }}ms</span
+                        >
                       </div>
                     }
                     @case ('delay') {
                       <div class="param-row">
                         <label>Time</label>
-                        <mat-slider [min]="0.01" [max]="1" [step]="0.01" discrete>
-                          <input matSliderThumb [ngModel]="asDelay(selectedEffect()!.params).time" (ngModelChange)="updateParam('time', $event)">
+                        <mat-slider
+                          [min]="0.01"
+                          [max]="1"
+                          [step]="0.01"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="asDelay(selectedEffect()!.params).time"
+                            (ngModelChange)="updateParam('time', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ (asDelay(selectedEffect()!.params).time * 1000).toFixed(0) }}ms</span>
+                        <span class="value"
+                          >{{
+                            (
+                              asDelay(selectedEffect()!.params).time * 1000
+                            ).toFixed(0)
+                          }}ms</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>Feedback</label>
-                        <mat-slider [min]="0" [max]="0.95" [step]="0.01" discrete>
-                          <input matSliderThumb [ngModel]="asDelay(selectedEffect()!.params).feedback" (ngModelChange)="updateParam('feedback', $event)">
+                        <mat-slider
+                          [min]="0"
+                          [max]="0.95"
+                          [step]="0.01"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asDelay(selectedEffect()!.params).feedback
+                            "
+                            (ngModelChange)="updateParam('feedback', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ (asDelay(selectedEffect()!.params).feedback * 100).toFixed(0) }}%</span>
+                        <span class="value"
+                          >{{
+                            (
+                              asDelay(selectedEffect()!.params).feedback * 100
+                            ).toFixed(0)
+                          }}%</span
+                        >
                       </div>
                       <div class="param-row toggle-row">
                         <label>Ping Pong</label>
-                        <mat-slide-toggle [ngModel]="asDelay(selectedEffect()!.params).pingPong" (ngModelChange)="updateParam('pingPong', $event)">
+                        <mat-slide-toggle
+                          [ngModel]="asDelay(selectedEffect()!.params).pingPong"
+                          (ngModelChange)="updateParam('pingPong', $event)"
+                        >
                         </mat-slide-toggle>
                       </div>
                     }
                     @case ('eq') {
                       <div class="param-row">
                         <label>Low</label>
-                        <mat-slider [min]="-12" [max]="12" [step]="0.5" discrete>
-                          <input matSliderThumb [ngModel]="asEQ(selectedEffect()!.params).low" (ngModelChange)="updateParam('low', $event)">
+                        <mat-slider
+                          [min]="-12"
+                          [max]="12"
+                          [step]="0.5"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="asEQ(selectedEffect()!.params).low"
+                            (ngModelChange)="updateParam('low', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asEQ(selectedEffect()!.params).low > 0 ? '+' : '' }}{{ asEQ(selectedEffect()!.params).low.toFixed(1) }}dB</span>
+                        <span class="value"
+                          >{{ asEQ(selectedEffect()!.params).low > 0 ? '+' : ''
+                          }}{{
+                            asEQ(selectedEffect()!.params).low.toFixed(1)
+                          }}dB</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>Mid</label>
-                        <mat-slider [min]="-12" [max]="12" [step]="0.5" discrete>
-                          <input matSliderThumb [ngModel]="asEQ(selectedEffect()!.params).mid" (ngModelChange)="updateParam('mid', $event)">
+                        <mat-slider
+                          [min]="-12"
+                          [max]="12"
+                          [step]="0.5"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="asEQ(selectedEffect()!.params).mid"
+                            (ngModelChange)="updateParam('mid', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asEQ(selectedEffect()!.params).mid > 0 ? '+' : '' }}{{ asEQ(selectedEffect()!.params).mid.toFixed(1) }}dB</span>
+                        <span class="value"
+                          >{{ asEQ(selectedEffect()!.params).mid > 0 ? '+' : ''
+                          }}{{
+                            asEQ(selectedEffect()!.params).mid.toFixed(1)
+                          }}dB</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>High</label>
-                        <mat-slider [min]="-12" [max]="12" [step]="0.5" discrete>
-                          <input matSliderThumb [ngModel]="asEQ(selectedEffect()!.params).high" (ngModelChange)="updateParam('high', $event)">
+                        <mat-slider
+                          [min]="-12"
+                          [max]="12"
+                          [step]="0.5"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="asEQ(selectedEffect()!.params).high"
+                            (ngModelChange)="updateParam('high', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asEQ(selectedEffect()!.params).high > 0 ? '+' : '' }}{{ asEQ(selectedEffect()!.params).high.toFixed(1) }}dB</span>
+                        <span class="value"
+                          >{{
+                            asEQ(selectedEffect()!.params).high > 0 ? '+' : ''
+                          }}{{
+                            asEQ(selectedEffect()!.params).high.toFixed(1)
+                          }}dB</span
+                        >
                       </div>
                     }
                     @case ('distortion') {
                       <div class="param-row">
                         <label>Drive</label>
                         <mat-slider [min]="0" [max]="1" [step]="0.01" discrete>
-                          <input matSliderThumb [ngModel]="asDistortion(selectedEffect()!.params).drive" (ngModelChange)="updateParam('drive', $event)">
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asDistortion(selectedEffect()!.params).drive
+                            "
+                            (ngModelChange)="updateParam('drive', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ (asDistortion(selectedEffect()!.params).drive * 100).toFixed(0) }}%</span>
+                        <span class="value"
+                          >{{
+                            (
+                              asDistortion(selectedEffect()!.params).drive * 100
+                            ).toFixed(0)
+                          }}%</span
+                        >
                       </div>
                     }
                     @case ('compressor') {
                       <div class="param-row">
                         <label>Threshold</label>
                         <mat-slider [min]="-60" [max]="0" [step]="1" discrete>
-                          <input matSliderThumb [ngModel]="asCompressor(selectedEffect()!.params).threshold" (ngModelChange)="updateParam('threshold', $event)">
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asCompressor(selectedEffect()!.params).threshold
+                            "
+                            (ngModelChange)="updateParam('threshold', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asCompressor(selectedEffect()!.params).threshold }}dB</span>
+                        <span class="value"
+                          >{{
+                            asCompressor(selectedEffect()!.params).threshold
+                          }}dB</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>Ratio</label>
                         <mat-slider [min]="1" [max]="20" [step]="0.5" discrete>
-                          <input matSliderThumb [ngModel]="asCompressor(selectedEffect()!.params).ratio" (ngModelChange)="updateParam('ratio', $event)">
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asCompressor(selectedEffect()!.params).ratio
+                            "
+                            (ngModelChange)="updateParam('ratio', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asCompressor(selectedEffect()!.params).ratio.toFixed(1) }}:1</span>
+                        <span class="value"
+                          >{{
+                            asCompressor(
+                              selectedEffect()!.params
+                            ).ratio.toFixed(1)
+                          }}:1</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>Attack</label>
-                        <mat-slider [min]="0.001" [max]="1" [step]="0.001" discrete>
-                          <input matSliderThumb [ngModel]="asCompressor(selectedEffect()!.params).attack" (ngModelChange)="updateParam('attack', $event)">
+                        <mat-slider
+                          [min]="0.001"
+                          [max]="1"
+                          [step]="0.001"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asCompressor(selectedEffect()!.params).attack
+                            "
+                            (ngModelChange)="updateParam('attack', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ (asCompressor(selectedEffect()!.params).attack * 1000).toFixed(0) }}ms</span>
+                        <span class="value"
+                          >{{
+                            (
+                              asCompressor(selectedEffect()!.params).attack *
+                              1000
+                            ).toFixed(0)
+                          }}ms</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>Release</label>
-                        <mat-slider [min]="0.01" [max]="1" [step]="0.01" discrete>
-                          <input matSliderThumb [ngModel]="asCompressor(selectedEffect()!.params).release" (ngModelChange)="updateParam('release', $event)">
+                        <mat-slider
+                          [min]="0.01"
+                          [max]="1"
+                          [step]="0.01"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asCompressor(selectedEffect()!.params).release
+                            "
+                            (ngModelChange)="updateParam('release', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ (asCompressor(selectedEffect()!.params).release * 1000).toFixed(0) }}ms</span>
+                        <span class="value"
+                          >{{
+                            (
+                              asCompressor(selectedEffect()!.params).release *
+                              1000
+                            ).toFixed(0)
+                          }}ms</span
+                        >
                       </div>
                     }
                     @case ('filter') {
                       <div class="param-row">
                         <label>Type</label>
-                        <mat-form-field subscriptSizing="dynamic" class="filter-type-select">
-                          <mat-select [ngModel]="asFilter(selectedEffect()!.params).type" (ngModelChange)="updateParam('type', $event)">
+                        <mat-form-field
+                          subscriptSizing="dynamic"
+                          class="filter-type-select"
+                        >
+                          <mat-select
+                            [ngModel]="asFilter(selectedEffect()!.params).type"
+                            (ngModelChange)="updateParam('type', $event)"
+                          >
                             <mat-option value="lowpass">Low Pass</mat-option>
                             <mat-option value="highpass">High Pass</mat-option>
                             <mat-option value="bandpass">Band Pass</mat-option>
@@ -248,56 +487,141 @@ import { generateUUID } from '../../shared/utils/uuid.util';
                       </div>
                       <div class="param-row">
                         <label>Frequency</label>
-                        <mat-slider [min]="20" [max]="20000" [step]="10" discrete>
-                          <input matSliderThumb [ngModel]="asFilter(selectedEffect()!.params).frequency" (ngModelChange)="updateParam('frequency', $event)">
+                        <mat-slider
+                          [min]="20"
+                          [max]="20000"
+                          [step]="10"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asFilter(selectedEffect()!.params).frequency
+                            "
+                            (ngModelChange)="updateParam('frequency', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asFilter(selectedEffect()!.params).frequency }}Hz</span>
+                        <span class="value"
+                          >{{
+                            asFilter(selectedEffect()!.params).frequency
+                          }}Hz</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>Resonance</label>
                         <mat-slider [min]="0" [max]="20" [step]="0.1" discrete>
-                          <input matSliderThumb [ngModel]="asFilter(selectedEffect()!.params).resonance" (ngModelChange)="updateParam('resonance', $event)">
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asFilter(selectedEffect()!.params).resonance
+                            "
+                            (ngModelChange)="updateParam('resonance', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asFilter(selectedEffect()!.params).resonance.toFixed(1) }}</span>
+                        <span class="value">{{
+                          asFilter(selectedEffect()!.params).resonance.toFixed(
+                            1
+                          )
+                        }}</span>
                       </div>
                     }
                     @case ('pitch-shift') {
                       <div class="param-row">
                         <label>Semitones</label>
                         <mat-slider [min]="-12" [max]="12" [step]="1" discrete>
-                          <input matSliderThumb [ngModel]="asPitchShift(selectedEffect()!.params).semitones" (ngModelChange)="updateParam('semitones', $event)">
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asPitchShift(selectedEffect()!.params).semitones
+                            "
+                            (ngModelChange)="updateParam('semitones', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asPitchShift(selectedEffect()!.params).semitones > 0 ? '+' : '' }}{{ asPitchShift(selectedEffect()!.params).semitones }}</span>
+                        <span class="value"
+                          >{{
+                            asPitchShift(selectedEffect()!.params).semitones > 0
+                              ? '+'
+                              : ''
+                          }}{{
+                            asPitchShift(selectedEffect()!.params).semitones
+                          }}</span
+                        >
                       </div>
                     }
                     @case ('chorus') {
                       <div class="param-row">
                         <label>Rate</label>
-                        <mat-slider [min]="0.1" [max]="10" [step]="0.1" discrete>
-                          <input matSliderThumb [ngModel]="asChorus(selectedEffect()!.params).rate" (ngModelChange)="updateParam('rate', $event)">
+                        <mat-slider
+                          [min]="0.1"
+                          [max]="10"
+                          [step]="0.1"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="asChorus(selectedEffect()!.params).rate"
+                            (ngModelChange)="updateParam('rate', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asChorus(selectedEffect()!.params).rate.toFixed(1) }}Hz</span>
+                        <span class="value"
+                          >{{
+                            asChorus(selectedEffect()!.params).rate.toFixed(1)
+                          }}Hz</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>Depth</label>
                         <mat-slider [min]="0" [max]="1" [step]="0.01" discrete>
-                          <input matSliderThumb [ngModel]="asChorus(selectedEffect()!.params).depth" (ngModelChange)="updateParam('depth', $event)">
+                          <input
+                            matSliderThumb
+                            [ngModel]="asChorus(selectedEffect()!.params).depth"
+                            (ngModelChange)="updateParam('depth', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ (asChorus(selectedEffect()!.params).depth * 100).toFixed(0) }}%</span>
+                        <span class="value"
+                          >{{
+                            (
+                              asChorus(selectedEffect()!.params).depth * 100
+                            ).toFixed(0)
+                          }}%</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>Feedback</label>
-                        <mat-slider [min]="0" [max]="0.95" [step]="0.01" discrete>
-                          <input matSliderThumb [ngModel]="asChorus(selectedEffect()!.params).feedback" (ngModelChange)="updateParam('feedback', $event)">
+                        <mat-slider
+                          [min]="0"
+                          [max]="0.95"
+                          [step]="0.01"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asChorus(selectedEffect()!.params).feedback
+                            "
+                            (ngModelChange)="updateParam('feedback', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ (asChorus(selectedEffect()!.params).feedback * 100).toFixed(0) }}%</span>
+                        <span class="value"
+                          >{{
+                            (
+                              asChorus(selectedEffect()!.params).feedback * 100
+                            ).toFixed(0)
+                          }}%</span
+                        >
                       </div>
                     }
                     @case ('autotune') {
                       <div class="param-row">
                         <label>Key</label>
-                        <mat-form-field subscriptSizing="dynamic" class="autotune-key-select">
-                          <mat-select [ngModel]="asAutotune(selectedEffect()!.params).key" (ngModelChange)="updateParam('key', $event)">
+                        <mat-form-field
+                          subscriptSizing="dynamic"
+                          class="autotune-key-select"
+                        >
+                          <mat-select
+                            [ngModel]="asAutotune(selectedEffect()!.params).key"
+                            (ngModelChange)="updateParam('key', $event)"
+                          >
                             <mat-option value="C">C</mat-option>
                             <mat-option value="C#">C#</mat-option>
                             <mat-option value="D">D</mat-option>
@@ -315,8 +639,16 @@ import { generateUUID } from '../../shared/utils/uuid.util';
                       </div>
                       <div class="param-row">
                         <label>Scale</label>
-                        <mat-form-field subscriptSizing="dynamic" class="autotune-scale-select">
-                          <mat-select [ngModel]="asAutotune(selectedEffect()!.params).scale" (ngModelChange)="updateParam('scale', $event)">
+                        <mat-form-field
+                          subscriptSizing="dynamic"
+                          class="autotune-scale-select"
+                        >
+                          <mat-select
+                            [ngModel]="
+                              asAutotune(selectedEffect()!.params).scale
+                            "
+                            (ngModelChange)="updateParam('scale', $event)"
+                          >
                             <mat-option value="chromatic">Chromatic</mat-option>
                             <mat-option value="major">Major</mat-option>
                             <mat-option value="minor">Minor</mat-option>
@@ -326,23 +658,56 @@ import { generateUUID } from '../../shared/utils/uuid.util';
                       <div class="param-row">
                         <label>Strength</label>
                         <mat-slider [min]="0" [max]="1" [step]="0.01" discrete>
-                          <input matSliderThumb [ngModel]="asAutotune(selectedEffect()!.params).strength" (ngModelChange)="updateParam('strength', $event)">
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asAutotune(selectedEffect()!.params).strength
+                            "
+                            (ngModelChange)="updateParam('strength', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ (asAutotune(selectedEffect()!.params).strength * 100).toFixed(0) }}%</span>
+                        <span class="value"
+                          >{{
+                            (
+                              asAutotune(selectedEffect()!.params).strength *
+                              100
+                            ).toFixed(0)
+                          }}%</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>Speed</label>
                         <mat-slider [min]="0" [max]="1" [step]="0.01" discrete>
-                          <input matSliderThumb [ngModel]="asAutotune(selectedEffect()!.params).speed" (ngModelChange)="updateParam('speed', $event)">
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asAutotune(selectedEffect()!.params).speed
+                            "
+                            (ngModelChange)="updateParam('speed', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ (asAutotune(selectedEffect()!.params).speed * 100).toFixed(0) }}%</span>
+                        <span class="value"
+                          >{{
+                            (
+                              asAutotune(selectedEffect()!.params).speed * 100
+                            ).toFixed(0)
+                          }}%</span
+                        >
                       </div>
                     }
                     @case ('vocoder') {
                       <div class="param-row">
                         <label>Carrier</label>
-                        <mat-form-field subscriptSizing="dynamic" class="vocoder-carrier-select">
-                          <mat-select [ngModel]="asVocoder(selectedEffect()!.params).carrierType" (ngModelChange)="updateParam('carrierType', $event)">
+                        <mat-form-field
+                          subscriptSizing="dynamic"
+                          class="vocoder-carrier-select"
+                        >
+                          <mat-select
+                            [ngModel]="
+                              asVocoder(selectedEffect()!.params).carrierType
+                            "
+                            (ngModelChange)="updateParam('carrierType', $event)"
+                          >
                             <mat-option value="sawtooth">Sawtooth</mat-option>
                             <mat-option value="square">Square</mat-option>
                             <mat-option value="pulse">Pulse</mat-option>
@@ -353,46 +718,123 @@ import { generateUUID } from '../../shared/utils/uuid.util';
                       <div class="param-row">
                         <label>Carrier Freq</label>
                         <mat-slider [min]="50" [max]="500" [step]="5" discrete>
-                          <input matSliderThumb [ngModel]="asVocoder(selectedEffect()!.params).carrierFreq" (ngModelChange)="updateParam('carrierFreq', $event)">
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asVocoder(selectedEffect()!.params).carrierFreq
+                            "
+                            (ngModelChange)="updateParam('carrierFreq', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asVocoder(selectedEffect()!.params).carrierFreq }}Hz</span>
+                        <span class="value"
+                          >{{
+                            asVocoder(selectedEffect()!.params).carrierFreq
+                          }}Hz</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>Bands</label>
                         <mat-slider [min]="8" [max]="32" [step]="2" discrete>
-                          <input matSliderThumb [ngModel]="asVocoder(selectedEffect()!.params).bands" (ngModelChange)="updateParam('bands', $event)">
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asVocoder(selectedEffect()!.params).bands
+                            "
+                            (ngModelChange)="updateParam('bands', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asVocoder(selectedEffect()!.params).bands }}</span>
+                        <span class="value">{{
+                          asVocoder(selectedEffect()!.params).bands
+                        }}</span>
                       </div>
                       <div class="param-row">
                         <label>Attack</label>
-                        <mat-slider [min]="0.001" [max]="0.1" [step]="0.001" discrete>
-                          <input matSliderThumb [ngModel]="asVocoder(selectedEffect()!.params).attack" (ngModelChange)="updateParam('attack', $event)">
+                        <mat-slider
+                          [min]="0.001"
+                          [max]="0.1"
+                          [step]="0.001"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asVocoder(selectedEffect()!.params).attack
+                            "
+                            (ngModelChange)="updateParam('attack', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ (asVocoder(selectedEffect()!.params).attack * 1000).toFixed(0) }}ms</span>
+                        <span class="value"
+                          >{{
+                            (
+                              asVocoder(selectedEffect()!.params).attack * 1000
+                            ).toFixed(0)
+                          }}ms</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>Release</label>
-                        <mat-slider [min]="0.01" [max]="0.5" [step]="0.01" discrete>
-                          <input matSliderThumb [ngModel]="asVocoder(selectedEffect()!.params).release" (ngModelChange)="updateParam('release', $event)">
+                        <mat-slider
+                          [min]="0.01"
+                          [max]="0.5"
+                          [step]="0.01"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asVocoder(selectedEffect()!.params).release
+                            "
+                            (ngModelChange)="updateParam('release', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ (asVocoder(selectedEffect()!.params).release * 1000).toFixed(0) }}ms</span>
+                        <span class="value"
+                          >{{
+                            (
+                              asVocoder(selectedEffect()!.params).release * 1000
+                            ).toFixed(0)
+                          }}ms</span
+                        >
                       </div>
                       <div class="param-row">
                         <label>Q Factor</label>
                         <mat-slider [min]="1" [max]="20" [step]="0.5" discrete>
-                          <input matSliderThumb [ngModel]="asVocoder(selectedEffect()!.params).qFactor" (ngModelChange)="updateParam('qFactor', $event)">
+                          <input
+                            matSliderThumb
+                            [ngModel]="
+                              asVocoder(selectedEffect()!.params).qFactor
+                            "
+                            (ngModelChange)="updateParam('qFactor', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asVocoder(selectedEffect()!.params).qFactor.toFixed(1) }}</span>
+                        <span class="value">{{
+                          asVocoder(selectedEffect()!.params).qFactor.toFixed(1)
+                        }}</span>
                       </div>
                     }
                     @case ('gain') {
                       <div class="param-row">
                         <label>Gain</label>
-                        <mat-slider [min]="-24" [max]="24" [step]="0.5" discrete>
-                          <input matSliderThumb [ngModel]="asGain(selectedEffect()!.params).gain" (ngModelChange)="updateParam('gain', $event)">
+                        <mat-slider
+                          [min]="-24"
+                          [max]="24"
+                          [step]="0.5"
+                          discrete
+                        >
+                          <input
+                            matSliderThumb
+                            [ngModel]="asGain(selectedEffect()!.params).gain"
+                            (ngModelChange)="updateParam('gain', $event)"
+                          />
                         </mat-slider>
-                        <span class="value">{{ asGain(selectedEffect()!.params).gain > 0 ? '+' : '' }}{{ asGain(selectedEffect()!.params).gain.toFixed(1) }}dB</span>
+                        <span class="value"
+                          >{{
+                            asGain(selectedEffect()!.params).gain > 0
+                              ? '+'
+                              : ''
+                          }}{{
+                            asGain(selectedEffect()!.params).gain.toFixed(1)
+                          }}dB</span
+                        >
                       </div>
                     }
                   }
@@ -409,6 +851,7 @@ import { generateUUID } from '../../shared/utils/uuid.util';
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './effects-panel.component.css',
 })
 export class EffectsPanelComponent {
@@ -426,7 +869,7 @@ export class EffectsPanelComponent {
   selectedEffect = computed(() => {
     const effectId = this.selectedEffectId();
     if (!effectId) return null;
-    return this.clipEffects().find((e) => e.id === effectId) || null;
+    return this.clipEffects().find(e => e.id === effectId) || null;
   });
 
   getEffectIcon(type: EffectType): string {
@@ -464,7 +907,7 @@ export class EffectsPanelComponent {
     const clip = this.selectedClip();
     if (!clip) return;
 
-    const effects = (clip.effects || []).filter((e) => e.id !== effect.id);
+    const effects = (clip.effects || []).filter(e => e.id !== effect.id);
     this.updateClipEffects(effects);
 
     // Clear selection if removed effect was selected
@@ -478,7 +921,9 @@ export class EffectsPanelComponent {
     const clip = this.selectedClip();
     if (!clip) return;
 
-    const effects = (clip.effects || []).map((e) => (e.id === effect.id ? { ...e, enabled: !e.enabled } : e));
+    const effects = (clip.effects || []).map(e =>
+      e.id === effect.id ? { ...e, enabled: !e.enabled } : e
+    );
     this.updateClipEffects(effects);
   }
 
@@ -496,7 +941,7 @@ export class EffectsPanelComponent {
     const effectId = this.selectedEffectId();
     if (!clip || !effectId) return;
 
-    const effects = (clip.effects || []).map((e) => {
+    const effects = (clip.effects || []).map(e => {
       if (e.id === effectId) {
         return {
           ...e,
@@ -519,16 +964,18 @@ export class EffectsPanelComponent {
 
     if (presetName === 'custom') {
       // Just clear the preset name
-      const effects = (clip.effects || []).map((e) => (e.id === effect.id ? { ...e, preset: undefined } : e));
+      const effects = (clip.effects || []).map(e =>
+        e.id === effect.id ? { ...e, preset: undefined } : e
+      );
       this.updateClipEffects(effects);
       return;
     }
 
     const presets = this.effectsService.factoryPresets.get(effect.type);
-    const preset = presets?.find((p) => p.name === presetName);
+    const preset = presets?.find(p => p.name === presetName);
     if (!preset) return;
 
-    const effects = (clip.effects || []).map((e) =>
+    const effects = (clip.effects || []).map(e =>
       e.id === effect.id
         ? {
             ...e,
@@ -545,10 +992,10 @@ export class EffectsPanelComponent {
     if (!clip) return;
 
     // Update the clip in the track
-    this.editorState.tracks.update((tracks) =>
-      tracks.map((track) => ({
+    this.editorState.tracks.update(tracks =>
+      tracks.map(track => ({
         ...track,
-        clips: track.clips.map((c) => (c.id === clip.id ? { ...c, effects } : c)),
+        clips: track.clips.map(c => (c.id === clip.id ? { ...c, effects } : c)),
       }))
     );
   }
